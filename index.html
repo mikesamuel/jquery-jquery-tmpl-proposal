@@ -1,21 +1,36 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 
+<!--
+From http://www.squarefree.com/shell/
+
+About
+
+The JavaScript shell was created by Jesse Ruderman. Ted Mielczarek
+added the tab completion feature in 1.1, Edward Lee added the
+multiline input feature in 1.2, and Jesper Rønn-Jensen fixed a few
+bugs for 1.4. Changelogs for some versions are available. The
+JavaScript Shell is GPL/LGPL/MPL tri-licensed.
+-->
+
 <html onclick="keepFocusInTextbox(event)">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<title>JavaScript Shell 1.4</title>
+<title>JavaScript Shell 1.4 Quasis Demo</title>
+<script src="js/desugar.js"></script>
+<script src="js/quasi-library-raw.js"></script>
 
 <script type="text/javascript">
-var 
-histList = [""], 
-histPos = 0, 
-_scope = {}, 
+var
+histList = [""],
+histPos = 0,
+_scope = {},
 _win, // a top-level context
 question,
 _in,
 _out,
 tooManyMatches = null,
-lastError = null;
+lastError = null,
+echoDesugared = false;
 
 function refocus()
 {
@@ -51,16 +66,16 @@ function initTarget()
 
 // Unless the user is selected something, refocus the textbox.
 // (requested by caillon, brendan, asa)
-function keepFocusInTextbox(e) 
+function keepFocusInTextbox(e)
 {
   var g = e.srcElement ? e.srcElement : e.target; // IE vs. standard
-  
+
   while (!g.tagName)
     g = g.parentNode;
   var t = g.tagName.toUpperCase();
   if (t=="A" || t=="INPUT")
     return;
-    
+
   if (window.getSelection) {
     // Mozilla
     if (String(window.getSelection()))
@@ -76,7 +91,7 @@ function keepFocusInTextbox(e)
     if ( document.selection.createRange().text )
       return;
   }
-  
+
   refocus();
 }
 
@@ -105,7 +120,7 @@ function inputKeydown(e) {
   } else { }
 
   setTimeout(recalculateInputHeight, 0);
-  
+
   //return true;
 };
 
@@ -116,7 +131,7 @@ function caretInFirstLine(textbox)
     return true;
 
   var firstLineBreak = textbox.value.indexOf("\n");
-  
+
   return ((firstLineBreak == -1) || (textbox.selectionStart <= firstLineBreak));
 }
 
@@ -127,7 +142,7 @@ function caretInLastLine(textbox)
     return true;
 
   var lastLineBreak = textbox.value.lastIndexOf("\n");
-  
+
   return (textbox.selectionEnd > lastLineBreak);
 }
 
@@ -136,7 +151,7 @@ function recalculateInputHeight()
   var rows = _in.value.split(/\n/).length
     + 1 // prevent scrollbar flickering in Mozilla
     + (window.opera ? 1 : 0); // leave room for scrollbar in Opera
-  
+
   if (_in.rows != rows) // without this check, it is impossible to select text in Opera 7.60 or Opera 8.0.
     _in.rows = rows;
 }
@@ -162,7 +177,7 @@ function printWithRunin(h, s, type)
 }
 
 
-var shellCommands = 
+var shellCommands =
 {
 load : function load(url)
 {
@@ -176,7 +191,7 @@ load : function load(url)
 clear : function clear()
 {
   var CHILDREN_TO_PRESERVE = 3;
-  while (_out.childNodes[CHILDREN_TO_PRESERVE]) 
+  while (_out.childNodes[CHILDREN_TO_PRESERVE])
     _out.removeChild(_out.childNodes[CHILDREN_TO_PRESERVE]);
 },
 
@@ -184,8 +199,8 @@ print : function print(s) { println(s, "print"); },
 
 // the normal function, "print", shouldn't return a value
 // (suggested by brendan; later noticed it was a problem when showing others)
-pr : function pr(s) 
-{ 
+pr : function pr(s)
+{
   shellCommands.print(s); // need to specify shellCommands so it doesn't try window.print()!
   return s;
 },
@@ -242,10 +257,10 @@ props : function props(e, onePerLine)
 
   for (j=0; j<protoLevels; ++j)
     for (i=0;i<ns.length;++i)
-      if (as[i][j].length) 
+      if (as[i][j].length)
         printWithRunin(
-          ns[i] + times(" of prototype", j), 
-          (onePerLine ? "\n\n" : "") + as[i][j].sort().join(onePerLine ? "\n" : ", ") + (onePerLine ? "\n\n" : ""), 
+          ns[i] + times(" of prototype", j),
+          (onePerLine ? "\n\n" : "") + as[i][j].sort().join(onePerLine ? "\n" : ", ") + (onePerLine ? "\n\n" : ""),
           "propList"
         );
 },
@@ -257,7 +272,7 @@ blink : function blink(node)
   if (node.nodeType == 3)        throw("blink: argument must not be a text node");
   if (node.documentElement)      throw("blink: argument must not be the document object");
 
-  function setOutline(o) { 
+  function setOutline(o) {
     return function() {
       if (node.style.outline != node.style.bogusProperty) {
         // browser supports outline (Firefox 1.1 and newer, CSS3, Opera 8).
@@ -272,11 +287,11 @@ blink : function blink(node)
         node.style.border = o;
       }
     }
-  } 
-  
+  }
+
   function focusIt(a) {
     return function() {
-      a.focus(); 
+      a.focus();
     }
   }
 
@@ -306,6 +321,11 @@ mathHelp : function mathHelp()
   printWithRunin("Math methods", "abs, acos, asin, atan, atan2, ceil, cos, exp, floor, log, max, min, pow, random, round, sin, sqrt, tan", "propList");
 },
 
+debugDesugaring : function debugDesugaring() {
+  echoDesugared = !echoDesugared;
+  println(echoDesugared ? 'Desugared output will be echoed' : 'Debugging toggled off');
+},
+
 ans : undefined
 };
 
@@ -314,7 +334,7 @@ function hist(up)
 {
   // histList[0] = first command entered, [1] = second, etc.
   // type something, press up --> thing typed is now in "limbo"
-  // (last item in histList) and should be reachable by pressing 
+  // (last item in histList) and should be reachable by pressing
   // down again.
 
   var L = histList.length;
@@ -337,16 +357,16 @@ function hist(up)
       // Set to nothing first for the same reason
       setTimeout(
         function() {
-          _in.value = ''; 
+          _in.value = '';
           _in.value = histList[histPos];
           var caretPos = _in.value.length;
-          if (_in.setSelectionRange) 
+          if (_in.setSelectionRange)
             _in.setSelectionRange(caretPos, caretPos);
         },
         0
       );
     }
-  } 
+  }
   else // down
   {
     if (histPos < L-1)
@@ -407,7 +427,7 @@ function tabcomplete()
 
       if(stopAtDot && s.charAt(i) == '.')
         break;
-        
+
       if(s.charAt(i) == ')')
         nparens++;
       else if(s.charAt(i) == '(')
@@ -438,7 +458,7 @@ function tabcomplete()
   {
     if(inp.selectionEnd != null)
       return inp.selectionEnd;
-      
+
     if(inp.createTextRange)
     {
       var docrange = _win.Shell.document.selection.createRange();
@@ -539,7 +559,7 @@ function tabcomplete()
                 obj = eval(objname);
         }
         catch(er) {
-          printError(er); 
+          printError(er);
           return;
         }
         if(obj == undefined) {
@@ -646,7 +666,7 @@ function printAnswer(a)
 }
 
 function printError(er)
-{ 
+{
   var lineNumberString;
 
   lastError = er; // for debugging the shell
@@ -670,18 +690,19 @@ function go(s)
   histList[histList.length-1] = question;
   histList[histList.length] = "";
   histPos = histList.length - 1;
-  
-  // Unfortunately, this has to happen *before* the JavaScript is run, so that 
+
+  // Unfortunately, this has to happen *before* the JavaScript is run, so that
   // print() output will go in the right place.
   _in.value='';
   recalculateInputHeight();
-  printQuestion(question);
+  printQuestion(echoDesugared ? desugar(question) : question);
+
 
   if (_win.closed) {
     printError("Target window has been closed.");
     return;
   }
-  
+
   try { ("Shell" in _win) }
   catch(er) {
     printError("The JavaScript Shell cannot access variables in the target window.  The most likely reason is that the target window now has a different page loaded and that page has a different hostname than the original page.");
@@ -692,7 +713,7 @@ function go(s)
     initTarget(); // silent
 
   // Evaluate Shell.question using _win's eval (this is why eval isn't in the |with|, IIRC).
-  _win.location.href = "javascript:try{ Shell.printAnswer(eval('with(Shell._scope) with(Shell.shellCommands) {' + Shell.question + String.fromCharCode(10) + '}')); } catch(er) { Shell.printError(er); }; setTimeout(Shell.refocus, 0); void 0";
+  _win.location.href = "javascript:try{ Shell.printAnswer(eval('with(Shell._scope) with(Shell.shellCommands) {' + desugar(Shell.question) + String.fromCharCode(10) + '}')); } catch(er) { Shell.printError(er); }; setTimeout(Shell.refocus, 0); void 0";
 }
 
 </script>
@@ -723,7 +744,7 @@ form { margin: 0; padding: 0; }
 
 <body onload="init()">
 
-<div id="output"><h3>JavaScript Shell 1.4</h3><div>Features: autocompletion of property names with Tab, multiline input with Shift+Enter, input history with (Ctrl+) Up/Down, <a accesskey="M" href="javascript:go('scope(Math); mathHelp();');" title="Accesskey: M">Math</a>, <a accesskey="H" href="http://www.squarefree.com/shell/?ignoreReferrerFrom=shell1.4"  title="Accesskey: H">help</a></div><div>Values and functions: ans, print(string), <a accesskey="P" href="javascript:go('props(ans)')" title="Accesskey: P">props(object)</a>, <a accesskey="B" href="javascript:go('blink(ans)')" title="Accesskey: B">blink(node)</a>, <a accesskey="C" href="javascript:go('clear()')" title="Accesskey: C">clear()</a>, load(scriptURL), scope(object)</div></div>
+<div id="output"><h3>JavaScript Shell 1.4</h3><div>Features: autocompletion of property names with Tab, multiline input with Shift+Enter, input history with (Ctrl+) Up/Down, <a accesskey="M" href="javascript:go('scope(Math); mathHelp();');" title="Accesskey: M">Math</a>, <a accesskey="H" href="http://www.squarefree.com/shell/?ignoreReferrerFrom=shell1.4"  title="Accesskey: H">help</a></div><div>Values and functions: ans, print(string), <a accesskey="P" href="javascript:go('props(ans)')" title="Accesskey: P">props(object)</a>, <a accesskey="B" href="javascript:go('blink(ans)')" title="Accesskey: B">blink(node)</a>, <a accesskey="C" href="javascript:go('clear()')" title="Accesskey: C">clear()</a>, load(scriptURL), scope(object), debugDesugaring()</div></div>
 
 <div><textarea id="input" class="input" wrap="off" onkeydown="inputKeydown(event)" rows="1"></textarea></div>
 
