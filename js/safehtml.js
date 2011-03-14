@@ -58,17 +58,28 @@ var safehtml = (function () {
     }
   
     var lastIndex = nChunks - 1;
-    var lastChunk = htmlTextChunks[lastIndex];
-  
-    var interpolator = function (var_args) {
-      var outputBuffer = [];
-      for (var i = 0, j = -1; i < lastIndex; ++i) {
-        outputBuffer[++j] = htmlTextChunks[i];
-        outputBuffer[++j] = sanitizerFunctions[i](arguments[i]);
-      }
-      outputBuffer[++j] = lastChunk;
-      return outputBuffer.join('');
-    };
+
+    var interpolator;
+    if (typeof prettyQuasi !== 'undefined') {  
+      interpolator = function (var_args) {
+        var escapedArgs = [];
+        for (var i = 0; i < lastIndex; ++i) {
+          escapedArgs[i] = sanitizerFunctions[i](arguments[i]);
+        }
+        return prettyQuasi(htmlTextChunks, escapedArgs, arguments, SanitizedHtml);
+      };
+    } else {
+      var lastChunk = htmlTextChunks[lastIndex];
+      interpolator = function (var_args) {
+        var outputBuffer = [];
+        for (var i = 0, j = -1; i < lastIndex; ++i) {
+          outputBuffer[++j] = htmlTextChunks[i];
+          outputBuffer[++j] = sanitizerFunctions[i](arguments[i]);
+        }
+        outputBuffer[++j] = lastChunk;
+        return new SanitizedHtml(outputBuffer.join(''));
+      };
+    }
 
     if (++cacheSize == 50) {
       cache = {};

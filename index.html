@@ -21,6 +21,8 @@ JavaScript Shell is GPL/LGPL/MPL tri-licensed.
 <script src="js/escapers.js"></script>
 <script src="js/safehtml.js"></script>
 <script src="js/quasi-library-raw.js"></script>
+<script src="js/pretty-quasi-output.js"></script>
+<link rel="stylesheet" type="text/css" href="js/pretty-quasi-output.css">
 
 <script type="text/javascript">
 var
@@ -662,10 +664,23 @@ function printQuestion(q)
 
 function printAnswer(a)
 {
-  if (a !== undefined) {
-    println(a, "normalOutput");
-    shellCommands.ans = a;
+  if (a === undefined) { return; }
+  var printed = false;
+  if (a != null && 'function' === typeof a.toPrettyHtml) {
+    var newdiv = document.createElement("div");
+    try {
+      newdiv.innerHTML = a.toPrettyHtml();
+      newdiv.className = "normalOutput";
+      _out.appendChild(newdiv);
+      printed = true;
+    } catch (ex) {
+      // not printed
+    }
   }
+  if (!printed) {
+    println(a, "normalOutput");
+  }
+  shellCommands.ans = a;
 }
 
 function printError(er)
@@ -722,8 +737,8 @@ function go(s)
 </script>
 
 <!-- for http://ted.mielczarek.org/code/mozilla/extensiondev/ -->
-<script type="text/javascript" src="chrome://extensiondev/content/rdfhistory.js"></script>
-<script type="text/javascript" src="chrome://extensiondev/content/chromeShellExtras.js"></script>
+<!--script type="text/javascript" src="chrome://extensiondev/content/rdfhistory.js"></script>
+<script type="text/javascript" src="chrome://extensiondev/content/chromeShellExtras.js"></script-->
 
 <style type="text/css">
 body { background: white; color: black; }
@@ -747,9 +762,33 @@ form { margin: 0; padding: 0; }
 
 <body onload="init()">
 
-<div id="output"><h3>JavaScript Shell 1.4</h3><div>Features: autocompletion of property names with Tab, multiline input with Shift+Enter, input history with (Ctrl+) Up/Down, <a accesskey="M" href="javascript:go('scope(Math); mathHelp();');" title="Accesskey: M">Math</a>, <a accesskey="H" href="http://www.squarefree.com/shell/?ignoreReferrerFrom=shell1.4"  title="Accesskey: H">help</a></div><div>Values and functions: ans, print(string), <a accesskey="P" href="javascript:go('props(ans)')" title="Accesskey: P">props(object)</a>, <a accesskey="B" href="javascript:go('blink(ans)')" title="Accesskey: B">blink(node)</a>, <a accesskey="C" href="javascript:go('clear()')" title="Accesskey: C">clear()</a>, load(scriptURL), scope(object), debugDesugaring()</div></div>
+  <h3>JavaScript Shell 1.4</h3>
 
-<div><textarea id="input" class="input" wrap="off" onkeydown="inputKeydown(event)" rows="1"></textarea></div>
+  <div>
+    Features: autocompletion of property names with Tab, multiline
+    input with Shift+Enter, input history with (Ctrl+) Up/Down,
+    <a accesskey="M" href="javascript:go('scope(Math); mathHelp();');" title="Accesskey: M">Math</a>,
+    <a accesskey="H" href="http://www.squarefree.com/shell/?ignoreReferrerFrom=shell1.4" title="Accesskey: H">help</a>
+  </div>
+
+  <div>
+    Values and functions: <code>ans</code>, <code>print(string)</code>,
+    <a accesskey="P" href="javascript:go('props(ans)')" title="Accesskey: P"><code>props(object)</code></a>,
+    <a accesskey="B" href="javascript:go('blink(ans)')" title="Accesskey: B"><code>blink(node)</code></a>,
+    <a accesskey="C" href="javascript:go('clear()')" title="Accesskey: C"><code>clear()</code></a>,
+    <code>load(scriptURL)</code>, <code>scope(object)</code>, <code>debugDesugaring()</code>
+  </div>
+
+  <div>
+    Quasi-handlers, <code>raw`&hellip;`</code>, <code>safehtml`&hellip;`</code>, <code>msg`&hellip;`</code>,
+    <code>safehtml_msg`&hellip;`</code>
+  </div>
+
+  <div id="output"></div>
+
+  <div>
+    <textarea id="input" class="input" wrap="off" onkeydown="inputKeydown(event)" rows="1"></textarea>
+  </div>
 
 </body>
 

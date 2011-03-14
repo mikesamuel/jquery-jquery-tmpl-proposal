@@ -1,0 +1,12 @@
+.pretty-quasi, .pretty-quasi .nested {
+  display: inline-block; border-bottom: 1px solid #888
+}
+.pretty-quasi .nested { margin-bottom: 2px }
+.pretty-quasi .dynamic.ord0 { background-color: #fcc }
+.pretty-quasi .dynamic.ord1 { background-color: #cfc }
+.pretty-quasi .dynamic.ord2 { background-color: #ccf }
+.pretty-quasi .dynamic:hover .tooltip { display: block }
+.pretty-quasi .dynamic { position: relative }
+.pretty-quasi .dynamic .tooltip {
+  display: none; position: absolute; top: 100%; background: #fff; border: 1px solid black
+}

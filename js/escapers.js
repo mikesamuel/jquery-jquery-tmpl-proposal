@@ -101,7 +101,7 @@ window['SanitizedUri'] = SanitizedUri;
 function escapeHtml(value) {
   if (typeof value === 'object' && value &&
       value.contentKind === CONTENT_KIND_HTML) {
-    return value.content;
+    return value;
   }
   return escapeHtmlHelper(value);
 };
