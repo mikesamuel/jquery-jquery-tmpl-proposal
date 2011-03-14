@@ -1,12 +1,23 @@
+/* Supporting styles for pretty-quasi-output.js */
+
+/* Show quasis and nested quasis with an underline.  Make sure the
+ * border only extends to the right of the content, not the right of the
+ * page, by using inline-block. */
 .pretty-quasi, .pretty-quasi .nested {
   display: inline-block; border-bottom: 1px solid #888
 }
+/* Stop the underlines from fusing together. */
 .pretty-quasi .nested { margin-bottom: 2px }
-.pretty-quasi .dynamic.ord0 { background-color: #fcc }
-.pretty-quasi .dynamic.ord1 { background-color: #cfc }
-.pretty-quasi .dynamic.ord2 { background-color: #ccf }
+/* Color dynamic sections with alternating backgrounds so that zero-length
+ * static portions don't make things visually indistinct. */
+.pretty-quasi .dynamic.ord0 { background-color: #faa }
+.pretty-quasi .dynamic.ord1 { background-color: #f9f }
+.pretty-quasi .dynamic.ord2 { background-color: #ffc }
+/* Display the interpolated value details on hover, below the content. */
 .pretty-quasi .dynamic:hover .tooltip { display: block }
-.pretty-quasi .dynamic { position: relative }
+.pretty-quasi .dynamic { position: relative } /* dynamic is a layout parent */
 .pretty-quasi .dynamic .tooltip {
-  display: none; position: absolute; top: 100%; background: #fff; border: 1px solid black
+  /* top: 100% means position the top at the bottom of the layout parent. */
+  display: none; position: absolute; top: 100%; background: #fff;
+  border: 1px solid black
 }
