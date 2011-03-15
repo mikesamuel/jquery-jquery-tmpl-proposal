@@ -25,6 +25,7 @@ var safehtml = (function () {
     var context = STATE_HTML_PCDATA;
 
     var sanitizerFunctions = [];
+    var prettyPrintDetails = typeof prettyQuasi !== 'undefined' ? [] : void 0;
     for (var i = 0; i < nChunks - 1; ++i) {
       var htmlTextChunk = htmlTextChunks[i];
       context = processRawText(htmlTextChunk, context);
@@ -86,18 +87,17 @@ var safehtml = (function () {
       if (secondEscMode !== null) {
         sanitizer = compose(SANITIZER_FOR_ESC_MODE[secondEscMode], sanitizer);
       }
-      sanitizer.context = sanitizerContext;
+      if (prettyPrintDetails) { prettyPrintDetails.push(sanitizerContext); }
       sanitizerFunctions.push(sanitizer);
     }
 
     var lastIndex = nChunks - 1;
 
     var interpolator;
-    if (typeof prettyQuasi !== 'undefined') {
+    if (prettyPrintDetails) {
       // HACK to allow pretty printing in demo REPL.
-      var details = [];
-      for (var i = sanitizerFunctions.length; --i >= 0;) {
-        details[i] = contextToString(sanitizerFunctions[i].context);
+      for (var i = prettyPrintDetails.length; --i >= 0;) {
+        prettyPrintDetails[i] = contextToString(prettyPrintDetails[i]);
       }
       interpolator = function (var_args) {
         var originals = [];
@@ -107,7 +107,8 @@ var safehtml = (function () {
           escapedArgs[i] = (0, sanitizerFunctions[i])(originals[i] = thunk());
         }
         return prettyQuasi(
-            htmlTextChunks, escapedArgs, originals, details, SanitizedHtml);
+            htmlTextChunks, escapedArgs, originals, prettyPrintDetails,
+	    SanitizedHtml);
       };
     } else {
       var lastChunk = htmlTextChunks[lastIndex];
