@@ -1,6 +1,6 @@
 // Allows a REPL to get a structured version of output from a compliant quasi handler.
 
-function prettyQuasi(staticPortions, dynamicPortions, originals, opt_ctor) {
+function prettyQuasi(staticPortions, dynamicPortions, originals, extraDetails, opt_ctor) {
   function escape(s) {
     if (/[<>&"]/.test(s)) {
       if (~s.indexOf('&')) { s = s.replace(/&/g, '&amp;'); }
@@ -11,10 +11,15 @@ function prettyQuasi(staticPortions, dynamicPortions, originals, opt_ctor) {
     return s;
   }
 
-  function describe(value) {
-    return value === null ? '<null>' : JSON.stringify(value) + ' : ' + (
+  function describe(index) {
+    var value = originals[index];
+    var descrip = value === null ? '<null>' : JSON.stringify(value) + ' : ' + (
         typeof value === 'object' && typeof value.constructor === 'function'
         && value.constructor.name ? value.constructor.name : typeof value);
+    if (extraDetails && extraDetails[index]) {
+      descrip += '\n' + extraDetails[index];
+    }
+    return descrip;
   }
 
   var buffer = [staticPortions[0]];
@@ -39,13 +44,15 @@ function prettyQuasi(staticPortions, dynamicPortions, originals, opt_ctor) {
         var dynamicPortion = chunks[i];
         if (dynamicPortion && 'function' === typeof dynamicPortion.toPrettyHtml) {
           var counterRef = [counter];
-          html.push('<span class=nested>');
+          html.push('<span class="nested">');
           dynamicPortion.toPrettyHtml(counterRef, html);
           counter = Math.max((counterRef[0] | 0) || 0, 0);
           html.push('</span>');
         } else {
-          html.push('<span class="dynamic ord', ((counter++) % 3), '">', escape(dynamicPortion),
-                    '<span class=tooltip>', escape(describe(originals[i >> 1])), '</span></span>');
+          html.push(
+              '<span class="dynamic ord', ((counter++) % 3), '">',
+              escape(dynamicPortion), '<span class="tooltip">',
+              escape(describe(i >> 1)), '</span></span>');
         }
       } else {
         html.push('<span class="static">', escape(chunks[i]), '</span>');

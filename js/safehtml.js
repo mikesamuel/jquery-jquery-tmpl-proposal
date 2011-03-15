@@ -25,10 +25,33 @@ var safehtml = (function () {
       var htmlTextChunk = htmlTextChunks[i];
       context = processRawText(htmlTextChunk, context);
       if (context === STATE_ERROR) { throw new Error(htmlTextChunk); }
+
+      // Some epsilon transitions need to be delayed until we get into a branch.
+      // For example, we do not transition into an unquoted attribute value
+      // context just because the raw text node that contained the "=" did
+      // not contain a quote character because the quote character may appear
+      // inside branches as in
+      //     <a href={if ...}"..."{else}"..."{/if}>
+      // which was derived from production code.
+      
+      // But we need to force epsilon transitions to happen consistentky before
+      // a dynamic value is considered as in
+      //    <a href={print $x}>
+      // where we consider $x as happening in an unquoted attribute value context,
+      // not as occuring before an attribute value.
       var state = stateOf(context);
+      if (state == STATE_HTML_BEFORE_ATTRIBUTE_VALUE) {
+	context = computeContextAfterAttributeDelimiter(
+	    elementTypeOf(context), attrTypeOf(context), DELIM_TYPE_SPACE_OR_TAG_END);
+      }
+
+      var sanitizerContext = context;
       var escMode = ESC_MODE_FOR_STATE[stateOf(context)];
       switch (uriPartOf(context)) {
-        case URI_PART_START: escMode = ESC_MODE_FILTER_NORMALIZE_URI; break;
+        case URI_PART_START:
+	  escMode = ESC_MODE_FILTER_NORMALIZE_URI;
+          context = (context & ~URI_PART_ALL) | URI_PART_PRE_QUERY;
+	  break;
         case URI_PART_QUERY: case URI_PART_FRAGMENT: escMode = ESC_MODE_ESCAPE_URI; break;
       }
       var secondEscMode = null;
@@ -51,22 +74,34 @@ var safehtml = (function () {
         }
       }
       var sanitizer = SANITIZER_FOR_ESC_MODE[escMode];
+      if (sanitizer == null) {
+	throw new Error(
+	    'Interpolation in illegal position after '
+	    + htmlTextChunks.slice(0, i + 1).join('${...}'));
+      }
       if (secondEscMode !== null) {
         sanitizer = compose(SANITIZER_FOR_ESC_MODE[secondEscMode], sanitizer);
       }
+      sanitizer.context = sanitizerContext;
       sanitizerFunctions.push(sanitizer);
     }
   
     var lastIndex = nChunks - 1;
 
     var interpolator;
-    if (typeof prettyQuasi !== 'undefined') {  
+    if (typeof prettyQuasi !== 'undefined') {
+      // HACK to allow pretty printing in demo REPL.
+      var details = [];
+      for (var i = sanitizerFunctions.length; --i >= 0;) {
+	details[i] = contextToString(sanitizerFunctions[i].context);
+      }
       interpolator = function (var_args) {
         var escapedArgs = [];
         for (var i = 0; i < lastIndex; ++i) {
           escapedArgs[i] = sanitizerFunctions[i](arguments[i]);
         }
-        return prettyQuasi(htmlTextChunks, escapedArgs, arguments, SanitizedHtml);
+        return prettyQuasi(
+	    htmlTextChunks, escapedArgs, arguments, details, SanitizedHtml);
       };
     } else {
       var lastChunk = htmlTextChunks[lastIndex];

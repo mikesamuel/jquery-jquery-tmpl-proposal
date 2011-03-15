@@ -542,6 +542,36 @@ function isRegexPreceder(jsTokens) {
   }
 }
 
+function computeContextAfterAttributeDelimiter(elType, attrType, delim) {
+  var state;
+  var slash = JS_FOLLOWING_SLASH_NONE;
+  var uriPart = URI_PART_NONE;
+  switch (attrType) {
+  case ATTR_TYPE_PLAIN_TEXT:
+    state = STATE_HTML_NORMAL_ATTR_VALUE;
+    break;
+  case ATTR_TYPE_SCRIPT:
+    state = STATE_JS;
+    // Start a JS block in a regex state since
+    //   /foo/.test(str) && doSideEffect();
+    // which starts with a regular expression literal is a valid and possibly
+    // useful program, but there is no valid program which starts with a
+    // division operator.
+    slash = JS_FOLLOWING_SLASH_REGEX;
+    break;
+  case ATTR_TYPE_STYLE:
+    state = STATE_CSS;
+    break;
+  case ATTR_TYPE_URI:
+    state = STATE_URI;
+    uriPart = URI_PART_START;
+    break;
+  // NONE is not a valid AttributeType inside an attribute value.
+  default: throw new Error("Unexpected attribute type " + attrType);
+  }
+  return state | elType | attrType | delim | slash | uriPart;
+}
+
 var processRawText = (function () {
   var global = this;
 
@@ -754,37 +784,6 @@ var processRawText = (function () {
     }
     return STATE_HTML_ATTRIBUTE_NAME | elementTypeOf(prior) | attr;
   };
-
-
-  function computeContextAfterAttributeDelimiter(elType, attrType, delim) {
-    var state;
-    var slash = JS_FOLLOWING_SLASH_NONE;
-    var uriPart = URI_PART_NONE;
-    switch (attrType) {
-    case ATTR_TYPE_PLAIN_TEXT:
-      state = STATE_HTML_NORMAL_ATTR_VALUE;
-      break;
-    case ATTR_TYPE_SCRIPT:
-      state = STATE_JS;
-      // Start a JS block in a regex state since
-      //   /foo/.test(str) && doSideEffect();
-      // which starts with a regular expression literal is a valid and possibly useful program,
-      // but there is no valid program which starts with a division operator.
-      slash = JS_FOLLOWING_SLASH_REGEX;
-      break;
-    case ATTR_TYPE_STYLE:
-      state = STATE_CSS;
-      break;
-    case ATTR_TYPE_URI:
-      state = STATE_URI;
-      uriPart = URI_PART_START;
-      break;
-      // NONE is not a valid AttributeType inside an attribute value.
-    default: throw new Error("Unexpected attribute type " + attrType);
-    }
-    return state | elType | attrType | delim | slash | uriPart;
-  }
-
 
   /**
    * A transition to a context in the name of an attribute of the given type.

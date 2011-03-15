@@ -752,7 +752,7 @@ function escapeCssStringHelper(value) {
 function filterCssValueHelper(value) {
   var str = String(value);
   if (!FILTER_FOR_FILTER_CSS_VALUE_.test(str)) {
-    return 'zSoyz';
+    return 'zSafehmlz';
   }
   return str;
 };
@@ -777,7 +777,7 @@ function normalizeUriHelper(value) {
 function filterNormalizeUriHelper(value) {
   var str = String(value);
   if (!FILTER_FOR_FILTER_NORMALIZE_URI_.test(str)) {
-    return '#zSoyz';
+    return '#zSafehmlz';
   }
   return str.replace(
       MATCHER_FOR_NORMALIZE_URI__AND__FILTER_NORMALIZE_URI_,
@@ -792,7 +792,7 @@ function filterNormalizeUriHelper(value) {
 function filterHtmlIdentHelper(value) {
   var str = String(value);
   if (!FILTER_FOR_FILTER_HTML_IDENT_.test(str)) {
-    return 'zSoyz';
+    return 'zSafehmlz';
   }
   return str;
 };
