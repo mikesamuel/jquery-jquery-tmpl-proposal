@@ -1,3 +1,7 @@
+// A safe HTML interpolation scheme that uses contextual autoescaping to
+// choose appropriate escapers for dynamic values.
+
+
 var safehtml = (function () {
   var cacheSize = 0;
   var cache = {};

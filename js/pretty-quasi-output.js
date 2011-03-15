@@ -1,5 +1,15 @@
-// Allows a REPL to get a structured version of output from a compliant quasi handler.
+// Allows a REPL to get a structured version of output from a compliant quasi handler
+// so it can display the output from a quasi with interpolated values annoatated.
 
+/**
+ * @param staticPortions The static content between which dynamic content is interpolated.
+ * @param dynamicPortions The processed dynamic content.
+ * @param originals The unprocessed dynamic content.
+ * @param extraDetails optionally, extra information corresponding to the originals.
+ * @param opt_ctor If supplied, the constructor for the result which should take a single
+ *    string, and which will have a {@code toPrettyHtml} method added which annotates the
+ *    string value in HTML with details and type info about the originals.
+ */
 function prettyQuasi(staticPortions, dynamicPortions, originals, extraDetails, opt_ctor) {
   function escape(s) {
     if (/[<>&"]/.test(s)) {

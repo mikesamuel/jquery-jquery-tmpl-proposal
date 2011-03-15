@@ -3,6 +3,14 @@
 // ==/ClosureCompiler==
 
 
+/**
+ * @fileoverview
+ * Definitions of sanitization functions used by safehtml.
+ * See http://js-quasis-libraries-and-repl.googlecode.com/svn/trunk/safetemplate.html#sanitization_functions
+ * for definitions of sanitization functions and sanitized content wrappers.
+ */
+
+
 
 /**
  * A string-like object that carries a content-type.

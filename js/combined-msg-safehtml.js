@@ -1,10 +1,20 @@
-// Provides a quasi handler that can be used, after desuagring,
-// via the syntax html_msg`...`.
-// This quasi handler applies the msg`...` quasi handler first
-// to handle I18N/L10N concerns, and then the safehtml handler
-// to handle security concerns.
+/**
+ * @fileoverview
+ * Provides a quasi handler that can be used, after desuagring,
+ * via the syntax html_msg`...`.
+ * This quasi handler applies the msg`...` quasi handler first
+ * to handle I18N/L10N concerns, and then the safehtml handler
+ * to handle security concerns.
+ * 
+ * <p>
+ * This shows how quasi handlers can be effectively chained
+ * while leaving most of the complex implementation details
+ * elsewhere.
+ */
 
+// Requires safehtml.js and messageQuasi.js
 
+// Obeys quasi handler calling conventions.
 function html_msg(staticParts) {
   var decomposed = msgPartsDecompose(staticParts);
   var inputXforms = decomposed.inputXforms;

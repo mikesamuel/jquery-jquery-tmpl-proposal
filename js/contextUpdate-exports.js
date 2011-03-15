@@ -1,3 +1,8 @@
+// An exports file, useful for compiling contextUpdate to a standalone JSCompiler library.
+// Not needed for normal usage, or if all clients of contextUpdate.js are in the same
+// compilation unit.
+// Requires contextUpdate.js
+
 this['rawTextContextUpdater'] = {
     'processRawText': processRawText,
     'ESC_MODE_FOR_STATE': ESC_MODE_FOR_STATE,

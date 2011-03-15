@@ -1,5 +1,15 @@
 /**
- * Desugars JavaScript code.
+ * @fileoverview
+ * A utility for converting JavaScript with syntactic sugar to one
+ * without.
+ */
+
+// Requires contextUpdate.js for its regex lexical prediction function.
+
+
+/**
+ * Desugars JavaScript code converting JavaScript + quasi syntax to regular
+ * JavaScript.
  * This does not deal with non-Latin letters or digits in identifiers.
  */
 function desugar(sugaryJs) {
