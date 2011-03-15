@@ -124,7 +124,7 @@ var safehtml = (function () {
       };
     }
 
-    if (++cacheSize == 50) {
+    if (++cacheSize === 50) {
       cache = {};
       cacheSize = 0;
     }
