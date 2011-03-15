@@ -5,13 +5,12 @@ function raw(rawParts) {
     var s = rawParts[0];
     return function raw() { return s; };
   }
-  var n = rawParts.length;
+  var lastIndex = rawParts.length - 1;
   return function raw() {
-    var buffer = [], k = -1;
-    buffer[++k] = rawParts[0];
-    for (var i = 0; i < n;) {
-      buffer[++k] = arguments[i];
-      buffer[++k] = rawParts[++i]();
+    var buffer = [rawParts[0]];
+    for (var i = 0, k = 0; i < lastIndex;) {
+      buffer[++k] = (0,arguments[i])();
+      buffer[++k] = rawParts[++i];
     }
     return buffer.join('');
   };
