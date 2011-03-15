@@ -87,8 +87,8 @@ function desugar(sugaryJs) {
       '^(?:' +
         '`' +  // End of quasi.
         '|(?:' +  // Literal text
-          '[^`\\\\$\\r\\n\\u2028\\u2029]' +  // Non-special character.
-          '|\\\\(?:\\r\\n?|[\\n\\u2028\\u2029]|.)' +  // Raw escape sequence
+          '[^`\\\\$]' +  // Non-special character.
+          '|\\\\[\\s\\S]' +  // Raw escape sequence prefix
           '|[$](?![\{a-z_$])' +  // Raw dollar-sign
         ')+' +
         '|[$][\{]' +  // Start of an interpolation
