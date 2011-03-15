@@ -1,3 +1,6 @@
+// Simple unit-testing utilities used by *Test.js and *Test.html
+
+/** May be called with 2 or 3 parameters.  If called with 3 then the first is a message. */
 function assertEquals(msg, a, b) {
   if (arguments.length === 2) {
     b = arguments[1];

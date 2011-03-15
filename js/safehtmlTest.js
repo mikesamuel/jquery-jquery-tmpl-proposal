@@ -12,7 +12,7 @@ function testSafeHtmlGoodInputs() {
       + ' style="color: red">Hello &amp; Goodbye</a>',
       template(
           thunk('http://www.google.com/search'),
-          thunk('Hello World'), 
+          thunk('Hello World'),
           thunk('Hello World'),
           thunk('red'),
           thunk('Hello & Goodbye')).toString());

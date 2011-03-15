@@ -17,9 +17,9 @@ var safehtml = (function () {
     if (cache.hasOwnProperty(key)) {
       return cache[key];
     }
-  
+
     var context = STATE_HTML_PCDATA;
-  
+
     var sanitizerFunctions = [];
     for (var i = 0; i < nChunks - 1; ++i) {
       var htmlTextChunk = htmlTextChunks[i];
@@ -33,7 +33,7 @@ var safehtml = (function () {
       // inside branches as in
       //     <a href={if ...}"..."{else}"..."{/if}>
       // which was derived from production code.
-      
+
       // But we need to force epsilon transitions to happen consistentky before
       // a dynamic value is considered as in
       //    <a href={print $x}>
@@ -41,17 +41,17 @@ var safehtml = (function () {
       // not as occuring before an attribute value.
       var state = stateOf(context);
       if (state == STATE_HTML_BEFORE_ATTRIBUTE_VALUE) {
-	context = computeContextAfterAttributeDelimiter(
-	    elementTypeOf(context), attrTypeOf(context), DELIM_TYPE_SPACE_OR_TAG_END);
+        context = computeContextAfterAttributeDelimiter(
+            elementTypeOf(context), attrTypeOf(context), DELIM_TYPE_SPACE_OR_TAG_END);
       }
 
       var sanitizerContext = context;
       var escMode = ESC_MODE_FOR_STATE[stateOf(context)];
       switch (uriPartOf(context)) {
         case URI_PART_START:
-	  escMode = ESC_MODE_FILTER_NORMALIZE_URI;
+          escMode = ESC_MODE_FILTER_NORMALIZE_URI;
           context = (context & ~URI_PART_ALL) | URI_PART_PRE_QUERY;
-	  break;
+          break;
         case URI_PART_QUERY: case URI_PART_FRAGMENT: escMode = ESC_MODE_ESCAPE_URI; break;
       }
       var secondEscMode = null;
@@ -75,9 +75,9 @@ var safehtml = (function () {
       }
       var sanitizer = SANITIZER_FOR_ESC_MODE[escMode];
       if (sanitizer == null) {
-	throw new Error(
-	    'Interpolation in illegal position after '
-	    + htmlTextChunks.slice(0, i + 1).join('${...}'));
+        throw new Error(
+            'Interpolation in illegal position after '
+            + htmlTextChunks.slice(0, i + 1).join('${...}'));
       }
       if (secondEscMode !== null) {
         sanitizer = compose(SANITIZER_FOR_ESC_MODE[secondEscMode], sanitizer);
@@ -85,7 +85,7 @@ var safehtml = (function () {
       sanitizer.context = sanitizerContext;
       sanitizerFunctions.push(sanitizer);
     }
-  
+
     var lastIndex = nChunks - 1;
 
     var interpolator;
@@ -93,17 +93,17 @@ var safehtml = (function () {
       // HACK to allow pretty printing in demo REPL.
       var details = [];
       for (var i = sanitizerFunctions.length; --i >= 0;) {
-	details[i] = contextToString(sanitizerFunctions[i].context);
+        details[i] = contextToString(sanitizerFunctions[i].context);
       }
       interpolator = function (var_args) {
-	var originals = [];
+        var originals = [];
         var escapedArgs = [];
         for (var i = 0; i < lastIndex; ++i) {
-	  var thunk = arguments[i];
+          var thunk = arguments[i];
           escapedArgs[i] = (0, sanitizerFunctions[i])(originals[i] = thunk());
         }
         return prettyQuasi(
-	    htmlTextChunks, escapedArgs, originals, details, SanitizedHtml);
+            htmlTextChunks, escapedArgs, originals, details, SanitizedHtml);
       };
     } else {
       var lastChunk = htmlTextChunks[lastIndex];
@@ -111,7 +111,7 @@ var safehtml = (function () {
         var outputBuffer = [];
         for (var i = 0, j = -1; i < lastIndex; ++i) {
           outputBuffer[++j] = htmlTextChunks[i];
-	  var thunk = arguments[i];
+          var thunk = arguments[i];
           outputBuffer[++j] = (0, sanitizerFunctions[i])(thunk());
         }
         outputBuffer[++j] = lastChunk;

@@ -1,3 +1,10 @@
+// Provides a quasi handler that can be used, after desuagring,
+// via the syntax html_msg`...`.
+// This quasi handler applies the msg`...` quasi handler first
+// to handle I18N/L10N concerns, and then the safehtml handler
+// to handle security concerns.
+
+
 function html_msg(staticParts) {
   var decomposed = msgPartsDecompose(staticParts);
   var inputXforms = decomposed.inputXforms;
@@ -13,9 +20,9 @@ function html_msg(staticParts) {
       // Exempt sanitized content from formatting.
       formattedArgs[i] = thunk && typeof thunk.contentKind === 'number'
           ? thunk : (
-	    function (value, xform) {
-	      return function () { return xform(value); };
-	    })(value, inputXforms[i]);
+            function (value, xform) {
+              return function () { return xform(value); };
+            })(value, inputXforms[i]);
     }
     return safeHtmlProducer.apply(null, formattedArgs);
   };
