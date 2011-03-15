@@ -56,6 +56,10 @@ function desugar(sugaryJs) {
     toLex = toLex.substring(match[0].length);
   }
 
+  var QUOTED_STRING_RE = (
+      '"(?:[^"\\\\]|\\\\[^\r\n\u2028\u2029])*"' +
+      '|\'(?:[^\'\\\\]|\\\\[^\r\n\u2028\u2029])*\'');
+
   var desugared = [];
   var lastToken = null;
   var tokenRe = new RegExp(
@@ -73,8 +77,7 @@ function desugar(sugaryJs) {
           '|\\.[0-9]+(?:e[+-]?[0-9]+)?' +  // fraction
           '|0x[0-9a-f]+' +  // hex
           '|[0-9]+(?:\\.[0-9])?(?:e[+-]?[0-9]+)?' +  // decimal
-          '|"(?:[^"\\\\]|\\\\.)*"' +  // string
-          '|\'(?:[^\'\\\\]|\\\\.)*\'' +  // string
+          '|' + QUOTED_STRING_RE +
           '|[^.a-z0-9"\'/\\s\u2028\u2029]+' +  // run of punctuation
           '|\\.(?![0-9])' +  // punctuation dot
           '|/' +  // div op part or regex start
@@ -93,7 +96,15 @@ function desugar(sugaryJs) {
       ')',
       'i');
 
-  var interpBodyRe = /^[\{\}`]|\"(?:[^"\\]|\\.)*\"|'(?:[^'\\]|\\.)*'|[^\{\}`"']+/;
+  var interpBodyRe = new RegExp(
+      '^(?:' +
+        // A word optionally followed by a quoted string.
+        '[a-z_$][a-z0-9_$]*`?' +
+        '|' + QUOTED_STRING_RE +
+        '|[\\{\\}]' +
+        '|[^\\{\\}"\'`a-z_$]+' +
+      ')', 'i');
+
   for (var toLex = sugaryJs; toLex;) {
     var m = toLex.match(tokenRe);
     if (!m) {
@@ -117,8 +128,12 @@ function desugar(sugaryJs) {
         consume(reBody);
         token += reBody[0];
       }
-    } else if (m[2] === '`') {  // Consume and desugar the rest of quasi body.
-      function desugarQuasiBody(quasiName) {
+    } else if (m[2]) {  // Consume and desugar the rest of quasi body.
+      function desugarQuasiBody(startToken) {
+        var startTokenLen = startToken.length;
+        var quasiName = startToken.substring(0, startTokenLen - 1);
+        var quasiDelim = startToken.charAt(startTokenLen - 1);
+
         var literalStrings = [];
         var interpolations = [];
         var buffer = [];
@@ -128,7 +143,7 @@ function desugar(sugaryJs) {
           if (!quasiBodyMatch) { console.trace(); return null; }
           consume(quasiBodyMatch);
           var quasiBodyToken = quasiBodyMatch[0];
-          if (quasiBodyToken === '`') {   // End of the quasi.
+          if (quasiBodyToken === quasiDelim) {   // End of the quasi.
             literalStrings.push(quasiRawToJs(buffer.join('')));
             return '(' + quasiName + '([' + literalStrings.join(', ') + '])('
                 + interpolations.join(', ') + '))';
@@ -144,20 +159,14 @@ function desugar(sugaryJs) {
               if (!interpBodyMatch) { console.trace(); return null; }
               consume(interpBodyMatch);
               var interpBodyToken = interpBodyMatch[0];
-              switch (interpBodyToken.charAt(0)) {
+              var lastChar = interpBodyToken.charAt(interpBodyToken.length - 1);
+              switch (lastChar) {
                 case '{': ++bracketDepth; break;
                 case '}':
                   if (!--bracketDepth) { break bracket_loop; }
                   break;
                 case '`':  // A nested quasi.
-                  var interpCode = buffer.join('');
-                  // Pull the quasi name off the end.
-                  var quasiNameMatch = interpCode.match(/(?:^|[^a-z0-9_$])([a-z_$][a-z0-9_$]*)$/i);
-                  if (!quasiNameMatch) { console.trace(); return null; }
-                  var nestedQuasiName = quasiNameMatch[1];
-                  buffer[0] = interpCode.substring(0, interpCode.length - nestedQuasiName.length);
-                  buffer.length = 1;
-                  interpBodyToken = desugarQuasiBody(nestedQuasiName);
+                  interpBodyToken = desugarQuasiBody(interpBodyToken);
                   if (!interpBodyToken) { console.trace(); return null; }
                   break;
               }
@@ -186,7 +195,7 @@ function desugar(sugaryJs) {
         return null;
       }
 
-      token = desugarQuasiBody(token.substring(0, token.length - 1));  // Strip quote.
+      token = desugarQuasiBody(token);
       if (!token) {
         reportFailure();
         return sugaryJs;

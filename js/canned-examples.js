@@ -4,7 +4,9 @@
 var cannedExamples = [
   { name: "Python Raw String",
     sugaryJs: "raw`foo\\nbar`",
-    result: 'foo\\nbar' },
+    result: 'foo\\nbar'
+  },
+
   { name: "Safe HTML",
     sugaryJs: (
       'url = "http://example.com/",\n'
@@ -17,6 +19,7 @@ var cannedExamples = [
       + ' onclick=alert(&#39;Hello&#32;\\x26&#32;Goodbye&#39;)'
       + ' style="color: red">Hello &amp; Goodbye</a>')
   },
+
   { name: "Safe HTML with bad inputs",
     sugaryJs: (
       'url = "javascript:alert(1337)//",\n'
@@ -31,6 +34,7 @@ var cannedExamples = [
       + ' onclick=alert(&#39;\\x22Hello&#32;World&#39;)'
       + ' style="color: zSafehtmlz">&lt;script&gt;alert(1337)&lt;/script&gt;</a>')
   },
+
   { name: "Number and Date formatting",
     sugaryJs: (
       'n = 42,\n'
@@ -39,6 +43,7 @@ var cannedExamples = [
     result: (
       'The answer to life, the universe, everything is +42.0000 as of 2011-03-14')
   },
+
   { name: "Safe HTML messages",
     sugaryJs: (
       'n = 42,\n'
