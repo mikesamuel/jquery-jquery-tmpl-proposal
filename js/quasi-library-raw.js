@@ -11,7 +11,7 @@ function raw(rawParts) {
     buffer[++k] = rawParts[0];
     for (var i = 0; i < n;) {
       buffer[++k] = arguments[i];
-      buffer[++k] = rawParts[++i];
+      buffer[++k] = rawParts[++i]();
     }
     return buffer.join('');
   };

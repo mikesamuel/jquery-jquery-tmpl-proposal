@@ -96,12 +96,14 @@ var safehtml = (function () {
 	details[i] = contextToString(sanitizerFunctions[i].context);
       }
       interpolator = function (var_args) {
+	var originals = [];
         var escapedArgs = [];
         for (var i = 0; i < lastIndex; ++i) {
-          escapedArgs[i] = sanitizerFunctions[i](arguments[i]);
+	  var thunk = arguments[i];
+          escapedArgs[i] = (0, sanitizerFunctions[i])(originals[i] = thunk());
         }
         return prettyQuasi(
-	    htmlTextChunks, escapedArgs, arguments, details, SanitizedHtml);
+	    htmlTextChunks, escapedArgs, originals, details, SanitizedHtml);
       };
     } else {
       var lastChunk = htmlTextChunks[lastIndex];
@@ -109,7 +111,8 @@ var safehtml = (function () {
         var outputBuffer = [];
         for (var i = 0, j = -1; i < lastIndex; ++i) {
           outputBuffer[++j] = htmlTextChunks[i];
-          outputBuffer[++j] = sanitizerFunctions[i](arguments[i]);
+	  var thunk = arguments[i];
+          outputBuffer[++j] = (0, sanitizerFunctions[i])(thunk());
         }
         outputBuffer[++j] = lastChunk;
         return new SanitizedHtml(outputBuffer.join(''));

@@ -31,29 +31,49 @@ function testSimpleQuasi() {
 }
 
 function testQuasiOneInterp() {
-  assertEquals('(foo(["foo ", " bar"])((x)))', desugar('foo`foo ${x} bar`'));
+  assertEquals(
+      '(foo(["foo ", " bar"])(function () { return (x); }))',
+      desugar('foo`foo ${x} bar`'));
 }
 
 function testQuasiOneAbbreviatedInterp() {
-  assertEquals('(foo(["foo ", " bar"])((x)))', desugar('foo`foo $x bar`'));
+  assertEquals(
+      '(foo(["foo ", " bar"])(function () { return (x); }))',
+      desugar('foo`foo $x bar`'));
 }
 
 function testQuasiEscape() {
-  assertEquals('(foo(["foo ", "\\nbar"])((x)))', desugar('foo`foo ${x}$\\nbar`'));
+  assertEquals(
+      '(foo(["foo ", "\\nbar"])(function () { return (x); }))',
+      desugar('foo`foo ${x}$\\nbar`'));
 }
 
 function testQuasiRawEscape() {
-  assertEquals('(foo(["foo ", "\\\\nbar"])((x)))', desugar('foo`foo ${x}\\nbar`'));
+  assertEquals(
+      '(foo(["foo ", "\\\\nbar"])(function () { return (x); }))',
+      desugar('foo`foo ${x}\\nbar`'));
 }
 
 function testBracketsInQuasiInterp() {
-  assertEquals('(foo(["foo ", "\\\\nbar"])((f({a: b}))))', desugar('foo`foo ${f({a: b})}\\nbar`'));
+  assertEquals(
+      '(foo(["foo ", "\\\\nbar"])(function () { return (f({a: b})); }))',
+      desugar('foo`foo ${f({a: b})}\\nbar`'));
 }
 
 function testStringInQuasiInterp() {
-  assertEquals('(foo(["foo ", "\\\\nbar"])((f("`"))))', desugar('foo`foo ${f("`")}\\nbar`'));
+  assertEquals(
+      '(foo(["foo ", "\\\\nbar"])(function () { return (f("`")); }))',
+      desugar('foo`foo ${f("`")}\\nbar`'));
 }
 
 function testNestedQuasi() {
-  assertEquals('(foo(["foo ", "\\\\nbar"])((f((bar(["-", "-"])((x)))))))', desugar('foo`foo ${f(bar`-${x}-`)}\\nbar`'));
+  assertEquals(
+      '(foo(["foo ", "\\\\nbar"])(function () { return (f((bar(["-", "-"])(function () { return (x); })))); }))',
+      desugar('foo`foo ${f(bar`-${x}-`)}\\nbar`'));
+}
+
+function testAssignableQuasiHole() {
+  assertEquals(
+      '(foo(["foo ", "\\\\nbar"])(function () { return arguments.length ? (x.y) = arguments[0] : (x.y); }))',
+      desugar('foo`foo ${=x.y}\\nbar`'));
 }

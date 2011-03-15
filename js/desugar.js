@@ -153,12 +153,21 @@ function desugar(sugaryJs) {
               }
               buffer.push(interpBodyToken);
             }
+            if (buffer.length == 1) { buffer.push('void 0'); }
             buffer.push(')');
-            interpolations.push(buffer.join(''));
+            var interpBody = buffer.join('');
             buffer.length = 0;
+            if (interpBody.charAt(1) === '=') {
+              interpBody = '(' + interpBody.substring(2);
+              interpolations.push(
+                  'function () { return arguments.length ? '
+                  + interpBody + ' = arguments[0] : ' + interpBody + '; }');
+            } else {
+              interpolations.push('function () { return ' + interpBody + '; }');
+            }
           } else if (/^[$][a-z_$][a-z0-9_$]*$/.test(quasiBodyToken)) {
             literalStrings.push(quasiRawToJs(buffer.join('')));
-            interpolations.push('(' + quasiBodyToken.substring(1) + ')');
+            interpolations.push('function () { return (' + quasiBodyToken.substring(1) + '); }');
             buffer.length = 0;
           } else {
             buffer.push(quasiBodyToken);
