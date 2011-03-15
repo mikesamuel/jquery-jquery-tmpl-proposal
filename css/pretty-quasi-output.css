@@ -17,8 +17,13 @@
 .pretty-quasi .dynamic:hover .tooltip { display: block }
 .pretty-quasi .dynamic { position: relative } /* dynamic is a layout parent */
 .pretty-quasi .dynamic .tooltip {
+  display: none;
+  position: absolute;
   /* top: 100% means position the top at the bottom of the layout parent. */
-  display: none; position: absolute; top: 100%; background: #fff;
+  top: 100%;
+  /* position at the left of the layout parent. */
+  left: 0;
+  background: #fff;
   z-index: 1;
   white-space: pre;
   border: 1px solid black
