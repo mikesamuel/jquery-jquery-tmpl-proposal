@@ -89,6 +89,7 @@ function loadCannedExamples() {
       if (exampleChosen) {
         var textarea = document.getElementById('input');
         textarea.value = exampleChosen.sugaryJs;
+        recalculateInputHeight();
         textarea.select();
       }
     }
