@@ -19,6 +19,7 @@
 .pretty-quasi .dynamic .tooltip {
   /* top: 100% means position the top at the bottom of the layout parent. */
   display: none; position: absolute; top: 100%; background: #fff;
+  z-index: 1;
   white-space: pre-wrap;
   border: 1px solid black
 }

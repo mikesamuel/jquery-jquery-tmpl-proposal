@@ -39,7 +39,7 @@ var msgPartsDecompose = (function () {
       staticParts[i] = decode(staticParts[i]).replace(/\u0000/g, '');
     }
     var key = staticParts.join('\u0000');
-    if (cache.hasOwnProperty(key)) { return cache[key]; }
+//  if (cache.hasOwnProperty(key)) { return cache[key]; }
 
     var literalParts = [staticParts[0]];
     var formatSpecifiersRe = /^:(?:([0-9a-z.\-+]*) ?|\(([^\)]*)\))/i;
@@ -63,7 +63,7 @@ var msgPartsDecompose = (function () {
       })(formatSpecifiers);
     }
 
-    if (cacheLen === 50) { cache = {}; cacheLen = 0; }
+    if (cacheLen >= 50) { cache = {}; cacheLen = 0; }
 
     return cache[key] = {
       literalParts: literalParts,
