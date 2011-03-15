@@ -15,7 +15,7 @@ JavaScript Shell is GPL/LGPL/MPL tri-licensed.
 <html onclick="keepFocusInTextbox(event)">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<title>JavaScript Shell 1.4 Quasis Demo</title>
+<title>Quasis Demo &mdash; JavaScript Shell 1.4</title>
 <script src="js/contextUpdate.js"></script>
 <script src="js/desugar.js"></script>
 <script src="js/escapers.js"></script>
@@ -24,6 +24,7 @@ JavaScript Shell is GPL/LGPL/MPL tri-licensed.
 <script src="js/pretty-quasi-output.js"></script>
 <script src="js/messageQuasi.js"></script>
 <script src="js/combined-msg-safehtml.js"></script>
+<script src="js/canned-examples.js"></script>
 <link rel="stylesheet" type="text/css" href="css/pretty-quasi-output.css">
 
 <script type="text/javascript">
@@ -60,6 +61,8 @@ function init()
 
   initTarget();
 
+  loadCannedExamples();
+
   recalculateInputHeight();
   refocus();
 }
@@ -68,6 +71,28 @@ function initTarget()
 {
   _win.Shell = window;
   _win.print = shellCommands.print;
+}
+
+function loadCannedExamples() {
+  var select = document.getElementById('canned-examples');
+  for (var i = 0, n = cannedExamples.length; i < n; ++i) {
+    var example = cannedExamples[i];
+    var option = document.createElement('OPTION');
+    option.value = i;
+    option.appendChild(document.createTextNode(example.name));
+    select.appendChild(option);
+  }
+  select.onchange = function () {
+    var index = +this.value;
+    if (index === (index | 0)) {
+      var exampleChosen = cannedExamples[index];
+      if (exampleChosen) {
+        var textarea = document.getElementById('input');
+        textarea.value = exampleChosen.sugaryJs;
+        textarea.select();
+      }
+    }
+  };
 }
 
 
@@ -764,7 +789,10 @@ form { margin: 0; padding: 0; }
 
 <body onload="init()">
 
-  <h3>JavaScript Shell 1.4</h3>
+  <h3>
+    Quasis Demo &mdash; JavaScript Shell 1.4
+    <small style="float: right">Example: <select id="canned-examples"><option></option></select></small>
+  </h3>
 
   <div>
     Features: autocompletion of property names with Tab, multiline

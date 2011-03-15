@@ -1,3 +1,6 @@
+// Examples that illustrate use cases that show up in a dropdown in the REPL.
+
+
 var cannedExamples = [
   { name: "Python Raw String",
     sugaryJs: "raw`foo\\nbar`",
