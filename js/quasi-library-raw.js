@@ -6,10 +6,10 @@ function raw(rawParts) {
     return function raw() { return s; };
   }
   var lastIndex = rawParts.length - 1;
-  return function raw() {
+  return function raw(interpolations) {
     var buffer = [rawParts[0]];
     for (var i = 0, k = 0; i < lastIndex;) {
-      buffer[++k] = (0,arguments[i])();
+      buffer[++k] = (0,interpolations[i])();
       buffer[++k] = rawParts[++i];
     }
     return buffer.join('');

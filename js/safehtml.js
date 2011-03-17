@@ -99,11 +99,11 @@ var safehtml = (function () {
       for (var i = prettyPrintDetails.length; --i >= 0;) {
         prettyPrintDetails[i] = contextToString(prettyPrintDetails[i]);
       }
-      interpolator = function (var_args) {
+      interpolator = function (interpolations) {
         var originals = [];
         var escapedArgs = [];
         for (var i = 0; i < lastIndex; ++i) {
-          var thunk = arguments[i];
+          var thunk = interpolations[i];
           escapedArgs[i] = (0, sanitizerFunctions[i])(originals[i] = thunk());
         }
         return prettyQuasi(
@@ -112,11 +112,11 @@ var safehtml = (function () {
       };
     } else {
       var lastChunk = htmlTextChunks[lastIndex];
-      interpolator = function (var_args) {
+      interpolator = function (interpolations) {
         var outputBuffer = [];
         for (var i = 0, j = -1; i < lastIndex; ++i) {
           outputBuffer[++j] = htmlTextChunks[i];
-          var thunk = arguments[i];
+          var thunk = interpolations[i];
           outputBuffer[++j] = (0, sanitizerFunctions[i])(thunk());
         }
         outputBuffer[++j] = lastChunk;

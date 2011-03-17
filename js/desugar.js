@@ -145,8 +145,8 @@ function desugar(sugaryJs) {
           var quasiBodyToken = quasiBodyMatch[0];
           if (quasiBodyToken === quasiDelim) {   // End of the quasi.
             literalStrings.push(quasiRawToJs(buffer.join('')));
-            return '(' + quasiName + '([' + literalStrings.join(', ') + '])('
-                + interpolations.join(', ') + '))';
+            return '(' + quasiName + '([' + literalStrings.join(', ') + '])(['
+                + interpolations.join(', ') + ']))';
           } else if (quasiBodyToken === '${') {  // A nested expression.
             literalStrings.push(quasiRawToJs(buffer.join('')));
             buffer.length = 0;

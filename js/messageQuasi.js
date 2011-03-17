@@ -114,11 +114,11 @@ var msg = function (staticParts) {
   var inputXforms = decomposed.inputXforms;
   var lastIndex = literalParts.length - 1;
 
-  return function (var_args) {
+  return function (interpolations) {
     var formattedArgs = [];
     var originals = [];
     for (var i = 0; i < lastIndex; ++i) {
-      var thunk = arguments[i];
+      var thunk = interpolations[i];
       var xform = inputXforms[i];
       formattedArgs[i] = xform(originals[i] = thunk());
     }

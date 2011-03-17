@@ -22,10 +22,10 @@ function html_msg(staticParts) {
   var safeHtmlProducer = safehtml(decomposed.literalParts);
   var lastIndex = inputXforms.length;
 
-  return function (var_args) {
+  return function (interpolations) {
     var formattedArgs = [];
     for (var i = 0; i < lastIndex; ++i) {
-      var thunk = arguments[i];
+      var thunk = interpolations[i];
       var value = thunk();
       // Exempt sanitized content from formatting.
       formattedArgs[i] = thunk && typeof thunk.contentKind === 'number'
@@ -34,6 +34,6 @@ function html_msg(staticParts) {
               return function () { return xform(value); };
             })(value, inputXforms[i]);
     }
-    return safeHtmlProducer.apply(null, formattedArgs);
+    return safeHtmlProducer(formattedArgs);
   };
 }
