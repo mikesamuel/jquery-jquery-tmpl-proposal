@@ -110,8 +110,16 @@ function escapeHtml(value) {
   if (typeof value === 'object' && value &&
       value.contentKind === CONTENT_KIND_HTML) {
     return value;
+  } else if (value instanceof Array) {
+    // In an HTML context, Array.map can generate lists and tables.
+    var escaped = [];
+    for (var i = 0, n = value.length; i < n; ++i) {
+      escaped[i] = escapeHtml(value[i]);
+    }
+    return escaped.join('');
+  } else {
+    return escapeHtmlHelper(value);
   }
-  return escapeHtmlHelper(value);
 };
 
 
