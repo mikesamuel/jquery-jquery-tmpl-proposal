@@ -126,7 +126,7 @@ of the burden.
 This paper argues that correct sanitization is too important, that manual
 sanitization is an unreasonable burden to place on template authors (and
 especially maintainers), defines goals that any automatic approach
-should satisft, and introduces an automatic approach that is
+should satisfy, and introduces an automatic approach that is
 particularly suitable for bolting onto existing web templating
 languages.
 </p>
@@ -139,7 +139,7 @@ templating languages. In particular, we introduce the new notion of
 "context" type qualifiers to represent the contexts in which untrusted
 data can be embedded. We propose a new type system that refines the
 base type system of a web templating language with the context type
-qualifer. Based on the new type system, we design and develop a
+qualifier. Based on the new type system, we design and develop a
 context-sensitive auto-sanitization (CSAS) engine which runs during
 the compilation stage of a web templating framework to add proper
 sanitization and runtime checks to ensure the correct sanitization. We
@@ -643,7 +643,7 @@ def areEquivalent(innocuous_tree, actual_tree):
       # a hole.  We only care that it does not interfere with
       # the structure in which it was embedded.
       return True
-    # Leaves strucurally the same.
+    # Leaves structurally the same.
     # Assumes same node type implies actual is leafy.
     return (innocuous_tree.node_type is actual_tree.node_type
             and innocuous_tree.leaf_value == actual_tree.leaf_value)
@@ -782,7 +782,7 @@ ul.inline li:first-child:before { content: '' }
 <p>
 This property is a prerequisite for many application <i>privacy</i> goals.
 If a third-party can cause script to run with the privileges of the origin,
-it can steal user data and phone home.  Even if credentials are unavailably
+it can steal user data and phone home.  Even if credentials are unavailable
 to JavaScript (<a href="http://www.codinghorror.com/blog/2008/08/protecting-your-cookies-httponly.html">HTTPOnly</a> cookies),
 scripts with same-origin privileges can screen scrape (using DOM APIs)
 user names and identifiers and associated page content and phone home.
@@ -801,12 +801,12 @@ meant to ensure that the data submitted was specified by the user.
 The last of the security properties that any auto-sanitization scheme should
 preserve is the property of least surprise.  This is not a property that
 can be proven mathematically as it depends on developers' intuition, but
-it is nonetheless important..
+it is nonetheless important.
 </p>
 
 <p>
-Developer intuition is impotant.
-A developer familar with HTML, CSS, and JavaScript; who knows that
+Developer intuition is important.
+A developer familiar with HTML, CSS, and JavaScript; who knows that
 auto-sanitization is happening should be able to look at a template
 and correctly infer what happens to dynamic values without having to
 read a complex specification document.
@@ -977,7 +977,7 @@ Examples of strict structural containment languages are
 </p>
 
 <p>
-What they have in common is that the input is (or is coerceable via
+What they have in common is that the input is (or is coercible via
 fancy tricks) to a tree structure like XML.  So for every data hole,
 it is obvious to the system which element and attribute context the
 hole appears in&dagger;.  Then a similar structural constraint could be
@@ -985,7 +985,7 @@ applied in principle to embedded JavaScript, CSS, and URIs.
 </p>
 
 <p>
-Strict structual containment is a sound, principled approach to
+Strict structural containment is a sound, principled approach to
 building safe templates that is a great approach for anyone planning a
 new template language.
 </p>
@@ -1030,7 +1030,7 @@ Prior to this work, the best auto-sanitization scheme was a
 A runtime contextual auto-sanitizer plugs into a template runtime at a
 low level.  Instead of writing content to an output buffer, the
 template runtime passes trusted and untrusted chunks to the
-autoescaper.  The template:
+auto-sanitizer.  The template:
 </p>
 <pre class=prettyprint>
 &lt;ul&gt;{for $item in $items}&lt;li onclick="alert('{$item}')"&gt;{$item}{/for}&lt;/ul&gt;
@@ -1156,7 +1156,7 @@ expanded upon below:
 
 <p>
 By contrast, the runtime auto-sanitization scheme described in
-strawman III has the same inital context, the same context propagation
+strawman III has the same initial context, the same context propagation
 operator, no context join operator and uses a slightly differently
 shaped sanitization function chooser :
 <code>context &rarr; (&alpha; &rarr; (string * context))</code>.
@@ -1186,14 +1186,14 @@ into 2 bytes with room to spare:
     (<code>href</code>, etc.), and other attributes.</li>
   <li>Attribute end delimiter &mdash; indicate the termination
     condition for the attribute value we're in: double quoted, single
-    quotd, unquoted, or none.</li>
+    quoted, unquoted, or none.</li>
   <li>JavaScript following slash &mdash; for JavaScript states,
     explains what to do with a <code>/</code> that does not start a
     comment: enter a regular expression literal, or a division
     operator, or fail with an error message due to ambiguity from
     context joining.</li>
   <li>URI part &mdash; for URI states, the part of the URI that we're
-    in: the start, path, query, fragment, or an ambiguous part tdue to
+    in: the start, path, query, fragment, or an ambiguous part due to
     context joining.</li>
 </ul>
 
@@ -1860,7 +1860,7 @@ def autosanitize(templates):
       # By exploring the call graph from only public templates, ones
       # that can be invoked by front-end code, or ones that must be
       # contextually sanitized, we do not trigger error checks for
-      # parts of the code-base that don't yet use contexual
+      # parts of the code-base that don't yet use contextual
       # auto-sanitization, easing migration.
       compute_end_context(template, inferences, start_context=HTML_PCDATA&dagger;)
   return inferences
@@ -2155,7 +2155,7 @@ existing code.
 <p>
 We studied 1035 templates that were migrated from an existing codebase
 to use contextually sanitized templates.
-Most of the templates were relatively small but totalled 21098 LOC and
+Most of the templates were relatively small but totaled 21098 LOC and
 783kB.  The compilation load time cost for these 1035 templates was
 998339279 ns on a platform with 2 GB of RAM, an Intel 2.6 MHz
 dual-core processor running Linux 2.6.31.
@@ -2283,5 +2283,5 @@ dynEscape  :   3531971000 ns  (7.2)
 
 <hr>
 <address></address>
-<!-- hhmts start --> Last modified: Thu Mar 17 18:31:41 PDT 2011 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Thu Mar 17 18:40:14 PDT 2011 <!-- hhmts end -->
 </body> </html>
