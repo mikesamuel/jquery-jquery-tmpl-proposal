@@ -187,7 +187,7 @@ better security and performance than previous approaches.
     special characters into entities: <code>'I &amp;lt;3
     Ponies'</code>.  <small>(Escapers may, in the process, break
     hearts.)</small>  See also
-    <a href="http://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet#Escaping_.28aka_Output_Encoding.29">OWASP's definition</a>.
+    <a href="http://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet#Escaping_.28aka_Output_Encoding.29" title="Escaping aka Output Encoding">OWASP's definition</a>.
   </dd>
   <dt>Filter</dt>
   <dd>A <a href="#glossary-sanitization_function">sanitization function</a>
@@ -258,7 +258,7 @@ better security and performance than previous approaches.
     same purpose, and browsers disallow spoofing of the URL bar so
     that informed users can reliably tell if a page is secure and
     using valid certs.
-    See also <a href="http://en.wikipedia.org/wiki/Trusted_path">wikipedia</a>.
+    See also <a href="http://en.wikipedia.org/wiki/Trusted_path" title="Trusted path">wikipedia</a>.
   </dd>
   <dt>XSS</dt>
   <dd>See <a href="#glossary-cross_site_scripting">Cross-Site Scripting</a></dd>
@@ -954,7 +954,7 @@ It also fails to preserve the code effect property.
 Bolting filters on non-contextual auto-sanitization will not help
 it to preserve the code effect property.  It is possible to write
 bizarre JavaScript that
-<a href="http://securitymusings.com/article/2022/code-with-javascript-letters-and-numbers-optional" title="Code with JS letters &amp; numbers optional">does not even need alphanumerics</a>.
+<a href="http://securitymusings.com/article/2022/code-with-javascript-letters-and-numbers-optional" title="Code with JS letters &amp; numbers&hellip;">does not even need alphanumerics</a>.
 Since JavaScript has no regular lexical grammar, regular expressions
 that are less than draconian are insufficient to filter out attacks.
 </p>
@@ -1002,7 +1002,7 @@ code written in a language that does not have this property.
 
 <p><small>
 &dagger; - modulo mechanisms like
-<a href="http://www.w3schools.com/xsl/el_element.asp" title="Creating Elements with xsl:element"><code>&lt;xsl:element name="..."&gt;</code></a>
+<a href="http://www.w3.org/TR/xslt#section-Creating-Elements-with-xsl:element" title="Creating Elements with xsl:element"><code>&lt;xsl:element name="..."&gt;</code></a>
 which can, in principle, be repaired using equivalence classes of
 elements and attributes.  I.e. one could define an equivalence class
 of elements all of whose attributes have the same meaning and which
@@ -1623,7 +1623,7 @@ for more detail.
       <p>Each of these characters is significant in a URI as specified
       in RFC 3986:
       <blockquote>
-      <h4><a href="http://www.apps.ietf.org/rfc/rfc3986.html#sec-2.2">2.2</a> Reserved Characters</h4>
+      <h4><a href="http://www.apps.ietf.org/rfc/rfc3986.html#sec-2.2" title="RFC 3986 2.2">2.2</a> Reserved Characters</h4>
       <pre>sub-delims  = "!" / "$" / "&" / <u>"'" / "(" / ")"</u></pre>
       </blockquote>
 
@@ -1633,7 +1633,7 @@ for more detail.
       productions.
 
       <blockquote>
-      <h4><a href="http://www.apps.ietf.org/rfc/rfc3986.html#sec-D.2">D.2</a> Modifications</h4>
+      <h4><a href="http://www.apps.ietf.org/rfc/rfc3986.html#sec-D.2" title="RFC 3986 D.2">D.2</a> Modifications</h4>
 
       <p>The ad-hoc BNF syntax of RFC 2396 has been replaced with the
       ABNF of [RFC2234]. This change required all rule names that
@@ -2243,6 +2243,19 @@ the template should approach string concatenation.
   <td>3531971000 ns</td><td>(7.2)</td></tr>
 </table>
 
+<script>
+if (shortVersion) {
+  document.write('<style>.fullversiononly { display: none }<\/style>');
+} else {
+  document.write('<style>.shortversiononly { display: none }<\/style>');
+}
+if (!printableVersion) {
+  document.write('<style>.printable { display: none }<\/style>');
+} else {
+  document.write('<style>a:link, a:visited { color: inherit; text-decoration: inherit }</style>');
+}
+</script>
+
 <h3 class="printable">References</h3>
 <p id="references" class="printable"></p>
 <script type="text/javascript">registerOnLoad(function () {
@@ -2253,6 +2266,25 @@ the template should approach string concatenation.
     return span;
   }
 
+  // From quirksmode
+  function getStyle(el, styleProp) {
+    if (el.currentStyle) { return el.currentStyle[styleProp]; }
+    if (window.getComputedStyle) {
+      return document.defaultView.getComputedStyle(el, null)
+        .getPropertyValue(styleProp);
+    }
+  }
+
+  function isDisplayed(el) {
+    while (el) {
+      if (el.nodeType === 1 && getStyle(el, 'display') === 'none') {
+        return false;
+      }
+      el = el.parentNode;
+    }
+    return true;
+  }
+
   var references = document.getElementById('references');
   var links = document.getElementsByTagName('A');
   links = Array.prototype.slice.call(links);
@@ -2260,6 +2292,7 @@ the template should approach string concatenation.
   var counter = 0;
   for (var i = 0, n = links.length; i !== n; ++i) {
     var link = links[i];
+    if (!isDisplayed(link)) { continue; }
     if (/^#/.test(link.getAttribute('href'))) { continue; }
     var description = link.title || link.innerText || link.textContent;
     if (counter) {
@@ -2277,19 +2310,7 @@ the template should approach string concatenation.
 
 <div class="fullversiononly">
 <hr>
-<!-- hhmts start --> Last modified: Mon Mar 21 18:44:32 PDT 2011 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Mon Mar 21 19:14:49 PDT 2011 <!-- hhmts end -->
 </div>
 
-<script>
-if (shortVersion) {
-  document.write('<style>.fullversiononly { display: none }<\/style>');
-} else {
-  document.write('<style>.shortversiononly { display: none }<\/style>');
-}
-if (!printableVersion) {
-  document.write('<style>.printable { display: none }<\/style>');
-} else {
-  document.write('<style>a:link, a:visited { color: inherit; text-decoration: inherit }</style>');
-}
-</script>
 </body> </html>
