@@ -5,13 +5,6 @@
 code { white-space: nowrap }
 h1 { font-size: 175% }
 body { margin: .75in; font-size: 10pt }
-
-.printonly { display: none }
-@media print {
-  .printonly { display: auto }
-  .noprint { display: none }
-}
-
 </style>
 <script>(function () {
   var handlers = [];
@@ -118,6 +111,10 @@ define a dynamic URL.
 .unchecked-safe-chunk { border:1px solid transparent }
 .data-hole { background: black; color: black }
 .data-hole-filled { background: black; color: white }
+.printonly { display: none }
+@media print {
+  .printonly { display: auto }
+}
 </style>
 <pre class=prettyprint>
 <span class="unchecked-safe-chunk">&lt;form action="</span><span class=nocode>{if $tgt}</span><span class="unchecked-safe-chunk">/</span>{$name}<span class="unchecked-safe-chunk">/handle?tgt=</span>{$tgt}<span class=nocode>{else}</span>/{$name}<span class="unchecked-safe-chunk">/default</span><span class=nocode>{/if}</span><span class="unchecked-safe-chunk">"&gt;Hello </span>{$name}&hellip;
@@ -166,7 +163,7 @@ Based on those contexts, we determine the type of content that is expected for e
 </pre>
 
 <p>
-Finally we insert calls to <a>sanitizer functions</a> into the template.
+Finally we insert calls to sanitizer functions into the template.
 </p>
 <pre class=prettyprint>
 &lt;form action=&quot;<span class=nocode>{if $tgt}</span>
@@ -209,7 +206,7 @@ A sanitization scheme should be judged on several performance metrics:
   <li>Run-time analysis overhead.  The cost of any dynamic analysis
       done when the template is run.
   <li>Run-time sanitization overhead.  The cost of
-      <a>sanitizing</a>
+      sanitizing
       untrusted data.
   <li>One-time development overhead.  The burden placed on a developer
       to learn the system.
@@ -363,7 +360,7 @@ to lose manual sanitization directives than to gain them.
 
 <p>
 Our proposal addresses this by introducing
-<a>sanitized content types</a>
+sanitized content types
 as a principled solution to over-encoding problems.
 </p>
 
@@ -407,7 +404,7 @@ comment in
 
 <p>
 Lower level encoding attacks, such as
-<a>UTF-7</a>
+<a href="http://ha.ckers.org/xss.html#XSS_UTF-7" title="ha.ckers.org UTF-7">UTF-7</a>
 attacks, may also violate this property.
 </p>
 
@@ -512,7 +509,7 @@ developer writes a tag, the browser should interpret that as a tag,
 and when the developer writes paired start and end tags, the browser
 should interpret those as a matched pair.
 It is also important to applications that want to embed sanitized data
-while preserving a <a>trusted path</a>
+while preserving a trusted path
 since the structure preservation property is a prerequisite for visual
 containment.
 </p>
@@ -520,7 +517,7 @@ containment.
 
 <h3 id="code_effect_property">Code Effect Property</h3>
 <p>
-Web clients may specify data values in code (loosely, strings,
+Web clients may specify data values in code (strings,
 booleans, numbers, JSON) but <i>only</i> code specified by the
 template author should run as a result of injecting the template
 output into a page and <i>all</i> code specified by the template
@@ -534,8 +531,8 @@ cause extra code to run:
   <li>A dynamic attribute name could specify an event handler: <code>onclick</code>.
   <li>A dynamic <code>src</code> or <code>href</code> could specify
       <code>javascript</code>, <code>livescript</code>, etc. as the protocol
-      in <a>myriad</a> ways.
-  <li>Dynamic CSS [1]
+      in <a href="http://ha.ckers.org/xss.html" title="XSS Cheat Sheet">myriad</a> ways.
+  <li><a href="http://code.google.com/p/browsersec/wiki/Part1#Cascading_stylesheets">Dynamic CSS</a>
       could use a vendor-specific extension, e.g.
       <code>expression</code> or <code>-moz-binding</code>.
   <li>A dynamic <code>&lt;object&gt;</code> might load flash cross origin
@@ -555,8 +552,8 @@ A non-exhaustive sample of ways to stop code running via XSS:
       <code>&lt;base&gt;</code> element disabling <code>src=</code>'ed
       <code>&lt;script&gt;</code>s with relative URLs.
   <li>Inject improperly encoded data into a data hole in an inline
-      &lt;script&gt; element that causes it to fail to parse, e.g.
-      raw codepoints U+2028 or U+2029 in a JS string body.
+      <code>&lt;script&gt;</code> element that causes it to fail to parse, e.g.
+      codepoints U+2028 or U+2029 in a string body.
       <small>(A violation of the Structure Preservation Property).</small>
   <li>Cause an inline event handler or <code>&lt;script&gt;</code> tag
       to not be interpreted as such.
@@ -571,7 +568,7 @@ A non-exhaustive sample of ways to stop code running via XSS:
 
 <p>
 Our proposal enforces this property by
-<a>filtering</a> URLs to prevent any data
+filtering URLs to prevent any data
 hole from specifying an exotic protocol, by filtering CSS keywords,
 and by only allowing data holes in JavaScript contexts to specify
 simple boolean, numeric, and string values, or complex JSON values
@@ -581,7 +578,7 @@ large inputs.
 </p>
 
 <p>
-Finally, our <a>escapers</a> are designed
+Finally, our escapers are designed
 to produce output that avoids grammatical such as semicolon insertion,
 non-ASCII newline characters,
 regular-expression/division-operator/line-comment confusion.
@@ -616,7 +613,7 @@ ul.inline li:first-child:before { content: '' }
 This property is a prerequisite for many application <i>privacy</i> goals.
 If a third-party can cause script to run with the privileges of the origin,
 it can steal user data and phone home.  Even if credentials are unavailable
-to JavaScript HTTPOnly [2] cookies),
+to JavaScript (<a href="http://www.codinghorror.com/blog/2008/08/protecting-your-cookies-httponly.html ">HTTPOnly</a> cookies),
 scripts with same-origin privileges can screen scrape (using DOM APIs)
 user names and identifiers and associated page content and phone home.
 </p>
@@ -700,8 +697,8 @@ level, should meet the criteria above.
 <h3>Strawman 0: Manual sanitization</h3>
 <p>
 Manual sanitization is the state-of-the-art currently.  Developers use
-a suite of functions, such as
-OWASP's open source OSAPI encoders[3]
+a suite of functions, such as OWASP's open source
+<a href="http://code.google.com/p/owasp-esapi-java/source/browse/trunk/src/main/java/org/owasp/esapi/Encoder.java">OSAPI encoders</a>
 and every developer must learn when and how to apply them correctly.
 They must apply sanitizers either before data reaches a template or
 within the template by inserting function calls into code.
@@ -737,7 +734,7 @@ take a team of developers to fix.
 </p>
 
 <p>
-XSS Scanners (e.g. lemon [4])
+XSS Scanners (e.g. <a href="http://googleonlinesecurity.blogspot.com/2007/07/automating-web-application-security.html">lemon</a>)
 can mitigate some of manual sanitization's cons (though they work with
 any of the other solutions here as well to provide defense-in-depth),
 but there are no good scanners for AJAX applications, and, with manual
@@ -749,7 +746,7 @@ to the reported errors.
 
 <p>
 Non-contextual auto-sanitization is a great improvement over
-manual sanitization.  Django templates [5] and others use it.
+manual sanitization.  <a href="http://code.djangoproject.com/wiki/AutoEscaping" title="Django autoescaping">Django templates</a> and others use it.
 </p>
 
 <p>
@@ -781,7 +778,7 @@ It also fails to preserve the code effect property.
 Bolting filters on non-contextual auto-sanitization will not help
 it to preserve the code effect property.  It is possible to write
 bizarre JavaScript that
-does not need even alphanumerics [6].
+<a href="http://securitymusings.com/article/2022/code-with-javascript-letters-and-numbers-optional" title="Code with JS letters &amp; numbers optional">does not even need alphanumerics</a>.
 Since JavaScript has no regular lexical grammar, regular expressions
 that are less than draconian are insufficient to filter out attacks.
 </p>
@@ -799,9 +796,9 @@ empirically, 74% of the time it does what they want
 <h3>Strawman II: Strict structural containment</h3>
 <p>
 Examples of strict structural containment languages are
-XSLT [7],
-GXP [8], and possibly
-XHP [9].
+<a href="http://www.w3.org/TR/xslt">XSLT</a>,
+<a href="http://code.google.com/p/gxp/">GXP</a>, and possibly
+<a href="http://www.facebook.com/notes/facebook-engineering/xhp-a-new-way-to-write-php/294003943919">XHP</a>.
 For all of these, the input is (or is coercible via
 fancy tricks) to a tree structure like XML.  So for every data hole,
 it is obvious to the system which element and attribute context the
@@ -815,8 +812,8 @@ building safe templates that is a great approach for anyone planning a
 new template language, but it cannot be bolted onto existing languages though because it requires
 that every element and attribute start and end in the same template.
 This assumption is violated by several very common idioms, such as the
-header-footer idiom (above) in ways that
-often require drastic changes to codebase to repair.
+<a href="#header-footer-example">header-footer idiom</a><span class=printonly> (above)</span>
+in ways that often require drastic changes to repair.
 </p>
 
 <p>
@@ -829,7 +826,7 @@ code written in a language that does not have this property.
 
 <p><small>
 &dagger; - modulo mechanisms like
-<code>&lt;xsl:element name="..."&gt;</code> [10]
+<a href="http://www.w3schools.com/xsl/el_element.asp" title="Creating Elements with xsl:element"><code>&lt;xsl:element name="..."&gt;</code></a>
 which can, in principle, be repaired using equivalence classes of
 elements and attributes.  I.e. one could define an equivalence class
 of elements all of whose attributes have the same meaning and which
@@ -843,8 +840,8 @@ perhaps those that imply user interaction for some applications).
 
 <h3>Strawman III: A runtime typing approach</h3>
 <p>
-Prior to this work, the best auto-sanitization scheme [11] was a
-runtime scheme.
+Prior to this work, the best auto-sanitization scheme was a
+<a href="http://googleonlinesecurity.blogspot.com/2009_03_01_archive.html" title="Reducing XSS by way of Automatic Context-Aware Escaping&hellip;">runtime scheme</a>.
 </p>
 
 <p>
@@ -877,8 +874,8 @@ escaping directives on the right before writing to the output buffer.
 
 <p>
 This works, and with a hand-tuned C parser has been deployed successfully on
-CTemplates [12]
-and ClearSilver [13].
+<a href="http://google-ctemplate.googlecode.com/svn/trunk/doc/auto_escape.html">CTemplates</a>
+and <a href="http://www.clearsilver.net/">ClearSilver</a>.
 </p>
 
 <p>
@@ -929,9 +926,10 @@ in the front-end code that calls the template.
 </p>
 
 <p>
-Our solution takes into account the runtime type of the values that fill
-a hole.  If the runtime type marks the value as a known-safe string of HTML,
-then a sanitization function can choose to re-escape, and instead normalize or do nothing.
+Our solution takes into account the runtime type of the values that
+fill a hole.  If the runtime type marks the value as a known-safe
+string of HTML, then a sanitization function can choose not to
+re-escape, and instead normalize or do nothing.
 </p>
 
 <p>
@@ -1001,7 +999,7 @@ into 2 bytes with room to spare:
     <code>&lt;/script&gt;</code> tag, but should ignore any apparent
     <code>&lt;/style&gt;</code> tags.</li>
   <li>Attribute type &mdash;
-    Distinguishes between JS attributes (<code>onclick</code>,
+    distinguishes between JS attributes (<code>onclick</code>,
     etc.), <code>style</code> attributes, URL attributes
     (<code>href</code>, etc.), and others.</li>
   <li>Attribute end delimiter &mdash; indicates the termination
@@ -1115,10 +1113,11 @@ template.
 
 <pre class="prettyprint">
 def compute_end_context(template, inferences, start_context):
-  # We need to chose an end context before typing the body to avoid
+  # We need to choose an end context before typing the body to avoid
   # infinite regression for recursive templates.
 
-  # Start with the optimistic assumption that the above is true.
+  # Start with the optimistic assumption that the template ends in the
+  # same context in which it starts.
   # Empirically, less than 0.2% of templates in our sample violate
   # this assumption.
   # The ones that do tend to be some of the gnarliest code that
@@ -1344,7 +1343,7 @@ scheme fails to handle correctly.
 
 <p>
 Our parser does not currently recognize HTML5
-escaping text spans [14],
+<a href="http://dev.w3.org/html5/markup/aria/syntax.html#escaping-text-span" title="Escaping Text Spans">escaping text spans</a>,
 the regions inside <code>&lt;script&gt;</code> and
 <code>&lt;style&gt;</code> bodies delimited by <code>&lt;!--</code>
 and <code>--&gt;</code> that suppress end-tag processing.  This can be
@@ -1408,7 +1407,7 @@ mostly <code>filterNormalizeUri</code>.
 
 <p>
 The benchmark runs over a large template with dummy data that is meant to be representative of the application
-using it.  The benchmarks range from 15.2-16.8 ms and the standard-deviation is roughly 6 ms, which puts the
+using it.  The benchmarks range from 15.2-16.8 ms and the standard-deviation is roughly 0.6 ms, which puts the
 runtime-cost of the sanitization functions in the noise.
 </p>
 <pre>
@@ -1476,43 +1475,31 @@ the template should approach string concatenation.
 </table>
 
 <h3>References</h3>
-<p>
-[1] -
-http://code.google.com/p/browsersec/wiki/Part1#Cascading_stylesheets
-<br>
-[2] - http://www.codinghorror.com/blog/2008/08/protecting-your-cookies-httponly.html
-<br>
-[3] -
-http://code.google.com/p/owasp-esapi-java/source/browse/trunk/src/main/java/org/owasp/esapi/Encoder.java
-<br>
-[4] -
-http://googleonlinesecurity.blogspot.com/2007/07/automating-web-application-security.html
-<br>
-[5] - http://code.djangoproject.com/wiki/AutoEscaping
-<br>
-[6] -
-http://securitymusings.com/article/2022/code-with-javascript-letters-and-numbers-optional
-<br>
-[7] - http://www.w3.org/TR/xslt
-<br>
-[8] - http://code.google.com/p/gxp/
-<br>
-[9] -
-http://www.facebook.com/notes/facebook-engineering/xhp-a-new-way-to-write-php/294003943919
-<br>
-[10] - XSLT Version 1.0
-(Creating Elements with xsl:element)
-http://www.w3schools.com/xsl/el_element.asp
-<br>
-[11] -
-http://googleonlinesecurity.blogspot.com/2009_03_01_archive.html
-<br>
-[12] -
-http://google-ctemplate.googlecode.com/svn/trunk/doc/auto_escape.html
-<br>
-[13] - http://www.clearsilver.net/
-<br>
-[14] - http://dev.w3.org/html5/markup/aria/syntax.html#escaping-text-span
-</p>
+<p id=references></p>
+<script type="text/javascript">(function () {
+  var references = document.getElementById('references');
+  var links = document.getElementsByTagName('A');
+  links = Array.prototype.slice.call(links);
+  // Pull into an array since
+  var counter = 0;
+  for (var i = 0, n = links.length; i < n; ++i) {
+    var link = links[i];
+    if (/^#/.test(link.getAttribute('href'))) { continue; }
+    var description = link.title || link.innerText || link.textContent;
+    if (counter) {
+      references.appendChild(document.createElement('BR'));
+    }
+    ++counter;
+    references.appendChild(document.createTextNode(
+        '[' + counter + '] : ' + description + ' @ ' + link.href));
+    var parent = link.parentNode;
+    var follower = link.nextSibling;
+    parent.removeChild(link);
+    for (var content; (content = link.firstChild) != null;) {
+      parent.insertBefore(content, follower);
+    }
+    parent.insertBefore(document.createTextNode('[' + counter + ']', follower));
+  }
+})()</script>
 
 </body> </html>

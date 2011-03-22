@@ -114,9 +114,6 @@ The template author might manually encode name:
 <p>
 making sure that the user sees exactly the value of <code>name</code>
 as per spec, and defeating this particular attack.
-</p>
-
-<p>
 A better web templating system might automatically insert the
 <code>|escape***</code> directives, relieving the template author
 of the burden.
@@ -131,11 +128,8 @@ particularly suitable for bolting onto existing web templating
 languages.
 </p>
 
-<h2>Abstract</h2>
 <p>
-In this paper, we propose a type-based approach to bolt
-context-sensitive automatic sanitization onto existing widely used web
-templating languages. In particular, we introduce the new notion of
+In particular, we introduce the new notion of
 "context" type qualifiers to represent the contexts in which untrusted
 data can be embedded. We propose a new type system that refines the
 base type system of a web templating language with the context type
@@ -269,73 +263,76 @@ better security and performance than previous approaches.
 });</script>
 
 <h2>Solution Sketch: A static approach with RTTI to avoid over-escaping.</h2>
-<p>
-First, a brief overview of the proposed solution.  Later, while
-discussing goals and alternatives, we will refer back to this.
-</p>
 
 <p>
 The template below specifies a form whose <code>action</code> depends
-on two values <code>$name</code> and <code>$target</code> which may
+on two values <code>$name</code> and <code>$tgt</code> which may
 come from untrusted sources.  The
 <code>{if &hellip;}&hellip;{else}&hellip;<span class=nocode>{/if}</span></code> branches to
 define a dynamic URL.
 </p>
+<style>
+.safe-chunk { border:1px solid green }
+.unchecked-safe-chunk { border:1px solid transparent }
+.data-hole { background: black; color: black }
+.data-hole-filled { background: black; color: white }
+</style>
 <pre class=prettyprint>
-&lt;form action="<span class=nocode>{if $target}</span>/{$name}/handle?tgt={$target}<span class=nocode>{else}</span>/{$name}/default<span class=nocode>{/if}</span>"&gt;Hello {$name}&hellip;
+<span class="unchecked-safe-chunk">&lt;form action="</span><span class=nocode>{if $tgt}</span><span class="unchecked-safe-chunk">/</span>{$name}<span class="unchecked-safe-chunk">/handle?tgt=</span>{$tgt}<span class=nocode>{else}</span>/{$name}<span class="unchecked-safe-chunk">/default</span><span class=nocode>{/if}</span><span class="unchecked-safe-chunk">"&gt;Hello </span>{$name}&hellip;
 </pre>
 
 <p>
 First, we parse the template to find trusted static content, dynamic
 "data holes" that may be filled by untrusted data, and flow control
-constructs: <code>if</code>, <code>for</code>, etc.  The black
+constructs: <code>if</code>, <code>for</code>, etc.  The solid black
 portions are the data holes, and the green portions are trusted static
 content.
 </p>
 
-<style>
-.safe-chunk { border:1px solid green }
-.data-hole { background: black; color: white }
-</style>
 <pre class=prettyprint>
-<span class="safe-chunk">&lt;form action="</span><span class=nocode>{if $target}</span><span class="safe-chunk">/</span><span class="data-hole">       </span><span class="safe-chunk">/handle?tgt=</span><span class="data-hole">         </span><span class=nocode>{else}</span><span class="safe-chunk">/</span><span class="data-hole">       </span><span class="safe-chunk">/default</span><span class=nocode>{/if}</span><span class="safe-chunk">"&gt;Hello </span><span class="data-hole">       </span>&hellip;
+<span class="safe-chunk">&lt;form action="</span><span class=nocode>{if $tgt}</span><span class="safe-chunk">/</span><span class="data-hole nocode">&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;</span><span class="safe-chunk">/handle?tgt=</span><span class="data-hole nocode">&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;</span><span class=nocode>{else}</span><span class="safe-chunk">/</span><span class="data-hole nocode">&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;</span><span class="safe-chunk">/default</span><span class=nocode>{/if}</span><span class="safe-chunk">"&gt;Hello </span><span class="data-hole nocode">&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;</span>&hellip;
 </pre>
 
 <p>Next we do a flow-sensitive analysis, propagating types to determine the context in which each data hole appears.</p>
 <pre class=prettyprint style="margin-bottom: 0; padding-bottom: 0">
-<span class="safe-chunk">&lt;form action="</span><span class=nocode>{if $target}</span><span class="safe-chunk">/</span><span class="data-hole">       </span><span class="safe-chunk">/handle?tgt=</span><span class="data-hole">         </span><span class=nocode>{else}</span><span class="safe-chunk">/</span><span class="data-hole">       </span><span class="safe-chunk">/default</span><span class=nocode>{/if}</span><span class="safe-chunk">"&gt;Hello </span><span class="data-hole">       </span>&hellip;
+<span class="safe-chunk">&lt;form action="</span><span class=nocode>{if $tgt}</span><span class="safe-chunk">/</span><span class="data-hole nocode">&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;</span><span class="safe-chunk">/handle?tgt=</span><span class="data-hole nocode">&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;</span><span class=nocode>{else}</span><span class="safe-chunk">/</span><span class="data-hole nocode">&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;</span><span class="safe-chunk">/default</span><span class=nocode>{/if}</span><span class="safe-chunk">"&gt;Hello </span><span class="data-hole nocode">&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;&#x2588;</span>&hellip;
 </pre>
 <table cellpadding=0 cellspacing=0 summary="inferred contexts">
   <tr>
     <td><small>&uarr;PCDATA</small></td>
-    <td><small>&uarr;Attr URL start</small></td>
-    <td><small>&uarr;Attr URL path</small></td>
-    <td><small>&uarr;Attr URL query</small></td>
-    <td><small>&uarr;Attr URL path</small></td>
+    <td><small>&uarr;URL start</small></td>
+    <td><small>&uarr;URL path</small></td>
+    <td><small>&uarr;URL query</small></td>
+    <td><small>&uarr;URL path</small></td>
     <td><small>&uarr;PCDATA</small></td>
   </tr>
   <tr style="font-family: monospace; white-space: pre">
     <td>&nbsp;            &nbsp;</td>
-    <td>&nbsp;           &nbsp;</td>
+    <td>&nbsp;        &nbsp;</td>
     <td>&nbsp;                 &nbsp;</td>
-    <td>&nbsp;              &nbsp;</td>
-    <td>&nbsp;                     &nbsp;</td>
+    <td>&nbsp;           &nbsp;</td>
+    <td>&nbsp;                           &nbsp;</td>
   </tr>
 </table>
 
-<p>
+<p style=margin-top:0>
 Based on those contexts, we determine the type of content that is expected for each hole.
 </p>
 
 <pre class=prettyprint>
-<span class="safe-chunk">&lt;form action=&quot;</span><span class=nocode>{if $target}</span><span class="safe-chunk">/</span><span class="data-hole nocode" style="font-size:75%">(HTML-encoded URL)</span><span class="safe-chunk">/handle?tgt=</span><span class="data-hole nocode" style="font-size:75%">(HTML-encoded query)</span><span class=nocode>{else}</span><span class="safe-chunk">/</span><span class="data-hole nocode" style="font-size:75%">(HTML-encoded URL)</span><span class="safe-chunk">/default</span><span class=nocode>{/if}</span><span class="safe-chunk">&quot;&gt;Hello </span><span class="data-hole nocode" style="font-size:75%">(text/html)</span>&hellip;
+<span class="safe-chunk">&lt;form action=&quot;</span><span class=nocode>{if $tgt}</span><span class="safe-chunk">/</span><span class="data-hole-filled nocode">  URL  </span><span class="safe-chunk">/handle?tgt=</span><span class="data-hole-filled nocode">Query </span><span class=nocode>{else}</span><span class="safe-chunk">/</span><span class="data-hole-filled nocode">  URL  </span><span class="safe-chunk">/default</span><span class=nocode>{/if}</span><span class="safe-chunk">&quot;&gt;Hello </span><span class="data-hole-filled nocode"> HTML  </span>&hellip;
 </pre>
 
 <p>
 Finally we insert calls to <a href="#glossary-sanitization_function">sanitizer functions</a> into the template.
 </p>
 <pre class=prettyprint>
-&lt;form action=&quot;<span class=nocode>{if $target}</span>/{<ins>escapeHTML</ins>($name)}/handle?tgt={<ins>encodeURIComponent</ins>($target)}<span class=nocode>{else}</span>/{<ins>escapeHTML</ins>($name)}/default<span class=nocode>{/if}</span>&quot;&gt;Hello {<ins>escapeHTML</ins>($name)}&hellip;
+&lt;form action=&quot;<span class=nocode>{if $tgt}</span>
+  /{<ins>escapeHTML</ins>($name)}/handle?tgt={<ins>encodeURIComponent</ins>($tgt)}
+<span class=nocode>{else}</span>
+  /{<ins>escapeHTML</ins>($name)}/default
+<span class=nocode>{/if}</span>
+&quot;&gt;Hello {<ins>escapeHTML</ins>($name)}&hellip;
 </pre>
 
 <p>
@@ -465,12 +462,10 @@ where the common header opens elements that are closed in the
 common footer:
 </p>
 <pre class="prettyprint">
-&lt;html&gt;
-&lt;head&gt;
+&lt;html&gt;&lt;head&gt;
 &lt;!-- Common style and script definitions --&gt;
 ...
-&lt;/head&gt;
-&lt;body&gt;
+&lt;/head&gt;&lt;body&gt;
 &lt;!-- Common menus --&gt;
 </pre>
 <p>
@@ -683,14 +678,11 @@ containment.
 
 <h3 id="code_effect_property">Code Effect Property</h3>
 <p>
-Untrusted data may specify data values in code (loosely, string,
+Web clients may specify data values in code (strings,
 booleans, numbers, JSON) but <i>only</i> code specified by the
 template author should run as a result of injecting the template
 output into a page and <i>all</i> code specified by the template
 author should run as a result of the same.
-</p>
-
-<p>
 There are a dizzyingly large number of ways this property can
 fail to hold for a template.  A non-exhaustive sample of ways to
 cause extra code to run:
@@ -706,8 +698,7 @@ cause extra code to run:
       <code>expression</code> or <code>-moz-binding</code>.
   <li>A dynamic <code>&lt;object&gt;</code> might load flash cross origin
       and <code>AllowScriptAccess</code>.
-  <li>Dynamic code might reach <code>eval</code> or any number of JavaScript
-      APIs that invoke the HTML, CSS, or JavaScript parsers.
+  <li>Dynamic values might reach <code>eval</code>, <code>setTimeout</code>, etc.
 </ul>
 
 <p>
@@ -722,15 +713,14 @@ A non-exhaustive sample of ways to stop code running via XSS:
       <code>&lt;base&gt;</code> element disabling <code>src=</code>'ed
       <code>&lt;script&gt;</code>s with relative URLs.
   <li>Inject improperly encoded data into a data hole in an inline
-      &lt;script&gt; element that causes it to fail to parse.  Putting
-      unicode codepoints U+2028 or U+2029 into a string body is a
-      favorite since JavaScript treats those as newline characters.
+      <code>&lt;script&gt;</code> element that causes it to fail to parse, e.g.
+      codepoints U+2028 or U+2029 in a string body.
       <small>(A violation of the Structure Preservation Property).</small>
   <li>Cause an inline event handler or <code>&lt;script&gt;</code> tag
       to not be interpreted as such.
       <small>(A violation of the Structure Preservation Property).</small>
   <li>Insert code that disables, removes, or changes critical APIs:
-      <code class=prettyprint>Object.prototype.toString = function () { throw new Error(); };</code>
+      <code class=prettyprint>Object.prototype.toString = function() {throw new Error}</code>
   <li>Inject a <code>&lt;noscript&gt;</code> element around the <code>&lt;head&gt;</code>.
       <small>(A violation of the Structure Preservation Property).</small>
   <li>Fool heuristic XSS defense browser plugins into thinking that the
@@ -868,8 +858,8 @@ level, should meet the criteria above.
 <h3>Strawman 0: Manual sanitization</h3>
 <p>
 Manual sanitization is the state-of-the-art currently.  Developers use
-a suite of functions, such as
-<a href="http://code.google.com/p/owasp-esapi-java/source/browse/trunk/src/main/java/org/owasp/esapi/Encoder.java">OWASP's open source OSAPI encoders</a>
+a suite of functions, such as OWASP's open source
+<a href="http://code.google.com/p/owasp-esapi-java/source/browse/trunk/src/main/java/org/owasp/esapi/Encoder.java">OSAPI encoders</a>
 and every developer must learn when and how to apply them correctly.
 They must apply sanitizers either before data reaches a template or
 within the template by inserting function calls into code.
@@ -905,8 +895,7 @@ take a team of developers to fix.
 </p>
 
 <p>
-XSS Scanners (e.g.
-<a href="http://googleonlinesecurity.blogspot.com/2007/07/automating-web-application-security.html">lemon</a>)
+XSS Scanners (e.g. <a href="http://googleonlinesecurity.blogspot.com/2007/07/automating-web-application-security.html">lemon</a>)
 can mitigate some of manual sanitization's cons (though they work with
 any of the other solutions here as well to provide defense-in-depth),
 but there are no good scanners for AJAX applications, and, with manual
@@ -917,18 +906,14 @@ to the reported errors.
 <h3>Strawman I: Non-contextual auto-sanitization</h3>
 
 <p>
-Context-less auto-sanitization is a great improvement over
-manual sanitization and is implemented in a number of languages including
-<a href="http://code.djangoproject.com/wiki/AutoEscaping">Django templates</a>.
+Non-contextual auto-sanitization is a great improvement over
+manual sanitization.  <a href="http://code.djangoproject.com/wiki/AutoEscaping">Django templates</a> and others use it.
 </p>
 
 <p>
 It works by assuming that every data hole should be sanitized the same way,
 usually by HTML entity encoding.  As such, it is prone to over-escaping and
 mis-escaping.
-</p>
-
-<p>
 To understand mis-escaping, consider imagine what happens when the
 following template is called with <code>', alert('XSS'), '</code> :
 </p>
@@ -954,7 +939,7 @@ It also fails to preserve the code effect property.
 Bolting filters on non-contextual auto-sanitization will not help
 it to preserve the code effect property.  It is possible to write
 bizarre JavaScript that
-<a href="http://securitymusings.com/article/2022/code-with-javascript-letters-and-numbers-optional">does not need even alphanumerics</a>.
+<a href="http://securitymusings.com/article/2022/code-with-javascript-letters-and-numbers-optional">does not even need alphanumerics</a>.
 Since JavaScript has no regular lexical grammar, regular expressions
 that are less than draconian are insufficient to filter out attacks.
 </p>
@@ -975,28 +960,21 @@ Examples of strict structural containment languages are
 <a href="http://www.w3.org/TR/xslt">XSLT</a>,
 <a href="http://code.google.com/p/gxp/">GXP</a>, and possibly
 <a href="http://www.facebook.com/notes/facebook-engineering/xhp-a-new-way-to-write-php/294003943919">XHP</a>.
-</p>
-
-<p>
-What they have in common is that the input is (or is coercible via
+For all of these, the input is (or is coercible via
 fancy tricks) to a tree structure like XML.  So for every data hole,
 it is obvious to the system which element and attribute context the
-hole appears in&dagger;.  Then a similar structural constraint could be
-applied in principle to embedded JavaScript, CSS, and URIs.
+hole appears in&dagger;.  A similar structural constraint could be
+applied in principle to embedded JS, CSS, and URIs.
 </p>
 
 <p>
 Strict structural containment is a sound, principled approach to
 building safe templates that is a great approach for anyone planning a
-new template language.
-</p>
-
-<p>
-It cannot be bolted onto existing languages though because it requires
+new template language, but it cannot be bolted onto existing languages though because it requires
 that every element and attribute start and end in the same template.
 This assumption is violated by several very common idioms, such as the
-<a href="#header-footer-example">header-footer</a> idiom in ways that
-often require drastic changes to codebase to repair.
+<a href="#header-footer-example">header-footer</a> idiom
+in ways that often require drastic changes to repair.
 </p>
 
 <p>
@@ -1009,7 +987,7 @@ code written in a language that does not have this property.
 
 <p><small>
 &dagger; - modulo mechanisms like
-<a href="http://www.w3.org/TR/xslt#section-Creating-Elements-with-xsl:element"><code>&lt;xsl:element name="..."&gt;</code></a>
+<a href="http://www.w3schools.com/xsl/el_element.asp"><code>&lt;xsl:element name="..."&gt;</code></a>
 which can, in principle, be repaired using equivalence classes of
 elements and attributes.  I.e. one could define an equivalence class
 of elements all of whose attributes have the same meaning and which
@@ -1109,10 +1087,10 @@ in the front-end code that calls the template.
 </p>
 
 <p>
-Our solution takes into account the runtime type of the values that fill
-a hole.  If the runtime type marks the value as known-safe string of HTML,
-then an HTML entity escaping sanitization function can use that information
-to decide not to re-escape, and instead normalize or do nothing.
+Our solution takes into account the runtime type of the values that
+fill a hole.  If the runtime type marks the value as a known-safe
+string of HTML, then a sanitization function can choose not to
+re-escape, and instead normalize or do nothing.
 </p>
 
 <p>
@@ -1181,19 +1159,19 @@ into 2 bytes with room to spare:
     e.g. inside a <code>&lt;script&gt;</code> body we have to find a
     <code>&lt;/script&gt;</code> tag, but should ignore any apparent
     <code>&lt;/style&gt;</code> tags.</li>
-  <li>Attribute type &mdash; the type of attribute we're in.
-    Distinguishes between script attributes (<code>onclick</code>,
+  <li>Attribute type &mdash;
+    distinguishes between JS attributes (<code>onclick</code>,
     etc.), <code>style</code> attributes, URL attributes
-    (<code>href</code>, etc.), and other attributes.</li>
+    (<code>href</code>, etc.), and others.</li>
   <li>Attribute end delimiter &mdash; indicates the termination
-    condition for the attribute value we're in: double quoted, single
+    condition for the attribute value: double quoted, single
     quoted, unquoted, or none.</li>
-  <li>JavaScript following slash &mdash; for JavaScript states,
+  <li>JavaScript following slash &mdash;
     explains what to do with a <code>/</code> that does not start a
     comment: enter a regular expression literal, or a division
     operator, or fail with an error message due to ambiguity from
     context joining.</li>
-  <li>URI part &mdash; for URI states, the part of the URI that we're
+  <li>URI part &mdash; the part of the URI that we're
     in: the start, path, query, fragment, or an ambiguous part due to
     context joining.</li>
 </ul>
@@ -1208,7 +1186,7 @@ loop, switch, or other flow control construct.  This sometimes
 introduces an ambiguity.  In the template:
 </p>
 <pre class="prettyprint">
-&lt;form action="<span class=nocode>{if $target}</span>/{$name}/handle?tgt={$target}<span class=nocode>{else}</span>/{$name}/default<span class=nocode>{/if}</span><span class=nocode>&uarr;</span>"&gt;Hello {$name}&hellip;
+&lt;form action="<span class=nocode>{if $tgt}</span>/{$name}/handle?tgt={$tgt}<span class=nocode>{else}</span>/{$name}/default<span class=nocode>{/if}</span><span class=nocode>&uarr;</span>"&gt;Hello {$name}&hellip;
 </pre>
 <p>
 One branch ends in the query portion of a URI, and one ends outside
@@ -1859,8 +1837,7 @@ def autosanitize(templates):
     if inferences.getEndContext(template) is not None: continue # already done
     if template.is_public() or template.is_contextually_autosanitized():
       # By exploring the call graph from only public templates, ones
-      # that can be invoked by front-end code, or ones that must be
-      # contextually sanitized, we do not trigger error checks for
+      # that can be invoked by front-end code, we do not trigger error checks for
       # parts of the code-base that don't yet use contextual
       # auto-sanitization, easing migration.
       compute_end_context(template, inferences, start_context=HTML_PCDATA&dagger;)
@@ -1875,23 +1852,20 @@ template.
 
 <pre class="prettyprint">
 def compute_end_context(template, inferences, start_context):
-  # First, assume that the end context is the same as the start context.
-  # Template authors seem to write templates that fit this way.
+  # We need to choose an end context before typing the body to avoid
+  # infinite regression for recursive templates.
+
+  # Start with the optimistic assumption that the template ends in the
+  # same context in which it starts.
   # Empirically, less than 0.2% of templates in our sample violate
   # this assumption.
   # The ones that do tend to be some of the gnarliest code that
   # template authors would rather not refactor.
-
-  # We need to chose an end context now to avoid infinite regression
-  # if a template recurses.
-
-  # Start with the optimistic assumption that the above is true.
   optimistic_assumption_1 = Inferences(parent=inferences)
   optimistic_assumption_1.template_end_contexts[template] = start_context
   end_context = propagate_context(
       template.children, start_context, optimistic_assumption_1)
-  if start_context == end_context:
-    # Our optimistic assumption was warranted.
+  if start_context == end_context:  # Our optimistic assumption was warranted.
     optimistic_assumption_1.commit_into_parent()
     return end_context
 
@@ -1901,12 +1875,11 @@ def compute_end_context(template, inferences, start_context):
   optimistic_assumption_2.template_end_contexts[template] = end_context
   end_context_fixed_point = propagate_context(
       template.body, start_context, optimistic_assumption_2)
-  if end_context_fixed_point == end_context:
-    # We have found a fixed point.  Phew!
+  if end_context_fixed_point == end_context:  # We have a fixed point.  Phew!
     optimistic_assumption_2.commit_into_parent()
     return end_context_fixed_point
 
-  # There are various other strategies we could try here, but
+  # We could try other strategies to generate optimistic assumptions, but
   # we have not seen a need in real template code.
   raise Error(...)
 </pre>
@@ -2018,7 +1991,7 @@ definitions from the glossary.
       into the middle of a quoted string.</tr>
   <tr><td><code>filterNormalizeURI</code></td>
     <td>Like <code>normalizeURI</code> but first rejects any input
-      that might embed a protocol other than <code>http</code>,
+      that might specify a protocol other than <code>http</code>,
       <code>https</code>, or <code>mailto</code>.</tr>
   <tr><td><code>{escape,normalize}JSStringChars</code></td>
     <td>Uses <code>\\</code> and <code>\uABCD</code> style escapes for
@@ -2030,8 +2003,8 @@ definitions from the glossary.
       <code>'$'</code>.</tr>
   <tr><td><code>{escape,normalize}JSValue</code></td>
     <td>Encodes a boolean or a number to the string representation of
-      that surrounded by spaces.  Otherwise escapes a string value
-      and wraps it in quotes.</tr>
+      that surrounded by spaces.  Otherwise wraps in quotes and escapes
+      as a string value.</tr>
   <tr><td><code>escapeCSSStringChars</code></td>
     <td>Uses <code>\ABCD</code> style escapes to escape HTML
       and CSS special characters.</tr>
@@ -2062,31 +2035,20 @@ It is possible for misuse of this feature to violate all the safety
 properties contextual auto-sanitization provides.
 We assert that allowing this makes it easier to migrate code that
 has no XSS safety net to a better place, and satisfies some
-compelling use cases.  But it needs to be used carefully.
-Developers should heed this advice:
+compelling use cases including
+HTML translated into foreign languages by trusted translators, and
+HTML from tag whitelisters, wiki-text-to-html converters, rich text editors.
+But it needs to be used carefully.  Developers should:
 </p>
 <ul>
-  <li>Don't roll your own escapers.  If you find them in existing
-    code, prefer escaping in the template via the contextual
-    auto-sanitization.  This does not apply to filters.  Filter early,
-    and filter often.
+  <li>Don't roll your own escapers and deprecate ones in existing code.
+    This does not apply to filters.  Filter early, and filter often.
   </li>
   <li>Put the sanitized content type constructor as close to the
     code that does the sanitization.</li>
   <li>Don't use tag or attribute black-lists.</li>
   <li>Be skeptical of "safe" HTML from a database.  This is
     a vector for SQL Injection to turn into XSS.
-</ul>
-
-<p>
-Compelling use cases include:
-</p>
-<ul>
-  <li>HTML from a trusted source such as translators who are
-    translating strings into foreign languages.  Consider using a
-    template system that supports text L10N directly.
-  <li>HTML from tag whitelisters, wiki-text-to-html converters,
-    rich text editors, etc.
 </ul>
 
 <h2 id="caveats">Caveats</h2>
@@ -2186,17 +2148,17 @@ Most of the sanitization functions chosen were plain text&rarr;HTML,
 so the non-contextual auto-sanitization.
 </p>
 <table summary="distribution of escaping directives">
-  <tr><td><code>|escapeHtml</code><td>602<td></tr>
-  <tr><td><code>|escapeHtmlAttribute</code><td>380<td></tr>
-  <tr><td><code>|filterNormalizeUri, |escapeHtmlAttribute</code><td>231<td></tr>
-  <tr><td><code>|escapeJsValue</code><td>39<td></tr>
-  <tr><td><code>|filterCssValue</code><td>33<td></tr>
+  <tr><td><code>|escapeHtml</code><td>602<td>
+      <td><code>|escapeUri</code><td>15<td></tr>
+  <tr><td><code>|escapeHtmlAttribute</code><td>380<td>
+      <td><code>|escapeHtmlRcdata</code><td>10<td></tr>
+  <tr><td><code>|filterNormalizeUri, |escapeHtmlAttribute</code><td>231<td>
+      <td><code>|escapeHtmlAttributeNospace</code><td>7<td></tr>
+  <tr><td><code>|escapeJsValue</code><td>39<td>
+      <td><code>|filterHtmlIdent</code><td>3<td></tr>
+  <tr><td><code>|filterCssValue</code><td>33<td>
+      <td><code>|filterNormalizeUri</code><td>1<td></tr>
   <tr><td><code>|escapeJsString</code><td>27<td></tr>
-  <tr><td><code>|escapeUri</code><td>15<td></tr>
-  <tr><td><code>|escapeHtmlRcdata</code><td>10<td></tr>
-  <tr><td><code>|escapeHtmlAttributeNospace</code><td>7<td></tr>
-  <tr><td><code>|filterHtmlIdent</code><td>3<td></tr>
-  <tr><td><code>|filterNormalizeUri</code><td>1<td></tr>
 </table>
 
 <p>
@@ -2206,21 +2168,13 @@ mostly <code>filterNormalizeUri</code>.
 
 <p>
 The benchmark runs over a large template with dummy data that is meant to be representative of the application
-using it.  The benchmarks range from 15.2 ms to 16.8 ms and the standard-deviation is roughly 6 ms, which puts the
+using it.  The benchmarks range from 15.2-16.8 ms and the standard-deviation is roughly 0.6 ms, which puts the
 runtime-cost of the sanitization functions in the noise.
 </p>
 <pre>
-No sanitization
-====
-50% Scenario 16709334.99 ns; &sigma;=615548.54 ns @ 10 trials
-
-Non-contextual auto-sanitization
-====
-50% Scenario 16835324.39 ns; &sigma;=6030836.03 ns @ 10 trials
-
-Full contextual auto-sanitization
-====
-50% Scenario 15227861.39 ns; &sigma;=616193.00 ns @ 10 trials
+No sanitization                   : 50% Scenario 16709334.99 ns; &sigma;= 615548.54 ns @ 10 trials
+Non-contextual auto-sanitization  : 50% Scenario 16835324.39 ns; &sigma;=6030836.03 ns @ 10 trials
+Full contextual auto-sanitization : 50% Scenario 15227861.39 ns; &sigma;= 616193.00 ns @ 10 trials
 </pre>
 
 <p>
@@ -2272,17 +2226,18 @@ computes values to fill data holes is simple so the cost of executing
 the template should approach string concatenation.
 </p>
 
-</p>
-<pre>
-Totals for 1000 runs:
-noEscape   :    491316000 ns  (1.0)
-parseOnly  :   2979672000 ns  (6.1)
-dynEscape  :   3531971000 ns  (7.2)
-</pre>
+<table cellpadding=2 cellspacing=0>
+  <tr align=center><td>For 1000 runs<th colspan=3>noEscape<th colspan=3>parseOnly<th colspan=2>dynEscape</th></tr>
+  <tr align=right>
+  <td>&nbsp;</td>
+  <td>491316000 ns</td><td>(1.0)</td><td>&nbsp;</td>
+  <td>2979672000 ns</td><td>(6.1)</td><td>&nbsp;</td>
+  <td>3531971000 ns</td><td>(7.2)</td></tr>
+</table>
 
 
 
 <hr>
 <address></address>
-<!-- hhmts start --> Last modified: Mon Mar 21 16:05:31 PDT 2011 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Mon Mar 21 17:42:57 PDT 2011 <!-- hhmts end -->
 </body> </html>
