@@ -7,11 +7,12 @@ code { white-space: nowrap }
 .printonly { display: none }
 @media print {
   .printonly { display: auto }
+  .noprint { display: none }
 }
 </style>
 <script>
 var shortVersion = /[?&]short(?!==0)/.test(location.search);
-var printableVersion = /[&]printable(?!==0)/.test(location.search);
+var printableVersion = /[?&]printable(?!==0)/.test(location.search);
 if (printableVersion) {
   document.write('<style>body { margin: .75in; font-size: 10pt } h1 { font-size: 175% }<\/style>');
 } else {
@@ -46,6 +47,30 @@ registerOnLoad(prettyPrint);
 </head>
 
 <body onload="dispatchOnLoad()">
+<small style="float:right" class="noprint">
+  [<a id="printable-link"></a>]
+  [<a id="full-link"></a>]
+<script>registerOnLoad(function () {  // After the references are computed
+  var plink = document.getElementById('printable-link');
+  var flink = document.getElementById('full-link');
+  function text(s) { return document.createTextNode(s); }
+  if (printableVersion) {
+    plink.href = location.pathname + (shortVersion ? '?short' : '');
+    plink.appendChild(text('clickable'));
+  } else {
+    plink.href = location.pathname + (shortVersion ? '?printable&short' : '?printable');
+    plink.appendChild(text('printable'));
+ }
+  if (shortVersion) {
+    flink.href = location.pathname + (printableVersion ? '?printable' : '');
+    flink.appendChild(text('long'));
+  } else {
+    flink.href = location.pathname + (printableVersion ? '?printable&short' : '?short');
+    flink.appendChild(text('short'));
+  }
+});
+</script>
+</small>
 <h1>Using type inference to make web templates robust against XSS</h1>
 <p>Mike Samuel &lt;msamuel@google.com&gt;, Prateek Sazena &lt;prateeks@eecs.berkeley.edu&gt;</p>
 
@@ -2252,7 +2277,7 @@ if (shortVersion) {
 if (!printableVersion) {
   document.write('<style>.printable { display: none }<\/style>');
 } else {
-  document.write('<style>a:link, a:visited { color: inherit; text-decoration: inherit }</style>');
+  document.write('<style>a.ref:link, a.ref:visited { color: inherit; text-decoration: inherit }</style>');
 }
 </script>
 
@@ -2290,10 +2315,13 @@ if (!printableVersion) {
   links = Array.prototype.slice.call(links);
   // Pull into an array since
   var counter = 0;
+  var isLocalRe = new RegExp(
+      '^' + (location.origin + location.pathname).replace(/[^a-z0-9]/ig, '\\$&') + '(?:[?#]|$)');
   for (var i = 0, n = links.length; i !== n; ++i) {
     var link = links[i];
     if (!isDisplayed(link)) { continue; }
-    if (/^#/.test(link.getAttribute('href'))) { continue; }
+    var url = link.href;
+    if (!url || isLocalRe.test(url)) { continue; }
     var description = link.title || link.innerText || link.textContent;
     if (counter) {
       references.appendChild(document.createElement('BR'));
@@ -2305,12 +2333,13 @@ if (!printableVersion) {
     var follower = link.nextSibling;
     parent.insertBefore(
         span('printable', document.createTextNode(' [' + counter + ']')), follower);
+    link.className += ' ref';
   }
 })</script>
 
 <div class="fullversiononly">
 <hr>
-<!-- hhmts start --> Last modified: Mon Mar 21 19:14:49 PDT 2011 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Mon Mar 21 19:38:55 PDT 2011 <!-- hhmts end -->
 </div>
 
 </body> </html>
