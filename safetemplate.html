@@ -1,10 +1,23 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html> <head>
-<title>Using Type Qualifiers to Make Web Templates Robust Against XSS</title>
+<title>Using type inference to make web templates robust against XSS</title>
 <style>
-body, td, th { font-size: 150% }
+h1 { text-align: center }
 code { white-space: nowrap }
+.printonly { display: none }
+@media print {
+  .printonly { display: auto }
+}
 </style>
+<script>
+var shortVersion = /[?&]short(?!==0)/.test(location.search);
+var printableVersion = /[&]printable(?!==0)/.test(location.search);
+if (printableVersion) {
+  document.write('<style>body { margin: .75in; font-size: 10pt } h1 { font-size: 175% }<\/style>');
+} else {
+  document.write('<style>body, td, th { font-size: 150% }<\/style>');
+}
+</script>
 <script>(function () {
   var handlers = [];
   this.registerOnLoad = function (handler) {
@@ -24,7 +37,7 @@ code { white-space: nowrap }
   };
 })();</script>
 
-<link href="http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.css" type="text/css" rel="stylesheet" /> 
+<link href="http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.css" type="text/css" rel="stylesheet" />
 <script src="http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.js" type="text/javascript"></script>
 <script src="http://google-code-prettify.googlecode.com/svn/trunk/src/lang-css.js" type="text/javascript"></script>
 <script>
@@ -33,10 +46,11 @@ registerOnLoad(prettyPrint);
 </head>
 
 <body onload="dispatchOnLoad()">
-<h1>Using Type Qualifiers to Make Web Templates Robust Against XSS</h1>
+<h1>Using type inference to make web templates robust against XSS</h1>
+<p>Mike Samuel &lt;msamuel@google.com&gt;, Prateek Sazena &lt;prateeks@eecs.berkeley.edu&gt;</p>
 
-<h2>Contents</h2>
-<ul id="toc">
+<h2 class="fullversiononly">Contents</h2>
+<ul id="toc" class="fullversiononly">
 </ul>
 <script>registerOnLoad(function () {
   var headers = [];
@@ -79,7 +93,7 @@ registerOnLoad(prettyPrint);
   }
 });</script>
 
-<h2>Motivation</h2>
+<h2 class="fullversiononly">Motivation</h2>
 
 <p>
 Scripting vulnerabilities plague web applications today.  To
@@ -144,8 +158,8 @@ Closure templates. We demonstrate that our approach achieves both
 better security and performance than previous approaches.
 </p>
 
-<h2>Glossary</h2>
-<dl id="glossary">
+<h2 class="fullversiononly">Glossary</h2>
+<dl id="glossary" class="fullversiononly">
   <dt>Context</dt>
   <dd>A parser state in the combined HTML, CSS, and JavaScript grammar
     used to determine the stack of sanitization routines that need to be
@@ -565,7 +579,7 @@ comment in
 
 <p>
 Lower level encoding attacks, such as
-<a href="http://ha.ckers.org/xss.html#XSS_UTF-7">UTF-7</a>
+<a href="http://ha.ckers.org/xss.html#XSS_UTF-7" title="ha.ckers.org UTF-7">UTF-7</a>
 attacks, may also violate this property.
 </p>
 
@@ -692,7 +706,7 @@ cause extra code to run:
   <li>A dynamic attribute name could specify an event handler: <code>onclick</code>.
   <li>A dynamic <code>src</code> or <code>href</code> could specify
       <code>javascript</code>, <code>livescript</code>, etc. as the protocol
-      in <a href="http://ha.ckers.org/xss.html">myriad</a> ways.
+      in <a href="http://ha.ckers.org/xss.html" title="XSS Cheat Sheet">myriad</a> ways.
   <li><a href="http://code.google.com/p/browsersec/wiki/Part1#Cascading_stylesheets">Dynamic CSS</a>
       could use a vendor-specific extension, e.g.
       <code>expression</code> or <code>-moz-binding</code>.
@@ -907,7 +921,8 @@ to the reported errors.
 
 <p>
 Non-contextual auto-sanitization is a great improvement over
-manual sanitization.  <a href="http://code.djangoproject.com/wiki/AutoEscaping">Django templates</a> and others use it.
+manual sanitization.
+<a href="http://code.djangoproject.com/wiki/AutoEscaping" title="Django autoescaping">Django templates</a> and others use it.
 </p>
 
 <p>
@@ -939,7 +954,7 @@ It also fails to preserve the code effect property.
 Bolting filters on non-contextual auto-sanitization will not help
 it to preserve the code effect property.  It is possible to write
 bizarre JavaScript that
-<a href="http://securitymusings.com/article/2022/code-with-javascript-letters-and-numbers-optional">does not even need alphanumerics</a>.
+<a href="http://securitymusings.com/article/2022/code-with-javascript-letters-and-numbers-optional" title="Code with JS letters &amp; numbers optional">does not even need alphanumerics</a>.
 Since JavaScript has no regular lexical grammar, regular expressions
 that are less than draconian are insufficient to filter out attacks.
 </p>
@@ -973,7 +988,7 @@ building safe templates that is a great approach for anyone planning a
 new template language, but it cannot be bolted onto existing languages though because it requires
 that every element and attribute start and end in the same template.
 This assumption is violated by several very common idioms, such as the
-<a href="#header-footer-example">header-footer</a> idiom
+<a href="#header-footer-example">header-footer idiom</a><span class=printonly>, above,</span>
 in ways that often require drastic changes to repair.
 </p>
 
@@ -987,7 +1002,7 @@ code written in a language that does not have this property.
 
 <p><small>
 &dagger; - modulo mechanisms like
-<a href="http://www.w3schools.com/xsl/el_element.asp"><code>&lt;xsl:element name="..."&gt;</code></a>
+<a href="http://www.w3schools.com/xsl/el_element.asp" title="Creating Elements with xsl:element"><code>&lt;xsl:element name="..."&gt;</code></a>
 which can, in principle, be repaired using equivalence classes of
 elements and attributes.  I.e. one could define an equivalence class
 of elements all of whose attributes have the same meaning and which
@@ -1002,7 +1017,7 @@ perhaps those that imply user interaction for some applications).
 <h3>Strawman III: A runtime typing approach</h3>
 <p>
 Prior to this work, the best auto-sanitization scheme was a
-<a href="http://googleonlinesecurity.blogspot.com/2009_03_01_archive.html">runtime scheme</a>.
+<a href="http://googleonlinesecurity.blogspot.com/2009_03_01_archive.html" title="Reducing XSS by way of Automatic Context-Aware Escaping&hellip;">runtime scheme</a>.
 </p>
 
 <p>
@@ -1036,7 +1051,7 @@ escaping directives on the right before writing to the output buffer.
 <p>
 This works, and with a hand-tuned C parser has been deployed successfully on
 <a href="http://google-ctemplate.googlecode.com/svn/trunk/doc/auto_escape.html">CTemplates</a>
-and <a href="http://www.clearsilver.net/">ClearSilver </a>.
+and <a href="http://www.clearsilver.net/">ClearSilver</a>.
 </p>
 
 <p>
@@ -1230,6 +1245,7 @@ but this is tricky to do across template boundaries and has not proven
 to be necessary for the codebase we migrated.</small>
 </p>
 
+<div class="fullversiononly">
 <h3>Grammar</h3>
 <p>
 The context propagation algorithm uses a combined HTML/CSS and JS
@@ -1315,7 +1331,7 @@ for more detail.
     <h4 id=URI>URI</h4>
     <div id="uri-railroad"></div>
 
-    <div id=DynamicText class=popup>
+    <div id=DynamicText class="popup">
       <h4>DynamicText</h4>
       Converts plain text to HTML by entity encoding unless it's type indicates it is known safe HTML.
       <ul>
@@ -1336,7 +1352,7 @@ for more detail.
       exists a safe HTML sanitizer that could have produced it.
     </div>
 
-    <div id=DynamicRcdata class=popup>
+    <div id=DynamicRcdata class="popup">
       <h4>DynamicRcdata</h4>
       Converts plain text to HTML by entity encoding unless it's type indicates it is known safe HTML.
       <ul>
@@ -1364,7 +1380,7 @@ for more detail.
       end tag like <code>&lt;/textarea&gt;</code>.
     </div>
 
-    <div id=DynamicTagName class=popup>
+    <div id=DynamicTagName class="popup">
       <h4>DynamicTagName</h4>
       Allows through parts of non-CDATA, non-RCDATA tag names.
       So the Soy <code>&lt;h{$headerLevel}&gt;</code> can be used to
@@ -1385,7 +1401,7 @@ for more detail.
       </ul>
     </div>
 
-    <div id=DynamicAttrName class=popup>
+    <div id=DynamicAttrName class="popup">
       <h4>DynamicAttrName</h4>
       Allows through parts of a non-special attribute name.
       <ul>
@@ -1397,7 +1413,7 @@ for more detail.
       <code>on</code>*, <code>style</code>, <code>href</code>, etc.
     </div>
 
-    <div id=DynamicAttrValue class=popup>
+    <div id=DynamicAttrValue class="popup">
       <h4>DynamicAttrValue</h4>
       Converts plain text to HTML by entity encoding so it can be embedded in an HTML attribute.
       If embedded in a quoteless attribute, then also encodes spaces.
@@ -1431,7 +1447,7 @@ for more detail.
       quoting character on some versions of IE.
     </div>
 
-    <div id=DynamicJsString class=popup>
+    <div id=DynamicJsString class="popup">
       <h4>DynamicJsString</h4>
       Escapes plain text so it can be incorporated into part of a JS
       string literal by escaping special characters, e.g. newline
@@ -1469,7 +1485,7 @@ for more detail.
       <a href="#DynamicAttrValue" onclick="showPopup('DynamicAttrValue')">DynamicAttrValue</a>.
    </div>
 
-    <div id=DynamicRegExp class=popup>
+    <div id=DynamicRegExp class="popup">
       <h4>DynamicRegExp</h4>
       <p>
       Like <a onclick="showPopup(&quot;DynamicJsString&quot;)" href="#DynamicJsString">DynamicJsString</a>,
@@ -1481,7 +1497,7 @@ for more detail.
       </ul>
     </div>
 
-    <div id=DynamicJsValue class=popup>
+    <div id=DynamicJsValue class="popup">
       <h4>DynamicJsValue</h4>
 
       Quotes strings and encodes them like
@@ -1507,7 +1523,7 @@ for more detail.
       given <code>{ myBoolean: false }</code>.
     </div>
 
-    <div id=DynamicCssString class=popup>
+    <div id=DynamicCssString class="popup">
       <h4>DynamicCssString</h4>
       Escapes plain text so it can be incorporated into part of a CSS
       string literal by escaping special characters, e.g. newline
@@ -1543,7 +1559,7 @@ for more detail.
       be introduced into the middle of CSS strings.
     </div>
 
-    <div id=DynamicCssQuantityOrKeywordOrName class=popup>
+    <div id=DynamicCssQuantityOrKeywordOrName class="popup">
       <h4>DynamicCssQuantityOrKeywordOrName</h4>
       Allows a CSS keyword, quantity, or ID or class name through, but filter content containing special characters.
       Some use cases:
@@ -1566,7 +1582,7 @@ for more detail.
       <p>TODO: explain the allowed set and its derivation.</p>
     </div>
 
-    <div id=DynamicSchemeFilteredUriPart class=popup>
+    <div id=DynamicSchemeFilteredUriPart class="popup">
       <h4>DynamicSchemeFilteredUriPart</h4>
 
       <p>
@@ -1585,7 +1601,7 @@ for more detail.
       TODO: Explain the filter details and their derivation.
     </div>
 
-    <div id=DynamicQueryPart class=popup>
+    <div id=DynamicQueryPart class="popup">
       <h4>DynamicQueryPart</h4>
 
       <p>Encodes all characters that are special or disallowed in a URI.
@@ -1634,7 +1650,7 @@ for more detail.
       </blockquote>
     </div>
 
-    <div id=DynamicUriPart class=popup>
+    <div id=DynamicUriPart class="popup">
       <h4>DynamicUriPart</h4>
 
       <p>
@@ -1797,24 +1813,15 @@ grammar('uri-railroad',
       }
     })();
     </script>
-
+</div>
 
 <h3>Context Propagation</h3>
 <p>
 The context propagation algorithm uniquely determines the context at
 every data hole so that a later pass may chose a sanitization
 function for each hole.
-</p>
-
-<style>
-.indent { margin-left: 2em }
-</style>
-<p>
 The algorithm operates at two level, one on the graph of templates,
 and another individually within templates.
-</p>
-
-<p>
 The first deals with identifying the minimal set of templates that
 need to be processed, and might clone templates to deal with templates
 that are called in multiple different contexts.
@@ -1950,11 +1957,21 @@ choose between this many options.  We have many sanitization functions
 because we want to minimize template output size to minimize network
 latency; having more sanitization functions lets us avoid escaping
 common characters like spaces when safe.
+<span class="fullversiononly">
 The naming convention for sanitization function reflects the
 <a href="#glossary-escaper">escaper</a>,
 <a href="#glossary-filter">filter</a>, and
 <a href="#glossary-normalizer">normalizer</a>
 definitions from the glossary.
+</span>
+<span class="shortversiononly">
+By convention, sanitization functions are split into broad
+groups: escaping functions transform an input language (usually plain
+text) to the output language, filters transform any input language to
+the same string or to an innocuous string, and normalizers transform a
+string in the input language to an output in the same language but
+that is easier to embed in other languages.
+</span>
 </p>
 
 <table summary="sanitization functions" cellpadding=4 cellpadding=0 border=1>
@@ -1965,22 +1982,24 @@ definitions from the glossary.
     <td>Normalizes HTML.  Same as HTML, but does not encode
       ampersands.</tr>
   <tr><td><code>{escape,normalize}HTMLRcdata</code></td>
-    <td>Like <code>escapeHTML</code> but does not allow pre-sanitized
-      HTML content through unchanged since tags are not allowed in
-      RCDATA contexts, <code>&lt;title&gt;</code> and
-      <code>&lt;textarea&gt;</code>.</tr>
+    <td>Like <code>escapeHTML</code> but does not exempt pre-sanitized
+      content since RCDATA
+      <span class="fullversiononly">(<code>&lt;title&gt;</code> and
+      <code>&lt;textarea&gt;</code>)</span> can't contain tags.</tr>
   <tr><td><code>{escape,normalize}HTMLAttribute</code></td>
     <td>Like <code>escapeHTML</code> but strips tags from
-      pre-sanitized HTML content since tags are not
-      allowed in attributes.</tr>
+      pre-sanitized content.</tr>
   <tr><td><code>filterHtmlElementName</code></td>
     <td>Rejects any invalid element name or non PCDATA element.</tr>
   <tr><td><code>filterHtmlAttribName</code></td>
     <td>Rejects any invalid attribute name or attribute name that
       has JS, CSS, or URI content.</tr>
   <tr><td><code>{escape,normalize}URI</code></td>
-    <td>Percent encodes (assuming UTF-8) URI, HTML, JS, and CSS
-      special characters so that the URL can be safely embedded.  This
+    <td>Percent encodes
+      <span class="fullversiononly"> (assuming UTF-8)</span>
+      URI,HTML,JS,&amp;CSS
+      special characters to allow safe embedding.
+      <span class="fullversiononly">This
       means encoding parentheses and single quotes which should not be
       normalized according to RFC 3986, and is not valid for all
       non-hierarchical URI schemes, but the only productions using
@@ -1988,31 +2007,27 @@ definitions from the glossary.
       and normalizing these characters is essential to safely
       embedding URIs in unquoted CSS <code>url(&hellip;)</code>
       and to make sure that CSS error recovery mode doesn't jump
-      into the middle of a quoted string.</tr>
-  <tr><td><code>filterNormalizeURI</code></td>
-    <td>Like <code>normalizeURI</code> but first rejects any input
-      that might specify a protocol other than <code>http</code>,
+      into the middle of a quoted string.</span></tr>
+  <tr><td><code>filterNormalizeUri</code></td>
+    <td>Like <code>normalizeUri</code> but rejects any input
+      that has a protocol other than <code>http</code>,
       <code>https</code>, or <code>mailto</code>.</tr>
   <tr><td><code>{escape,normalize}JSStringChars</code></td>
-    <td>Uses <code>\\</code> and <code>\uABCD</code> style escapes for
-      any code-units special in HTML, JS, or conditional compilation
-      directives.</tr>
+    <td>Uses <code>\uABCD</code> style escapes for
+      code-units special in HTML, JS, or conditional compilation.</tr>
   <tr><td><code>{escape,normalize}JSRegexChars</code></td>
     <td>Like <code>{escape,normalize}JSStringChars</code> but also
-      escapes regular expression special characters like
-      <code>'$'</code>.</tr>
+      escapes regular expression specials <span class="fullversiononly">
+      such as <code>'$'</code></span>.</tr>
   <tr><td><code>{escape,normalize}JSValue</code></td>
-    <td>Encodes a boolean or a number to the string representation of
-      that surrounded by spaces.  Otherwise wraps in quotes and escapes
-      as a string value.</tr>
+    <td>Encodes booleans &amp; numbers wrapped in spaces, else quotes and escapes.</tr>
   <tr><td><code>escapeCSSStringChars</code></td>
     <td>Uses <code>\ABCD</code> style escapes to escape HTML
       and CSS special characters.</tr>
   <tr><td><code>filterCssIdentOrValue</code></td>
-    <td>Allows CLASSes and IDs for CSS selectors, parts of property
-      names necessary for many BIDI applications, CSS keyword values,
-      color literals, and quantities.  But disallows property names
-      that might nest javascript, and disallows URL schemes.</tr>
+    <td>Allows <tt>class</tt>es, <tt>id</tt>s, property
+      name parts for bidi, CSS keyword values,
+      colors, &amp; quantities.</tr>
   <tr><td><code>noAutoescape</code></td>
     <td>Passes its input through unchanged.  This is an auditable
       exception to auto-sanitization.</tr>
@@ -2092,12 +2107,12 @@ token.  This works well for all the code we've seen that people actually
 write, and makes our approach feasible, but there is a known case where
 it fails: <code>x++ /a/i</code> vs <code>x = ++/a/i</code>.
 The second code snippet, while nonsensical, is valid JavaScript that our
-scheme fails to handle correctly.  
+scheme fails to handle correctly.
 </p>
 
 <p>
 Our parser does not currently recognize HTML5
-<a href="http://dev.w3.org/html5/markup/aria/syntax.html#escaping-text-span">escaping text spans</a>,
+<a href="http://dev.w3.org/html5/markup/aria/syntax.html#escaping-text-span" title="Escaping Text Spans">escaping text spans</a>,
 the regions inside <code>&lt;script&gt;</code> and
 <code>&lt;style&gt;</code> bodies delimited by <code>&lt;!--</code>
 and <code>--&gt;</code> that suppress end-tag processing.  This can be
@@ -2109,8 +2124,7 @@ span boundaries.
 <p>
 Our parser does not descend into HTML, CSS, or JS in <tt>data:</tt>
 URLs.
-This is fixable but we have not encountered the need for this in
-existing code.
+We could but have not encountered the need in existing code.
 </p>
 
 
@@ -2124,23 +2138,17 @@ Most of the templates were relatively small but totaled 21098 LOC and
 dual-core processor running Linux 2.6.31.
 </p>
 <table summary="LOC">
-  <tr><td align=right>  1-    18</td><td>######################################## (685)</tr> 
-  <tr><td align=right> 19-    36</td><td>############ (210)</tr> 
-  <tr><td align=right> 37-    55</td><td>#### (78)</tr> 
-  <tr><td align=right> 56-    73</td><td># (33)</tr> 
-  <tr><td align=right> 74-    91</td><td> (10)</tr> 
-  <tr><td align=right> 92-   110</td><td> (7)</tr> 
-  <tr><td align=right>111-   128</td><td> (4)</tr> 
-  <tr><td align=right>129-   147</td><td> (3)</tr> 
-  <tr><td align=right>148-   165</td><td> (1)</tr> 
-  <tr><td align=right>166-   183</td><td> (1)</tr> 
-  <tr><td align=right>184-   202</td><td> (1)</tr> 
-  <tr><td align=right>203-   220</td><td> (1)</tr> 
-  <tr><td align=right>221-   238</td><td> (0)</tr> 
-  <tr><td align=right>239-   257</td><td> (0)</tr> 
-  <tr><td align=right>258-   275</td><td> (0)</tr> 
-  <tr><td align=right>276-   294</td><td> (0)</tr> 
-  <tr><td align=right>295-   312</td><td> (1)</tr> 
+  <tr><td align=right>  1-    18</td><td>######################################## (685)</tr>
+  <tr><td align=right> 19-    36</td><td>############ (210)</tr>
+  <tr><td align=right> 37-    55</td><td>#### (78)</tr>
+  <tr><td align=right> 56-    73</td><td># (33)</tr>
+  <tr><td align=right> 74-    91</td><td> (10)</tr>
+  <tr><td align=right> 92-   110</td><td> (7)</tr>
+  <tr><td align=right>111-   128</td><td> (4)</tr>
+  <tr><td align=right>129-   147</td><td> (3)</tr>
+  <tr><td align=right>148-   220</td><td> (1) x 4</tr>
+  <tr><td align=right>221-   294</td><td> (0) x 4</tr>
+  <tr><td align=right>295-   312</td><td> (1)</tr>
 </table>
 
 <p>
@@ -2183,30 +2191,30 @@ auto-sanitization approach shows a 3-4 time slowdown over string
 concatenation.
 </p>
 <table cellspacing=4 cols=6 summary="open(Template()) benchmark">
-<tbody> 
-<tr> 
-  <th># rows</th> 
-  <th>string +=</th> 
-  <th>Array.join</th> 
-  <th>open(Template(&hellip;))</th> 
-  <th>DOM</th> 
-  <th>render time</th> 
-</tr> 
-<tr> 
-  <td>1000</td> 
-  <td>54 ms</td> 
-  <td>68 ms</td> 
-  <td>204 ms</td> 
-  <td>508 ms</td> 
-  <td>586 ms</td> 
-</tr> 
-<tr> 
-  <td>5000</td> 
-  <td>267 ms</td> 
-  <td>332 ms</td> 
-  <td>1159 ms</td> 
-  <td>2528 ms</td> 
-  <td>1458 ms</td> 
+<tbody>
+<tr>
+  <th># rows</th>
+  <th>string +=</th>
+  <th>Array.join</th>
+  <th>open(Template(&hellip;))</th>
+  <th>DOM</th>
+  <th>render time</th>
+</tr>
+<tr>
+  <td>1000</td>
+  <td>54 ms</td>
+  <td>68 ms</td>
+  <td>204 ms</td>
+  <td>508 ms</td>
+  <td>586 ms</td>
+</tr>
+<tr>
+  <td>5000</td>
+  <td>267 ms</td>
+  <td>332 ms</td>
+  <td>1159 ms</td>
+  <td>2528 ms</td>
+  <td>1458 ms</td>
 </tr></tbody></table>
 
 <p>
@@ -2235,9 +2243,53 @@ the template should approach string concatenation.
   <td>3531971000 ns</td><td>(7.2)</td></tr>
 </table>
 
+<h3 class="printable">References</h3>
+<p id="references" class="printable"></p>
+<script type="text/javascript">registerOnLoad(function () {
+  function span(classes, content) {
+    var span = document.createElement('SPAN');
+    span.className = classes;
+    span.appendChild(content);
+    return span;
+  }
 
+  var references = document.getElementById('references');
+  var links = document.getElementsByTagName('A');
+  links = Array.prototype.slice.call(links);
+  // Pull into an array since
+  var counter = 0;
+  for (var i = 0, n = links.length; i !== n; ++i) {
+    var link = links[i];
+    if (/^#/.test(link.getAttribute('href'))) { continue; }
+    var description = link.title || link.innerText || link.textContent;
+    if (counter) {
+      references.appendChild(document.createElement('BR'));
+    }
+    ++counter;
+    references.appendChild(document.createTextNode(
+        '[' + counter + '] : ' + description + ' @ ' + link.href));
+    var parent = link.parentNode;
+    var follower = link.nextSibling;
+    parent.insertBefore(
+        span('printable', document.createTextNode(' [' + counter + ']')), follower);
+  }
+})</script>
 
+<div class="fullversiononly">
 <hr>
-<address></address>
-<!-- hhmts start --> Last modified: Mon Mar 21 17:42:57 PDT 2011 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Mon Mar 21 18:44:32 PDT 2011 <!-- hhmts end -->
+</div>
+
+<script>
+if (shortVersion) {
+  document.write('<style>.fullversiononly { display: none }<\/style>');
+} else {
+  document.write('<style>.shortversiononly { display: none }<\/style>');
+}
+if (!printableVersion) {
+  document.write('<style>.printable { display: none }<\/style>');
+} else {
+  document.write('<style>a:link, a:visited { color: inherit; text-decoration: inherit }</style>');
+}
+</script>
 </body> </html>
