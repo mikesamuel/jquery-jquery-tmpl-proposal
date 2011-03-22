@@ -51,4 +51,11 @@ var cannedExamples = [
       + 'html_msg`<a href="/foo?q=${n}:+.6">${message}</a>`'
       ),
     result: '<a href="/foo?q=%2B42.0000">I &lt;3 Ponies!</a>'
+  },
+
+  { name: "Dynamic regular expression",
+    sugaryJs: (
+      'price = "-$123.50",\n'
+      + 're`^price\\s*:\\s*$price\\b:gi`'),
+    result: '/^price\\s*:\\s*\\-\\$123\\.50\\b/gi'
   }];
