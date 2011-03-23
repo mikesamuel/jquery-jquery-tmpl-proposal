@@ -45,7 +45,9 @@ function testQuasiOneAbbreviatedInterp() {
 function testQuasiEscape() {
   assertEquals(
       '(foo(["foo ", "\\nbar"])([function () { return (x); }]))',
-      desugar('foo`foo ${x}$\\nbar`'));
+      desugar('foo`foo ${x}$\\nbar`')
+      // There are multiple legal ways to encode a quasi quote.
+      .replace('\\u000a', '\\n'));
 }
 
 function testQuasiRawEscape() {
