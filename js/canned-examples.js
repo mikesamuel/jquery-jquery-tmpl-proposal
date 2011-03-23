@@ -58,4 +58,22 @@ var cannedExamples = [
       'price = "-$123.50",\n'
       + 're`^price\\s*:\\s*$price\\b:gi`'),
     result: '/^price\\s*:\\s*\\-\\$123\\.50\\b/gi'
+  },
+
+  { name: "Nesting HTML",
+    sugaryJs: (
+      'rows = [["Unicorns", "Sunbeams", "Puppies"], ["<3", "<3", "<3"]],\n'
+      + 'safehtml`<table>${\n'
+      + '  rows.map(function(row) {\n'
+      + '    return safehtml`<tr>${\n'
+      + '      row.map(function(cell) {\n'
+      + '        return safehtml`<td>${cell}</td>`\n'
+      + '      })\n'
+      + '    }</tr>`\n'
+      + '  })\n'
+      + '}</table>`'
+      ),
+    result: (
+      '<table><tr><td>Unicorns</td><td>Sunbeams</td><td>Puppies</td></tr>'
+      + '<tr><td>&lt;3</td><td>&lt;3</td><td>&lt;3</td></tr></table>')
   }];
