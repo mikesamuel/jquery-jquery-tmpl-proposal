@@ -40,7 +40,8 @@ h2.fail { color: red }
       header.className = 'pass';
     } catch (e) {
       header.className = 'fail';
-      document.body.appendChild(document.createTextNode(e.toString()));
+      document.body.appendChild(document.createTextNode(
+          e.toString() + '\n' + e.stack));
     }
     if (typeof console !== 'undefined') { console.groupEnd(k); }
   }

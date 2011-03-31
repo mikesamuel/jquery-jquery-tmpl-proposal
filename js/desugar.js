@@ -6,6 +6,9 @@
 
 // Requires contextUpdate.js for its regex lexical prediction function.
 
+var CURRIED = false;
+var THUNKED = false;
+
 
 /**
  * Desugars JavaScript code converting JavaScript + quasi syntax to regular
@@ -145,8 +148,16 @@ function desugar(sugaryJs) {
           var quasiBodyToken = quasiBodyMatch[0];
           if (quasiBodyToken === quasiDelim) {   // End of the quasi.
             literalStrings.push(quasiRawToJs(buffer.join('')));
-            return '(' + quasiName + '([' + literalStrings.join(', ') + '])(['
-                + interpolations.join(', ') + ']))';
+            if (CURRIED) {
+              return '(' + quasiName + '([' + literalStrings.join(', ') + '])(['
+                  + interpolations.join(', ') + ']))';
+            } else {
+              var interleaved = [literalStrings[0]];
+              for (var i = 0, n = interpolations.length; i < n;) {
+                interleaved.push(interpolations[i], literalStrings[++i]);
+              }
+              return '(' + quasiName + '([' + interleaved.join(', ') + ']))';
+            }
           } else if (quasiBodyToken === '${') {  // A nested expression.
             literalStrings.push(quasiRawToJs(buffer.join('')));
             buffer.length = 0;
@@ -176,17 +187,26 @@ function desugar(sugaryJs) {
             buffer.push(')');
             var interpBody = buffer.join('');
             buffer.length = 0;
-            if (interpBody.charAt(1) === '=') {
-              interpBody = '(' + interpBody.substring(2);
-              interpolations.push(
-                  'function () { return arguments.length ? '
-                  + interpBody + ' = arguments[0] : ' + interpBody + '; }');
+            if (THUNKED) {
+              if (interpBody.charAt(1) === '=') {
+                interpBody = '(' + interpBody.substring(2);
+                interpolations.push(
+                    'function () { return arguments.length ? '
+                    + interpBody + ' = arguments[0] : ' + interpBody + '; }');
+              } else {
+                interpolations.push('function () { return ' + interpBody + '; }');
+              }
             } else {
-              interpolations.push('function () { return ' + interpBody + '; }');
+              interpolations.push(interpBody);
             }
           } else if (/^[$][a-z_$][a-z0-9_$]*$/.test(quasiBodyToken)) {
             literalStrings.push(quasiRawToJs(buffer.join('')));
-            interpolations.push('function () { return (' + quasiBodyToken.substring(1) + '); }');
+            if (THUNKED) {
+              interpolations.push(
+                  'function () { return (' + quasiBodyToken.substring(1) + '); }');
+            } else {
+              interpolations.push('(' + quasiBodyToken.substring(1) + ')');
+            }
             buffer.length = 0;
           } else {
             buffer.push(quasiBodyToken);

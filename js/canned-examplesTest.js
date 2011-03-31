@@ -1,6 +1,7 @@
 (function () {
   for (var i = 0, n = cannedExamples.length; i < n; ++i) {
-    this['testExample' + i] = (
+    var exampleName = cannedExamples[i].name.replace(/\W+/g, '_');
+    this['testExample' + i + '_' + exampleName] = (
         function (example) {
           return function () {
             assertEquals(

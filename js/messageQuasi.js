@@ -63,26 +63,26 @@ var msgPartsDecompose = (function () {
    * produces a bundle of the static parts and functions for
    * formatting dynamic values.
    */
-  function msgPartsDecompose(staticParts) {
-    var n = staticParts.length;
+  function msgPartsDecompose(literalParts) {
+    var n = literalParts.length;
     for (var i = 0; i < n; ++i) {
-      staticParts[i] = decode(staticParts[i]).replace(/\u0000/g, '');
+      literalParts[i] = decode(literalParts[i]).replace(/\u0000/g, '');
     }
-    var key = staticParts.join('\u0000');
+    var key = literalParts.join('\u0000');
 //  if (cache.hasOwnProperty(key)) { return cache[key]; }
 
-    var literalParts = [staticParts[0]];
+    var literalPartsNoMetadata = [literalParts[0]];
     var formatSpecifiersRe = /^:(?:([0-9a-z.\-+\/]*) ?|\(([^\)]*)\))/i;
     var inputXforms = [];
     for (var i = 1; i < n; ++i) {
-      var staticPart = staticParts[i];
-      var formatSpecifiersMatch = staticPart.match(formatSpecifiersRe);
+      var literalPart = literalParts[i];
+      var formatSpecifiersMatch = literalPart.match(formatSpecifiersRe);
       var formatSpecifiers = null;
       if (formatSpecifiersMatch) {
         formatSpecifiers = formatSpecifiersMatch[1] || formatSpecifiersMatch[2];
-        staticPart = staticPart.substring(formatSpecifiersMatch[0].length);
+        literalPart = literalPart.substring(formatSpecifiersMatch[0].length);
       }
-      literalParts[i] = decode(staticPart);
+      literalPartsNoMetadata[i] = decode(literalPart);
       inputXforms[i - 1] = (function (formatSpecifiers) {
         return function (value) {
           if (value && 'function' === typeof value.formatToString) {
@@ -96,7 +96,7 @@ var msgPartsDecompose = (function () {
     if (cacheLen >= 50) { cache = {}; cacheLen = 0; }
 
     return cache[key] = {
-      literalParts: literalParts,
+      literalParts: literalPartsNoMetadata,
       inputXforms: inputXforms
     };
   }
@@ -108,23 +108,25 @@ var msgPartsDecompose = (function () {
  * A quasi handler that allows format specifiers using the
  * syntax described at the top of this file.
  */
-var msg = function (staticParts) {
-  var decomposed = msgPartsDecompose(staticParts);
-  var literalParts = decomposed.literalParts;
-  var inputXforms = decomposed.inputXforms;
-  var lastIndex = literalParts.length - 1;
+var msg = function (parts) {
+  var literalParts = [];
+  var n = parts.length >> 1;
+  for (var i = n + 1; --i >= 0;) {
+    literalParts[i] = parts[i << 1];
+  }
 
-  return function (interpolations) {
-    var formattedArgs = [];
-    var originals = [];
-    for (var i = 0; i < lastIndex; ++i) {
-      var thunk = interpolations[i];
-      var xform = inputXforms[i];
-      formattedArgs[i] = xform(originals[i] = thunk());
-    }
-    return prettyQuasi(
-        literalParts, formattedArgs, originals, null, String);
-  };
+  var decomposed = msgPartsDecompose(literalParts);
+  literalParts = decomposed.literalParts;
+  var inputXforms = decomposed.inputXforms;
+
+  var formattedArgs = [];
+  var originals = [];
+  for (var i = 0; i < n; ++i) {
+    var xform = inputXforms[i];
+    formattedArgs[i] = xform(originals[i] = parts[(i << 1) | 1]);
+  }
+  return prettyQuasi(
+      literalParts, formattedArgs, originals, null, String);
 };
 
 /** Produces a padding string with the specified number of zeroes. */

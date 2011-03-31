@@ -1,8 +1,9 @@
 // A safe HTML interpolation scheme that uses contextual autoescaping to
 // choose appropriate escapers for dynamic values.
 
+var safehtml, safeHtmlChooseEscapers;
 
-var safehtml = (function () {
+(function () {
   var cacheSize = 0;
   var cache = {};
 
@@ -10,8 +11,7 @@ var safehtml = (function () {
     return function (x) { return f(g(x)); };
   }
 
-  return function safehtml(chunksIn) {
-    var htmlTextChunks = chunksIn.splice(0);
+  safeHtmlChooseEscapers = function (htmlTextChunks) {
     var nChunks = htmlTextChunks.length;
 
     for (var i = nChunks; --i >= 0;) {
@@ -87,48 +87,48 @@ var safehtml = (function () {
       if (secondEscMode !== null) {
         sanitizer = compose(SANITIZER_FOR_ESC_MODE[secondEscMode], sanitizer);
       }
-      if (prettyPrintDetails) { prettyPrintDetails.push(sanitizerContext); }
+      // HACK to allow pretty printing in demo REPL.
+      if (prettyPrintDetails) { prettyPrintDetails.push(contextToString(sanitizerContext)); }
       sanitizerFunctions.push(sanitizer);
     }
 
-    var lastIndex = nChunks - 1;
-
-    var interpolator;
     if (prettyPrintDetails) {
-      // HACK to allow pretty printing in demo REPL.
-      for (var i = prettyPrintDetails.length; --i >= 0;) {
-        prettyPrintDetails[i] = contextToString(prettyPrintDetails[i]);
-      }
-      interpolator = function (interpolations) {
-        var originals = [];
-        var escapedArgs = [];
-        for (var i = 0; i < lastIndex; ++i) {
-          var thunk = interpolations[i];
-          escapedArgs[i] = (0, sanitizerFunctions[i])(originals[i] = thunk());
-        }
-        return prettyQuasi(
-            htmlTextChunks, escapedArgs, originals, prettyPrintDetails,
-	    SanitizedHtml);
-      };
-    } else {
-      var lastChunk = htmlTextChunks[lastIndex];
-      interpolator = function (interpolations) {
-        var outputBuffer = [];
-        for (var i = 0, j = -1; i < lastIndex; ++i) {
-          outputBuffer[++j] = htmlTextChunks[i];
-          var thunk = interpolations[i];
-          outputBuffer[++j] = (0, sanitizerFunctions[i])(thunk());
-        }
-        outputBuffer[++j] = lastChunk;
-        return new SanitizedHtml(outputBuffer.join(''));
-      };
+      sanitizerFunctions.prettyPrintDetails = prettyPrintDetails;
     }
 
     if (++cacheSize === 50) {
       cache = {};
       cacheSize = 0;
     }
-    return cache[key] = interpolator;
+    return cache[key] = sanitizerFunctions;
+  };
+
+  safehtml = function (parts) {
+    var literalParts = [];
+    var n = parts.length >> 1;
+    for (var i = n + 1; --i >= 0;) {
+      literalParts[i] = parts[i << 1];
+    }
+    var sanitizers = safeHtmlChooseEscapers(literalParts);
+
+    if (sanitizers.prettyPrintDetails) {
+      var originals = [];
+      var escapedArgs = [];
+      for (var i = 0; i < n; ++i) {
+        escapedArgs[i] = (0, sanitizers[i])(originals[i] = parts[(i << 1) | 1]);
+      }
+      return prettyQuasi(
+          literalParts, escapedArgs, originals, sanitizers.prettyPrintDetails,
+          SanitizedHtml);
+    } else {
+      var outputBuffer = [];
+      for (var i = 0, j = -1; i < n; ++i) {
+        outputBuffer[++j] = literalParts[i];
+        outputBuffer[++j] = (0, sanitizers[i])(parts[j]);
+      }
+      outputBuffer[++j] = literalParts[n];
+      return new SanitizedHtml(outputBuffer.join(''));
+    }
   };
 })();
 

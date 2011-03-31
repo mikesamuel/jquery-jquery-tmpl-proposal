@@ -27,24 +27,24 @@ function testBackquotesInStringsAndRegexs() {
 }
 
 function testSimpleQuasi() {
-  assertEquals('(foo(["foo"])([]))', desugar('foo`foo`'));
+  assertEquals('(foo(["foo"]))', desugar('foo`foo`'));
 }
 
 function testQuasiOneInterp() {
   assertEquals(
-      '(foo(["foo ", " bar"])([function () { return (x); }]))',
+      '(foo(["foo ", (x), " bar"]))',
       desugar('foo`foo ${x} bar`'));
 }
 
 function testQuasiOneAbbreviatedInterp() {
   assertEquals(
-      '(foo(["foo ", " bar"])([function () { return (x); }]))',
+      '(foo(["foo ", (x), " bar"]))',
       desugar('foo`foo $x bar`'));
 }
 
 function testQuasiEscape() {
   assertEquals(
-      '(foo(["foo ", "\\nbar"])([function () { return (x); }]))',
+      '(foo(["foo ", (x), "\\nbar"]))',
       desugar('foo`foo ${x}$\\nbar`')
       // There are multiple legal ways to encode a quasi quote.
       .replace('\\u000a', '\\n'));
@@ -52,32 +52,33 @@ function testQuasiEscape() {
 
 function testQuasiRawEscape() {
   assertEquals(
-      '(foo(["foo ", "\\\\nbar"])([function () { return (x); }]))',
+      '(foo(["foo ", (x), "\\\\nbar"]))',
       desugar('foo`foo ${x}\\nbar`'));
 }
 
 function testBracketsInQuasiInterp() {
   assertEquals(
-      '(foo(["foo ", "\\\\nbar"])([function () { return (f({a: b})); }]))',
+      '(foo(["foo ", (f({a: b})), "\\\\nbar"]))',
       desugar('foo`foo ${f({a: b})}\\nbar`'));
 }
 
 function testStringInQuasiInterp() {
   assertEquals(
-      '(foo(["foo ", "\\\\nbar"])([function () { return (f("`")); }]))',
+      '(foo(["foo ", (f("`")), "\\\\nbar"]))',
       desugar('foo`foo ${f("`")}\\nbar`'));
 }
 
 function testNestedQuasi() {
   assertEquals(
-      '(foo(["foo ", "\\\\nbar"])(' + 
-      '[function () { return (f((bar(["-", "-"])([function () { return (x); }])))); }]))',
+      '(foo(["foo ", (f((bar(["-", (x), "-"])))), "\\\\nbar"]))',
       desugar('foo`foo ${f(bar`-${x}-`)}\\nbar`'));
 }
 
-function testAssignableQuasiHole() {
-  assertEquals(
-      '(foo(["foo ", "\\\\nbar"])' + 
-      '([function () { return arguments.length ? (x.y) = arguments[0] : (x.y); }]))',
-      desugar('foo`foo ${=x.y}\\nbar`'));
+if (THUNKED) {
+  testAssignableQuasiHole = function testAssignableQuasiHole() {
+    assertEquals(
+        '(foo(["foo ", "\\\\nbar"])' +
+        '([function () { return arguments.length ? (x.y) = arguments[0] : (x.y); }]))',
+        desugar('foo`foo ${=x.y}\\nbar`'));
+  };
 }
