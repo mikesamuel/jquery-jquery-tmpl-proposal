@@ -2112,13 +2112,18 @@ sure that it specifies no protocol or an approved one.  But if
 <code>$x</code> is the empty string, then <code>$y</code> might still
 specify a dangerous protocol.  Alternatively <code>$x</code> might
 specify <code>"javascript"</code> and <code>$y</code> start with a
-colon.  This hole can be closed a number of ways, but is a source
-of considerable complexity because the two interpolations might cross
-template boundaries.  Other examples of whitespace problems are in
-JavaScript regular expressions:
+colon.  This hole can be closed a number of ways, e.g.
+<code>java<b>%73</b>cript:alert(1337)</code> is not a dangerous URL.
+Similar problems arise with JavaScript regular expressions:
 <code class=prettyprint>var myPattern = /{$x}/</code> where an empty
-<code>$x</code> would turn the regular expression literal into a
-line comment.
+<code>$x</code> could turn the regular expression literal into a
+line comment and there are similar special case fixes
+(<code>/(?:)/</code> is not a comment).
+But a general solution to empty strings would be a source
+of considerable complexity.  Simply making sanitizer functions variadic
+(<code>{$x}{$y}</code> &rarr; <code>{filterNormalizeUri($x, $y)}</code>)
+will not suffice because the two interpolations might cross
+template boundaries.
 </p>
 
 <p>
@@ -2339,7 +2344,7 @@ if (!printableVersion) {
 
 <div class="fullversiononly">
 <hr>
-<!-- hhmts start --> Last modified: Mon Mar 21 19:41:24 PDT 2011 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Fri Apr  1 16:31:01 PDT 2011 <!-- hhmts end -->
 </div>
 
 </body> </html>
