@@ -3,7 +3,7 @@
 // compilation unit.
 // Requires contextUpdate.js
 
-this['rawTextContextUpdater'] = {
+window['rawTextContextUpdater'] = {
     'processRawText': processRawText,
     'ESC_MODE_FOR_STATE': ESC_MODE_FOR_STATE,
     'STATE_HTML_PCDATA': STATE_HTML_PCDATA,

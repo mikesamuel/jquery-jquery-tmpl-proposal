@@ -115,7 +115,8 @@ var safehtml, safeHtmlChooseEscapers;
       var originals = [];
       var escapedArgs = [];
       for (var i = 0; i < n; ++i) {
-        escapedArgs[i] = (0, sanitizers[i])(originals[i] = parts[(i << 1) | 1]);
+	var sanitizer = sanitizers[i];
+        escapedArgs[i] = sanitizer(originals[i] = parts[(i << 1) | 1]);
       }
       return prettyQuasi(
           literalParts, escapedArgs, originals, sanitizers.prettyPrintDetails,
@@ -124,7 +125,8 @@ var safehtml, safeHtmlChooseEscapers;
       var outputBuffer = [];
       for (var i = 0, j = -1; i < n; ++i) {
         outputBuffer[++j] = literalParts[i];
-        outputBuffer[++j] = (0, sanitizers[i])(parts[j]);
+	var sanitizer = sanitizers[i];
+        outputBuffer[++j] = sanitizer(parts[j]);
       }
       outputBuffer[++j] = literalParts[n];
       return new SanitizedHtml(outputBuffer.join(''));
