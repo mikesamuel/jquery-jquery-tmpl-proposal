@@ -1,6 +1,9 @@
 // A safe HTML interpolation scheme that uses contextual autoescaping to
 // choose appropriate escapers for dynamic values.
 
+/** @define {boolean} See pretty-quasi-output.js */
+var USE_PRETTY_QUASI;
+
 var safehtml, safeHtmlChooseEscapers;
 
 (function () {
@@ -25,7 +28,7 @@ var safehtml, safeHtmlChooseEscapers;
     var context = STATE_HTML_PCDATA;
 
     var sanitizerFunctions = [];
-    var prettyPrintDetails = typeof prettyQuasi !== 'undefined' ? [] : void 0;
+    var prettyPrintDetails = USE_PRETTY_QUASI ? [] : void 0;
     for (var i = 0; i < nChunks - 1; ++i) {
       var htmlTextChunk = htmlTextChunks[i];
       context = processRawText(htmlTextChunk, context);
@@ -88,11 +91,11 @@ var safehtml, safeHtmlChooseEscapers;
         sanitizer = compose(SANITIZER_FOR_ESC_MODE[secondEscMode], sanitizer);
       }
       // HACK to allow pretty printing in demo REPL.
-      if (prettyPrintDetails) { prettyPrintDetails.push(contextToString(sanitizerContext)); }
+      if (USE_PRETTY_QUASI) { prettyPrintDetails.push(contextToString(sanitizerContext)); }
       sanitizerFunctions.push(sanitizer);
     }
 
-    if (prettyPrintDetails) {
+    if (USE_PRETTY_QUASI) {
       sanitizerFunctions.prettyPrintDetails = prettyPrintDetails;
     }
 
@@ -111,7 +114,7 @@ var safehtml, safeHtmlChooseEscapers;
     }
     var sanitizers = safeHtmlChooseEscapers(literalParts);
 
-    if (sanitizers.prettyPrintDetails) {
+    if (USE_PRETTY_QUASI) {
       var originals = [];
       var escapedArgs = [];
       for (var i = 0; i < n; ++i) {

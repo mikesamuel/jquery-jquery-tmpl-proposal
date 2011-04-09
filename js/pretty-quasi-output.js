@@ -1,6 +1,8 @@
 // Allows a REPL to get a structured version of output from a compliant quasi handler
 // so it can display the output from a quasi with interpolated values annoatated.
 
+USE_PRETTY_QUASI = true;
+
 /**
  * @param staticPortions The static content between which dynamic content is interpolated.
  * @param dynamicPortions The processed dynamic content.

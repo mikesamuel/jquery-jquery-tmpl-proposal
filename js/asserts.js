@@ -10,9 +10,9 @@ function assertEquals(msg, a, b) {
   if (a !== b) {
     if (typeof console !== 'undefined') {
       console.error(
-        '%s: Expected\n\t(%o : %s)\nbut was\n\t(%o : %s)',
-        msg || 'Inequal',
-        a, typeof a, b, typeof b);
+          '%s: Expected\n\t(%o : %s)\nbut was\n\t(%o : %s)',
+          msg || 'Inequal',
+          a, typeof a, b, typeof b);
       console.trace();
     }
     throw new Error(
