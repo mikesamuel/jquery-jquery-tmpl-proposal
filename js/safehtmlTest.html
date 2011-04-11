@@ -1,9 +1,16 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html><head>
 <title>Safe HTML Test</title>
-<script src="contextUpdate.js"></script>
-<script src="escapers.js"></script>
-<script src="safehtml.js"></script>
+<script>
+if (/[?&]compiled/.test(location.search)) {
+  document.write('<script src="safehtml-compiled.js"><\/script>');
+} else {
+  document.write(
+     '<script src="contextUpdate.js"><\/script>' +
+     '<script src="escapers.js"><\/script>' +
+     '<script src="safehtml.js"><\/script>');
+}
+</script>
 
 <script src="asserts.js"></script>
 <script src="safehtmlTest.js"></script>
