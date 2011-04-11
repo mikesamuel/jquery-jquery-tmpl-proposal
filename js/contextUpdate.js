@@ -930,25 +930,33 @@ var processRawText = (function () {
 
   /**
    * Matches the end of a special tag like {@code script}.
-   * @param {string} tagName
+   * @param {RegExp} pattern
    * @constructor
    * @extends Transition
    */
-  function EndTagTransition(tagName) {
-    Transition.call(this, new RegExp("</" + tagName + "\\b", 'i'));
+  function EndTagTransition(pattern) {
+    Transition.call(this, pattern);
   }
   TransitionSubclass(
       EndTagTransition,
+      // TODO: This transitions to an HTML_TAG state which accepts attributes.
+      // So we allow nonsensical constructs like </br foo="bar">.
+      // Add another HTML_END_TAG state that just accepts space and >.
       function (prior, match) {
         return STATE_HTML_TAG | ELEMENT_TYPE_NORMAL;
       },
       function (prior, match) {
         return attrTypeOf(prior) === ATTR_TYPE_NONE;
       });
-  // TODO: This transitions to an HTML_TAG state which can accept attributes.
-  // So we allow nonsensical constructs like </br foo="bar">.
-  // Add another HTML_END_TAG state that just accepts space and >.
+  var SCRIPT_TAG_END = new EndTagTransition(/<\/script\b/i);
+  var STYLE_TAG_END = new EndTagTransition(/<\/style\b/i);
 
+
+  var ELEMENT_TYPE_TO_TAG_NAME = {};
+  ELEMENT_TYPE_TO_TAG_NAME[ELEMENT_TYPE_TEXTAREA] = 'textarea';
+  ELEMENT_TYPE_TO_TAG_NAME[ELEMENT_TYPE_TITLE] = 'title';
+  ELEMENT_TYPE_TO_TAG_NAME[ELEMENT_TYPE_LISTING] = 'listing';
+  ELEMENT_TYPE_TO_TAG_NAME[ELEMENT_TYPE_XMP] = 'xmp';
 
   /**
    * @param {RegExp} regex
@@ -964,14 +972,8 @@ var processRawText = (function () {
         return STATE_HTML_TAG | ELEMENT_TYPE_NORMAL;
       },
       function (prior, match) {
-        var tagName = match[1].toUpperCase();
-        switch (elementTypeOf(prior)) {
-        case ELEMENT_TYPE_TEXTAREA: return tagName === 'TEXTAREA';
-        case ELEMENT_TYPE_TITLE: return tagName === 'TITLE';
-        case ELEMENT_TYPE_LISTING: return tagName === 'LISTING';
-        case ELEMENT_TYPE_XMP: return tagName === 'XMP';
-        }
-        return FALSEY;
+        return match[1].toLowerCase()
+            === ELEMENT_TYPE_TO_TAG_NAME[elementTypeOf(prior)];
       });
 
   /**
@@ -1036,13 +1038,13 @@ var processRawText = (function () {
     new ToTransition(/^[a-zA-Z]+/, STATE_HTML_TAG_NAME),
     new ToTransition(/^(?=[^a-zA-Z])/, STATE_HTML_PCDATA)];
   TRANSITIONS[STATE_HTML_TAG_NAME] = [
-    new TransitionToSelf(/^[a-zA-Z0-9:\-]*(?:[a-zA-Z0-9]|$)/),
+    new TransitionToSelf(/^[a-zA-Z0-9:-]*(?:[a-zA-Z0-9]|$)/),
     new ToTagTransition(/^(?=[\/\s>])/, ELEMENT_TYPE_NORMAL)];
   TRANSITIONS[STATE_HTML_TAG] = [
     // Allows {@code data-foo} and other dashed attribute names, but intentionally disallows
     // "--" as an attribute name so that a tag ending after a value-less attribute named "--"
     // cannot be confused with a HTML comment end ("-->").
-    new TransitionToAttrName(/^\s*([a-zA-Z][\w\-]*)/),
+    new TransitionToAttrName(/^\s*([a-zA-Z][\w-]*)/),
     new TagDoneTransition(/^\s*\/?>/),
     new TransitionToSelf(/^\s+$/)];
   TRANSITIONS[STATE_HTML_ATTRIBUTE_NAME] = [
@@ -1051,9 +1053,9 @@ var processRawText = (function () {
     // look for a tag end or another attribute name.
     new TransitionBackToTag(/^/)];
   TRANSITIONS[STATE_HTML_BEFORE_ATTRIBUTE_VALUE] = [
-    new TransitionToAttrValue(/^\s*\"/, DELIM_TYPE_DOUBLE_QUOTE),
-    new TransitionToAttrValue(/^\s*\'/, DELIM_TYPE_SINGLE_QUOTE),
-    new TransitionToAttrValue(/^(?=[^\"\'\s>])/,  // Matches any unquoted value part.
+    new TransitionToAttrValue(/^\s*"/, DELIM_TYPE_DOUBLE_QUOTE),
+    new TransitionToAttrValue(/^\s*'/, DELIM_TYPE_SINGLE_QUOTE),
+    new TransitionToAttrValue(/^(?=[^"'\s>])/,  // Matches any unquoted value part.
                               DELIM_TYPE_SPACE_OR_TAG_END),
     // Epsilon transition back if there is an empty value followed by an obvious attribute
     // name or a tag end.
@@ -1061,7 +1063,7 @@ var processRawText = (function () {
     //    <input value=>
     // and the second handles the blank value in:
     //    <input value= name=foo>
-    new TransitionBackToTag(/^(?=>|\s+[\w\-]+\s*=)/),
+    new TransitionBackToTag(/^(?=>|\s+[\w-]+\s*=)/),
     new TransitionToSelf(/^\s+/)];
   TRANSITIONS[STATE_HTML_COMMENT] = [
     new ToTransition(/-->/, STATE_HTML_PCDATA),
@@ -1072,67 +1074,67 @@ var processRawText = (function () {
   TRANSITIONS[STATE_CSS] = [
     new TransitionToState(/\/\*/, STATE_CSS_COMMENT),
     // TODO: Do we need to support non-standard but widely supported C++ style comments?
-    new TransitionToState(/\"/, STATE_CSS_DQ_STRING),
+    new TransitionToState(/"/, STATE_CSS_DQ_STRING),
     new TransitionToState(/'/, STATE_CSS_SQ_STRING),
-    new CssUriTransition(/\burl\s*\(\s*([\'\"]?)/i),
-    new EndTagTransition('style'),
+    new CssUriTransition(/\burl\s*\(\s*(["']?)/i),
+    STYLE_TAG_END,
     TRANSITION_TO_SELF];
   TRANSITIONS[STATE_CSS_COMMENT] = [
     new TransitionToState(/\*\//, STATE_CSS),
-    new EndTagTransition('style'),
+    STYLE_TAG_END,
     TRANSITION_TO_SELF];
   TRANSITIONS[STATE_CSS_DQ_STRING] = [
-    new TransitionToState(/\"/, STATE_CSS),
-    new TransitionToSelf(/\\(?:\r\n?|[\n\f\"])/),  // Line continuation or escape.
+    new TransitionToState(/"/, STATE_CSS),
+    new TransitionToSelf(/\\(?:\r\n?|[\n\f"])/),  // Line continuation or escape.
     new ToTransition(/[\n\r\f]/, STATE_ERROR),
-    new EndTagTransition('style'),  // TODO: Make this an error transition?
+    STYLE_TAG_END,  // TODO: Make this an error transition?
     TRANSITION_TO_SELF];
   TRANSITIONS[STATE_CSS_SQ_STRING] = [
     new TransitionToState(/'/, STATE_CSS),
     new TransitionToSelf(/\\(?:\r\n?|[\n\f'])/),  // Line continuation or escape.
     new ToTransition(/[\n\r\f]/, STATE_ERROR),
-    new EndTagTransition('style'),  // TODO: Make this an error transition?
+    STYLE_TAG_END,  // TODO: Make this an error transition?
     TRANSITION_TO_SELF];
   TRANSITIONS[STATE_CSS_URI] = [
     new TransitionToState(/[\\)\s]/, STATE_CSS),
     URI_PART_TRANSITION,
-    new TransitionToState(/[\"']/, STATE_ERROR),
-    new EndTagTransition('style')];
+    new TransitionToState(/["']/, STATE_ERROR),
+    STYLE_TAG_END];
   TRANSITIONS[STATE_CSS_SQ_URI] = [
     new TransitionToState(/'/, STATE_CSS),
     URI_PART_TRANSITION,
     new TransitionToSelf(/\\(?:\r\n?|[\n\f'])/),  // Line continuation or escape.
     new ToTransition(/[\n\r\f]/, STATE_ERROR),
-    new EndTagTransition('style')];
+    STYLE_TAG_END];
   TRANSITIONS[STATE_CSS_DQ_URI] = [
-    new TransitionToState(/\"/, STATE_CSS),
+    new TransitionToState(/"/, STATE_CSS),
     URI_PART_TRANSITION,
-    new TransitionToSelf(/\\(?:\r\n?|[\n\f\"])/),  // Line continuation or escape.
+    new TransitionToSelf(/\\(?:\r\n?|[\n\f"])/),  // Line continuation or escape.
     new ToTransition(/[\n\r\f]/, STATE_ERROR),
-    new EndTagTransition('style')];
+    STYLE_TAG_END];
   TRANSITIONS[STATE_JS] = [
     new TransitionToState(/\/\*/, STATE_JS_BLOCK_COMMENT),
     new TransitionToState(/\/\//, STATE_JS_LINE_COMMENT),
-    new TransitionToJsString(/\"/, STATE_JS_DQ_STRING),
+    new TransitionToJsString(/"/, STATE_JS_DQ_STRING),
     new TransitionToJsString(/'/, STATE_JS_SQ_STRING),
     new SlashTransition(/\//),
     // Shuffle words, punctuation (besides /), and numbers off to an analyzer which does a
     // quick and dirty check to update isRegexPreceder.
-    new JsPuncTransition(/(?:[^<\/\"'\s\\]|<(?!\/script))+/i),
+    new JsPuncTransition(/(?:[^<\/"'\s\\]|<(?!\/script))+/i),
     new TransitionToSelf(/\s+/),  // Space
-    new EndTagTransition('script')];
+    SCRIPT_TAG_END];
   TRANSITIONS[STATE_JS_BLOCK_COMMENT] = [
     new TransitionToState(/\*\//, STATE_JS),
-    new EndTagTransition('script'),
+    SCRIPT_TAG_END,
     TRANSITION_TO_SELF];
   // Line continuations are not allowed in line comments.
   TRANSITIONS[STATE_JS_LINE_COMMENT] = [
     new TransitionToState(new RegExp("[" + JS_LINEBREAKS + "]"), STATE_JS),
-    new EndTagTransition('script'),
+    SCRIPT_TAG_END,
     TRANSITION_TO_SELF];
   TRANSITIONS[STATE_JS_DQ_STRING] = [
-    new DivPreceder(/\"/),
-    new EndTagTransition('script'),
+    new DivPreceder(/"/),
+    SCRIPT_TAG_END,
     new TransitionToSelf(new RegExp(
               "^(?:" +                              // Case-insensitively, from start of string
                 "[^\"\\\\" + JS_LINEBREAKS + "<]" + // match any chars except newlines, quotes, \s;
@@ -1145,7 +1147,7 @@ var processRawText = (function () {
               ")+", 'i'))];
   TRANSITIONS[STATE_JS_SQ_STRING] = [
     new DivPreceder(/'/),
-    new EndTagTransition('script'),
+    SCRIPT_TAG_END,
     new TransitionToSelf(new RegExp(
               "^(?:" +                              // Case-insensitively, from start of string
                 "[^'\\\\" + JS_LINEBREAKS + "<]" +  // match any chars except newlines, quotes, \s;
@@ -1158,7 +1160,7 @@ var processRawText = (function () {
               ")+", 'i'))];
   TRANSITIONS[STATE_JS_REGEX] = [
     new DivPreceder(/\//),
-    new EndTagTransition('script'),
+    SCRIPT_TAG_END,
     new TransitionToSelf(new RegExp(
               "^(?:" +
                 // We have to handle [...] style character sets specially since in /[/]/, the
@@ -1172,9 +1174,9 @@ var processRawText = (function () {
                   "|\\\\?<(?!/script)" +                   // or an angle bracket possibly escaped.
                 "\\]" +
               ")+", 'i'))];
-      // TODO: Do we need to recognize URI attributes that start with javascript:, data:text/html,
-      // etc. and transition to JS instead with a second layer of percent decoding triggered by
-      // a protocol in (DATA, JAVASCRIPT, NONE) added to Context?
+    // TODO: Do we need to recognize URI attributes that start with javascript:, data:text/html,
+    // etc. and transition to JS instead with a second layer of percent decoding triggered by
+    // a protocol in (DATA, JAVASCRIPT, NONE) added to Context?
   TRANSITIONS[STATE_URI] = [URI_PART_TRANSITION];
   TRANSITIONS[STATE_HTML_RCDATA] = [
     new RcdataEndTagTransition(/<\/(\w+)\b/),
@@ -1204,8 +1206,8 @@ var processRawText = (function () {
     // Find the transition whose pattern matches earliest in the raw text.
     var earliestStart = 0x7fffffff;
     var earliestEnd = -1;
-    var earliestTransition = null;
-    var earliestMatch = null;
+    var earliestTransition;
+    var earliestMatch;
     var stateTransitions = TRANSITIONS[stateOf(context)];
     var transition, match, start, end;
     var i, n = stateTransitions.length;
@@ -1226,7 +1228,7 @@ var processRawText = (function () {
       }
     }
 
-    if (earliestTransition !== null) {
+    if (earliestTransition) {
       this.next = earliestTransition.computeNextContext(context, earliestMatch);
       this.numCharsConsumed = earliestEnd;
     } else {
