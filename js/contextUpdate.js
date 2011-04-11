@@ -673,83 +673,86 @@ var processRawText = (function () {
   };
 
 
+  function TransitionSubclass(ctor, computeNextContext, opt_isApplicableTo) {
+    var proto = ctor.prototype = new Transition(/(?!)/);
+    proto.constructor = ctor;
+    proto.computeNextContext = computeNextContext;
+    if (opt_isApplicableTo) { proto.isApplicableTo = opt_isApplicableTo; }
+  }
+
+
   /**
    * A transition to a given context.
    * @param {RegExp} regex
    * @param {number} dest a context.
    * @constructor
+   * @extends Transition
    */
   function ToTransition(regex, dest) {
     Transition.call(this, regex);
     this.dest = dest;
   }
-
-  ToTransition.prototype = new Transition(/(?!)/);
-  ToTransition.prototype.constructor = ToTransition;
-  ToTransition.prototype.computeNextContext = function (prior, match) {
-    return this.dest;
-  };
+  TransitionSubclass(
+      ToTransition,
+      function (prior, match) { return this.dest; });
 
 
   /**
    * A transition to a context in the body of an open tag for the given element.
    * @param {RegExp} regex
    * @constructor
+   * @extends Transition
    */
   function ToTagTransition(regex, el) {
     Transition.call(this, regex);
     this.el = el;
   }
-  ToTagTransition.prototype = new Transition(/(?!)/);
-  ToTagTransition.prototype.constructor = ToTagTransition;
-  ToTagTransition.prototype.computeNextContext = function (prior, match) {
-    return STATE_HTML_TAG | this.el;
-  };
+  TransitionSubclass(
+      ToTagTransition,
+      function (prior, match) { return STATE_HTML_TAG | this.el; });
 
+
+  var TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT = [];
+   TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_SCRIPT] = STATE_JS | JS_FOLLOWING_SLASH_REGEX;
+   TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_STYLE] = STATE_CSS;
+   TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_NORMAL] = STATE_HTML_PCDATA;
+   TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_LISTING] = STATE_HTML_RCDATA;
+   TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_TEXTAREA] = STATE_HTML_RCDATA;
+   TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_TITLE] = STATE_HTML_RCDATA;
+   TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_XMP] = STATE_HTML_RCDATA;
 
   /**
    * @param {RegExp} regex
    * @constructor
+   * @extends Transition
    */
   function TagDoneTransition(regex) {
     Transition.call(this, regex);
   }
-  TagDoneTransition.prototype = new Transition(/(?!)/);
-  TagDoneTransition.prototype.constructor = TagDoneTransition;
-  TagDoneTransition.prototype.computeNextContext = function (prior, match) {
-    var elType = elementTypeOf(prior);
-    switch (elType) {
-    case ELEMENT_TYPE_SCRIPT:
-      return STATE_JS | JS_FOLLOWING_SLASH_REGEX;
-    case ELEMENT_TYPE_STYLE:
-      return STATE_CSS;
-    case ELEMENT_TYPE_NORMAL:
-      return STATE_HTML_PCDATA;
-    case ELEMENT_TYPE_NONE:
-      throw new Error();
-    case ELEMENT_TYPE_LISTING:
-    case ELEMENT_TYPE_TEXTAREA:
-    case ELEMENT_TYPE_TITLE:
-    case ELEMENT_TYPE_XMP:
-      return STATE_HTML_RCDATA | elType;
-    }
-    throw new Error(elType);  // Unrecognized element type
-  };
+  TransitionSubclass(
+      TagDoneTransition,
+      function (prior, match) {
+        var elType = elementTypeOf(prior);
+        var partialContext = TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[elType];
+        if (typeof partialContext !== 'number') { throw new Error(elType); }
+        return partialContext === STATE_HTML_RCDATA ? partialContext | elType : partialContext;
+      });
 
 
   /**
    * A transition back to a context in the body of an open tag.
    * @param {RegExp} regex
    * @constructor
+   * @extends Transition
    */
   function TransitionBackToTag(regex) {
     Transition.call(this, regex);
   }
-  TransitionBackToTag.prototype = new Transition(/(?!)/);
-  TransitionBackToTag.prototype.constructor = TransitionBackToTag;
-  TransitionBackToTag.prototype.computeNextContext = function (prior, match) {
-    return STATE_HTML_TAG | elementTypeOf(prior);
-  };
+  TransitionSubclass(
+       TransitionBackToTag,
+       function (prior, match) {
+         return STATE_HTML_TAG | elementTypeOf(prior);
+       });
 
 
   /**
@@ -777,125 +780,130 @@ var processRawText = (function () {
    * A transition to a context in the name of an attribute whose type is determined from its name.
    * @param {RegExp} regex A regular expression whose group 1 is a prefix of an attribute name.
    * @constructor
+   * @extends Transition
    */
   function TransitionToAttrName(regex) {
     Transition.call(this, regex);
   }
-  TransitionToAttrName.prototype = new Transition(/(?!)/);
-  TransitionToAttrName.prototype.constructor = TransitionToAttrName;
-  TransitionToAttrName.prototype.computeNextContext = function (prior, match) {
-    var attrName = match[1].toLowerCase();
-    var attr;
-    if ('on' === attrName.substring(0, 2)) {
-      attr = ATTR_TYPE_SCRIPT;
-    } else if ("style" === attrName) {
-      attr = ATTR_TYPE_STYLE;
-    } else if (URI_ATTR_NAMES[attrName] === TRUTHY) {
-      attr = ATTR_TYPE_URI;
-    } else {
-      attr = ATTR_TYPE_PLAIN_TEXT;
-    }
-    return STATE_HTML_ATTRIBUTE_NAME | elementTypeOf(prior) | attr;
-  };
+  TransitionSubclass(
+      TransitionToAttrName,
+      function (prior, match) {
+        var attrName = match[1].toLowerCase();
+        var attr;
+        if ('on' === attrName.substring(0, 2)) {
+          attr = ATTR_TYPE_SCRIPT;
+        } else if ("style" === attrName) {
+          attr = ATTR_TYPE_STYLE;
+        } else if (URI_ATTR_NAMES[attrName] === TRUTHY) {
+          attr = ATTR_TYPE_URI;
+        } else {
+          attr = ATTR_TYPE_PLAIN_TEXT;
+        }
+        return STATE_HTML_ATTRIBUTE_NAME | elementTypeOf(prior) | attr;
+      });
 
   /**
    * A transition to a context in the name of an attribute of the given type.
    * @param {RegExp} regex
    * @constructor
+   * @extends Transition
    */
   function TransitionToAttrValue(regex, delim) {
     Transition.call(this, regex);
     this.delim = delim;
   }
-  TransitionToAttrValue.prototype = new Transition(/(?!)/);
-  TransitionToAttrValue.prototype.constructor = TransitionToAttrValue;
-  TransitionToAttrValue.prototype.computeNextContext = function (prior, match) {
-    return computeContextAfterAttributeDelimiter(
-        elementTypeOf(prior), attrTypeOf(prior), this.delim);
-  };
+  TransitionSubclass(
+      TransitionToAttrValue,
+      function (prior, match) {
+        return computeContextAfterAttributeDelimiter(
+            elementTypeOf(prior), attrTypeOf(prior), this.delim);
+      });
 
 
   /**
    * A transition to the given state.
    * @param {RegExp} regex
    * @constructor
+   * @extends Transition
    */
   function TransitionToState(regex, state) {
     Transition.call(this, regex);
     this.state = state;
   }
-  TransitionToState.prototype = new Transition(/(?!)/);
-  TransitionToState.prototype.constructor = TransitionToState;
-  TransitionToState.prototype.computeNextContext = function (prior, match) {
-    return (prior & ~(URI_PART_ALL | STATE_ALL)) | this.state;
-  };
+  TransitionSubclass(
+      TransitionToState,
+      function (prior, match) {
+        return (prior & ~(URI_PART_ALL | STATE_ALL)) | this.state;
+      });
 
   /**
    * A transition to the given state.
    * @param {RegExp} regex
    * @constructor
+   * @extends Transition
    */
   function TransitionToJsString(regex, state) {
     Transition.call(this, regex);
     this.state = state;
   }
-  TransitionToJsString.prototype = new Transition(/(?!)/);
-  TransitionToJsString.prototype.constructor = TransitionToJsString;
-  TransitionToJsString.prototype.computeNextContext = function (prior, match) {
-    return (prior & (ELEMENT_TYPE_ALL | ATTR_TYPE_ALL | DELIM_TYPE_ALL)) | this.state;
-  };
+  TransitionSubclass(
+      TransitionToJsString,
+      function (prior, match) {
+        return (prior & (ELEMENT_TYPE_ALL | ATTR_TYPE_ALL | DELIM_TYPE_ALL)) | this.state;
+      });
 
   /**
    * @param {RegExp} regex
    * @constructor
+   * @extends Transition
    */
   function SlashTransition(regex) {
     Transition.call(this, regex);
   }
-  SlashTransition.prototype = new Transition(/(?!)/);
-  SlashTransition.prototype.constructor = SlashTransition;
-  SlashTransition.prototype.computeNextContext = function (prior, match) {
-    switch (jsFollowingSlashOf(prior)) {
-    case JS_FOLLOWING_SLASH_DIV_OP:
-      return (prior & ~(STATE_ALL | JS_FOLLOWING_SLASH_ALL)) | STATE_JS | JS_FOLLOWING_SLASH_REGEX;
-    case JS_FOLLOWING_SLASH_REGEX:
-      return (prior & ~(STATE_ALL | JS_FOLLOWING_SLASH_ALL))
-          | STATE_JS_REGEX | JS_FOLLOWING_SLASH_NONE;
-    default:
-      throw new Error(
-          "Ambiguous / could be a RegExp or division.  " +
-          "Please add parentheses before `" + match[0] + "`"
-      );
-    }
-  };
+  TransitionSubclass(
+      SlashTransition,
+      function (prior, match) {
+        switch (jsFollowingSlashOf(prior)) {
+        case JS_FOLLOWING_SLASH_DIV_OP:
+          return (prior & ~(STATE_ALL | JS_FOLLOWING_SLASH_ALL)) | STATE_JS | JS_FOLLOWING_SLASH_REGEX;
+        case JS_FOLLOWING_SLASH_REGEX:
+          return (prior & ~(STATE_ALL | JS_FOLLOWING_SLASH_ALL))
+              | STATE_JS_REGEX | JS_FOLLOWING_SLASH_NONE;
+        default:
+          throw new Error(
+              "Ambiguous / could be a RegExp or division.  " +
+              "Please add parentheses before `" + match[0] + "`"
+          );
+        }
+      });
 
   /**
    * @param {RegExp} regex
    * @constructor
+   * @extends Transition
    */
   function JsPuncTransition(regex) {
     Transition.call(this, regex);
   }
-  JsPuncTransition.prototype = new Transition(/(?!)/);
-  JsPuncTransition.prototype.constructor = JsPuncTransition;
-  JsPuncTransition.prototype.computeNextContext = function (prior, match) {
-    return (prior & ~JS_FOLLOWING_SLASH_ALL) | (isRegexPreceder(match[0])
-      ? JS_FOLLOWING_SLASH_REGEX : JS_FOLLOWING_SLASH_DIV_OP);
-  };
+  TransitionSubclass(
+      JsPuncTransition,
+      function (prior, match) {
+        return (prior & ~JS_FOLLOWING_SLASH_ALL) | (isRegexPreceder(match[0])
+            ? JS_FOLLOWING_SLASH_REGEX : JS_FOLLOWING_SLASH_DIV_OP);
+      });
 
   /**
    * A transition that consumes some content without changing state.
    * @param {RegExp} regex
    * @constructor
+   * @extends Transition
    */
   function TransitionToSelf(regex) {
     Transition.call(this, regex);
   }
-  TransitionToSelf.prototype = new Transition(/(?!)/);
-  TransitionToSelf.prototype.constructor = TransitionToSelf;
-  TransitionToSelf.prototype.computeNextContext = function (prior, match) {
-    return prior;
-  };
+  TransitionSubclass(
+      TransitionToSelf,
+      function (prior, match) { return prior; });
 
 
   /** Consumes the entire content without change if nothing else matched. */
@@ -923,18 +931,19 @@ var processRawText = (function () {
    * Matches the end of a special tag like {@code script}.
    * @param {string} tagName
    * @constructor
+   * @extends Transition
    */
   function EndTagTransition(tagName) {
     Transition.call(this, new RegExp("</" + tagName + "\\b", 'i'));
   }
-  EndTagTransition.prototype = new Transition(/(?!)/);
-  EndTagTransition.prototype.constructor = EndTagTransition;
-  EndTagTransition.prototype.isApplicableTo = function (prior, match) {
-    return attrTypeOf(prior) === ATTR_TYPE_NONE;
-  };
-  EndTagTransition.prototype.computeNextContext = function (prior, match) {
-    return STATE_HTML_TAG | ELEMENT_TYPE_NORMAL;
-  };
+  TransitionSubclass(
+      EndTagTransition,
+      function (prior, match) {
+        return STATE_HTML_TAG | ELEMENT_TYPE_NORMAL;
+      },
+      function (prior, match) {
+        return attrTypeOf(prior) === ATTR_TYPE_NONE;
+      });
   // TODO: This transitions to an HTML_TAG state which can accept attributes.
   // So we allow nonsensical constructs like </br foo="bar">.
   // Add another HTML_END_TAG state that just accepts space and >.
@@ -943,62 +952,65 @@ var processRawText = (function () {
   /**
    * @param {RegExp} regex
    * @constructor
+   * @extends Transition
    */
   function RcdataEndTagTransition(regex) {
     Transition.call(this, regex);
   }
-  RcdataEndTagTransition.prototype = new Transition(/(?!)/);
-  RcdataEndTagTransition.prototype.constructor = RcdataEndTagTransition;
-  RcdataEndTagTransition.prototype.isApplicableTo = function (prior, match) {
-    var tagName = match[1].toUpperCase();
-    switch (elementTypeOf(prior)) {
-    case ELEMENT_TYPE_TEXTAREA: return tagName === 'TEXTAREA';
-    case ELEMENT_TYPE_TITLE: return tagName === 'TITLE';
-    case ELEMENT_TYPE_LISTING: return tagName === 'LISTING';
-    case ELEMENT_TYPE_XMP: return tagName === 'XMP';
-    }
-    return FALSEY;
-  };
-  RcdataEndTagTransition.prototype.computeNextContext = function (prior, match) {
-    return STATE_HTML_TAG | ELEMENT_TYPE_NORMAL;
-  };
+  TransitionSubclass(
+      RcdataEndTagTransition,
+      function (prior, match) {
+        return STATE_HTML_TAG | ELEMENT_TYPE_NORMAL;
+      },
+      function (prior, match) {
+        var tagName = match[1].toUpperCase();
+        switch (elementTypeOf(prior)) {
+        case ELEMENT_TYPE_TEXTAREA: return tagName === 'TEXTAREA';
+        case ELEMENT_TYPE_TITLE: return tagName === 'TITLE';
+        case ELEMENT_TYPE_LISTING: return tagName === 'LISTING';
+        case ELEMENT_TYPE_XMP: return tagName === 'XMP';
+        }
+        return FALSEY;
+      });
 
   /**
    * Matches the beginning of a CSS URI with the delimiter, if any, in group 1.
    * @param {RegExp} regex
    * @constructor
+   * @extends Transition
    */
   function CssUriTransition(regex) {
     Transition.call(this, regex);
   }
-  CssUriTransition.prototype = new Transition(/(?!)/);
-  CssUriTransition.prototype.constructor = CssUriTransition;
-  CssUriTransition.prototype.computeNextContext = function (prior, match) {
-    var delim = match[1];
-    var state;
-    if ('"' === delim) {
-      state = STATE_CSS_DQ_URI;
-    } else if ("'" === delim) {
-      state = STATE_CSS_SQ_URI;
-    } else {
-      state = STATE_CSS_URI;
-    }
-    return (prior & ~(STATE_ALL | URI_PART_ALL)) | state | URI_PART_START;
-  };
+  TransitionSubclass(
+      CssUriTransition,
+      function (prior, match) {
+        var delim = match[1];
+        var state;
+        if ('"' === delim) {
+          state = STATE_CSS_DQ_URI;
+        } else if ("'" === delim) {
+          state = STATE_CSS_SQ_URI;
+        } else {
+          state = STATE_CSS_URI;
+        }
+        return (prior & ~(STATE_ALL | URI_PART_ALL)) | state | URI_PART_START;
+      });
 
   /**
    * Matches a portion of JavaScript that can precede a division operator.
    * @param {RegExp} regex
    * @constructor
+   * @extends Transition
    */
   function DivPreceder(regex) {
     Transition.call(this, regex);
   }
-  DivPreceder.prototype = new Transition(/(?!)/);
-  DivPreceder.prototype.constructor = DivPreceder;
-  DivPreceder.prototype.computeNextContext = function (prior, match) {
-    return (prior & ~(STATE_ALL | JS_FOLLOWING_SLASH_ALL)) | STATE_JS | JS_FOLLOWING_SLASH_DIV_OP;
-  };
+  TransitionSubclass(
+      DivPreceder,
+      function (prior, match) {
+        return (prior & ~(STATE_ALL | JS_FOLLOWING_SLASH_ALL)) | STATE_JS | JS_FOLLOWING_SLASH_DIV_OP;
+      });
 
   /** Characters that break a line in JavaScript source suitable for use in a regex charset. */
   var JS_LINEBREAKS = "\r\n\u2028\u2029";
