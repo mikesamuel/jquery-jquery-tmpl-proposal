@@ -33,62 +33,56 @@ SanitizedContent.prototype.toString = function() {
   return this.content;
 };
 
+function defineSanitizedContentSubclass(contentKind) {
+  function SanitizedContentCtor(content) {
+    this.content = content;
+  }
+
+  /** @type {SanitizedContent} */
+  var proto = (SanitizedContentCtor.prototype = new SanitizedContent());
+  proto.constructor = SanitizedContentCtor;
+
+  /** @override */
+  proto.contentKind = CONTENT_KIND_HTML;
+
+  return SanitizedContentCtor;
+}
+
 
 /**
  * Content of type {@link CONTENT_KIND_HTML}.
  * @constructor
+ * @extends SanitizedContent
  * @param {string!} content A string of HTML that can safely be embedded in
  *     a PCDATA context in your app.  If you would be surprised to find that an
  *     HTML sanitizer produced {@code s} (e.g. it runs code or fetches bad URLs)
  *     and you wouldn't write a template that produces {@code s} on security or
  *     privacy grounds, then don't pass {@code s} here.
  */
-function SanitizedHtml(content) {
-  this.content = content;
-}
-
-/** @override */
-SanitizedHtml.prototype = new SanitizedContent();
-
-/** @override */
-SanitizedHtml.prototype.contentKind = CONTENT_KIND_HTML;
+var SanitizedHtml = defineSanitizedContentSubclass(CONTENT_KIND_HTML);
 
 
 /**
  * Content of type {@link CONTENT_KIND_JS_STR_CHARS}.
  * @constructor
+ * @extends SanitizedContent
  * @param {string!} content A string of JS that when evaled, produces a
  *     value that does not depend on any sensitive data and has no side effects
  *     <b>OR</b> a string of JS that does not reference any variables or have
  *     any side effects not known statically to the app authors.
  */
-function SanitizedJsStrChars(content) {
-  this.content = content;
-}
-
-/** @override */
-SanitizedJsStrChars.prototype = new SanitizedContent();
-
-/** @override */
-SanitizedJsStrChars.prototype.contentKind =
-    CONTENT_KIND_JS_STR_CHARS;
+var SanitizedJsStrChars = defineSanitizedContentSubclass(CONTENT_KIND_JS_STR_CHARS);
 
 
 /**
  * Content of type {@link CONTENT_KIND_URI}.
  * @constructor
+ * @extends SanitizedContent
  * @param {string!} content A chunk of URI that the caller knows is safe to
  *     emit in a template.
  */
-function SanitizedUri(content) {
-  this.content = content;
-}
+var SanitizedUri = defineSanitizedContentSubclass(CONTENT_KIND_URI);
 
-/** @override */
-SanitizedUri.prototype = new SanitizedContent();
-
-/** @override */
-SanitizedUri.prototype.contentKind = CONTENT_KIND_URI;
 
 // exports
 window['SanitizedHtml'] = SanitizedHtml;
@@ -107,15 +101,14 @@ window['SanitizedUri'] = SanitizedUri;
  * @return {string|SanitizedHtml} An escaped version of value.
  */
 function escapeHtml(value) {
-  if (typeof value === 'object' && value &&
-      value.contentKind === CONTENT_KIND_HTML) {
+  if (value && value.contentKind === CONTENT_KIND_HTML) {
     return /** @type {SanitizedHtml} */ (value);
   } else if (value instanceof Array) {
     return value.map(escapeHtml).join('');
   } else {
     return escapeHtmlHelper(value);
   }
-};
+}
 
 
 /**
@@ -137,12 +130,11 @@ function escapeHtml(value) {
  * @return {string} An escaped version of value.
  */
 function escapeHtmlRcdata(value) {
-  if (typeof value === 'object' && value &&
-      value.contentKind === CONTENT_KIND_HTML) {
+  if (value && value.contentKind === CONTENT_KIND_HTML) {
     return normalizeHtmlHelper(value.content);
   }
   return escapeHtmlHelper(value);
-};
+}
 
 
 /**
@@ -156,7 +148,7 @@ function escapeHtmlRcdata(value) {
  */
 function stripHtmlTags(value) {
   return String(value).replace(HTML_TAG_REGEX_, '');
-};
+}
 
 
 /**
@@ -167,12 +159,11 @@ function stripHtmlTags(value) {
  * @return {string} An escaped version of value.
  */
 function escapeHtmlAttribute(value) {
-  if (typeof value === 'object' && value &&
-      value.contentKind === CONTENT_KIND_HTML) {
+  if (value && value.contentKind === CONTENT_KIND_HTML) {
     return normalizeHtmlHelper(stripHtmlTags(value.content));
   }
   return escapeHtmlHelper(value);
-};
+}
 
 
 /**
@@ -184,13 +175,12 @@ function escapeHtmlAttribute(value) {
  * @return {string} An escaped version of value.
  */
 function escapeHtmlAttributeNospace(value) {
-  if (typeof value === 'object' && value &&
-      value.contentKind === CONTENT_KIND_HTML) {
+  if (value && value.contentKind === CONTENT_KIND_HTML) {
     return normalizeHtmlNospaceHelper(
         stripHtmlTags(value.content));
   }
   return escapeHtmlNospaceHelper(value);
-};
+}
 
 
 /**
@@ -203,7 +193,7 @@ function escapeHtmlAttributeNospace(value) {
  */
 function filterHtmlIdent(value) {
   return filterHtmlIdentHelper(value);
-};
+}
 
 
 /**
@@ -215,12 +205,11 @@ function filterHtmlIdent(value) {
  * @return {string} An escaped version of value.
  */
 function escapeJsString(value) {
-  if (typeof value === 'object' &&
-      value.contentKind === CONTENT_KIND_JS_STR_CHARS) {
+  if (value && value.contentKind === CONTENT_KIND_JS_STR_CHARS) {
     return value.content;
   }
   return escapeJsStringHelper(value);
-};
+}
 
 
 /**
@@ -245,9 +234,9 @@ function escapeJsValue(value) {
     case 'boolean': case 'number':
       return ' ' + value + ' ';
     default:
-      return "'" + escapeJsStringHelper(String(value)) + "'";
+      return "'" + escapeJsStringHelper(value) + "'";
   }
-};
+}
 
 
 /**
@@ -260,7 +249,7 @@ function escapeJsValue(value) {
  */
 function escapeJsRegex(value) {
   return escapeJsRegexHelper(value);
-};
+}
 
 
 /**
@@ -283,7 +272,7 @@ var problematicUriMarks_ = /['()]/g;
  */
 function pctEncode_(ch) {
   return '%' + ch.charCodeAt(0).toString(16);
-};
+}
 
 /**
  * Escapes a string so that it can be safely included in a URI.
@@ -293,8 +282,7 @@ function pctEncode_(ch) {
  * @return {string} An escaped version of value.
  */
 function escapeUri(value) {
-  if (typeof value === 'object' &&
-      value.contentKind === CONTENT_KIND_URI) {
+  if (value && value.contentKind === CONTENT_KIND_URI) {
     return normalizeUri(value);
   }
   // Apostophes and parentheses are not matched by encodeURIComponent.
@@ -306,7 +294,7 @@ function escapeUri(value) {
     return encoded.replace(problematicUriMarks_, pctEncode_);
   }
   return encoded;
-};
+}
 
 
 /**
@@ -318,7 +306,7 @@ function escapeUri(value) {
  */
 function normalizeUri(value) {
   return normalizeUriHelper(value);
-};
+}
 
 
 /**
@@ -331,7 +319,7 @@ function normalizeUri(value) {
  */
 function filterNormalizeUri(value) {
   return filterNormalizeUriHelper(value);
-};
+}
 
 
 /**
@@ -343,7 +331,7 @@ function filterNormalizeUri(value) {
  */
 function escapeCssString(value) {
   return escapeCssStringHelper(value);
-};
+}
 
 
 /**
@@ -359,7 +347,7 @@ function filterCssValue(value) {
     return '';
   }
   return filterCssValueHelper(value);
-};
+}
 
 
 
@@ -373,8 +361,9 @@ function filterCssValue(value) {
  * @type {function (*) : string}
  */
 function escapeUriHelper(v) {
-  return encodeURIComponent(String(v));
-};
+  // encodeURIComponent coerces its argument to a string.
+  return encodeURIComponent(/** @type {string} */ (v));
+}
 
 /**
  * Maps charcters to the escaped versions for the named escape directives.
@@ -412,7 +401,7 @@ var ESCAPE_MAP_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__A
  */
 function REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_(ch) {
   return ESCAPE_MAP_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_[ch];
-};
+}
 
 /**
  * Maps charcters to the escaped versions for the named escape directives.
@@ -464,7 +453,7 @@ var ESCAPE_MAP_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_ = {
  */
 function REPLACER_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_(ch) {
   return ESCAPE_MAP_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_[ch];
-};
+}
 
 /**
  * Maps charcters to the escaped versions for the named escape directives.
@@ -509,7 +498,7 @@ var ESCAPE_MAP_FOR_ESCAPE_CSS_STRING_ = {
  */
 function REPLACER_FOR_ESCAPE_CSS_STRING_(ch) {
   return ESCAPE_MAP_FOR_ESCAPE_CSS_STRING_[ch];
-};
+}
 
 /**
  * Maps charcters to the escaped versions for the named escape directives.
@@ -592,7 +581,7 @@ var ESCAPE_MAP_FOR_NORMALIZE_URI__AND__FILTER_NORMALIZE_URI_ = {
  */
 function REPLACER_FOR_NORMALIZE_URI__AND__FILTER_NORMALIZE_URI_(ch) {
   return ESCAPE_MAP_FOR_NORMALIZE_URI__AND__FILTER_NORMALIZE_URI_[ch];
-};
+}
 
 /**
  * Matches characters that need to be escaped for the named directives.
@@ -681,7 +670,7 @@ function escapeHtmlHelper(value) {
   return str.replace(
       MATCHER_FOR_ESCAPE_HTML_,
       REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_);
-};
+}
 
 /**
  * A helper for the Soy directive |normalizeHtml
@@ -693,7 +682,7 @@ function normalizeHtmlHelper(value) {
   return str.replace(
       MATCHER_FOR_NORMALIZE_HTML_,
       REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_);
-};
+}
 
 /**
  * A helper for the Soy directive |escapeHtmlNospace
@@ -705,7 +694,7 @@ function escapeHtmlNospaceHelper(value) {
   return str.replace(
       MATCHER_FOR_ESCAPE_HTML_NOSPACE_,
       REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_);
-};
+}
 
 /**
  * A helper for the Soy directive |normalizeHtmlNospace
@@ -717,7 +706,7 @@ function normalizeHtmlNospaceHelper(value) {
   return str.replace(
       MATCHER_FOR_NORMALIZE_HTML_NOSPACE_,
       REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_);
-};
+}
 
 /**
  * A helper for the Soy directive |escapeJsString
@@ -729,7 +718,7 @@ function escapeJsStringHelper(value) {
   return str.replace(
       MATCHER_FOR_ESCAPE_JS_STRING_,
       REPLACER_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_);
-};
+}
 
 /**
  * A helper for the Soy directive |escapeJsRegex
@@ -741,7 +730,7 @@ function escapeJsRegexHelper(value) {
   return str.replace(
       MATCHER_FOR_ESCAPE_JS_REGEX_,
       REPLACER_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_);
-};
+}
 
 /**
  * A helper for the Soy directive |escapeCssString
@@ -753,7 +742,7 @@ function escapeCssStringHelper(value) {
   return str.replace(
       MATCHER_FOR_ESCAPE_CSS_STRING_,
       REPLACER_FOR_ESCAPE_CSS_STRING_);
-};
+}
 
 /**
  * A helper for the Soy directive |filterCssValue
@@ -766,7 +755,7 @@ function filterCssValueHelper(value) {
     return 'zSafehtmlz';
   }
   return str;
-};
+}
 
 /**
  * A helper for the Soy directive |normalizeUri
@@ -778,7 +767,7 @@ function normalizeUriHelper(value) {
   return str.replace(
       MATCHER_FOR_NORMALIZE_URI__AND__FILTER_NORMALIZE_URI_,
       REPLACER_FOR_NORMALIZE_URI__AND__FILTER_NORMALIZE_URI_);
-};
+}
 
 /**
  * A helper for the Soy directive |filterNormalizeUri
@@ -793,7 +782,7 @@ function filterNormalizeUriHelper(value) {
   return str.replace(
       MATCHER_FOR_NORMALIZE_URI__AND__FILTER_NORMALIZE_URI_,
       REPLACER_FOR_NORMALIZE_URI__AND__FILTER_NORMALIZE_URI_);
-};
+}
 
 /**
  * A helper for the Soy directive |filterHtmlIdent
@@ -806,7 +795,7 @@ function filterHtmlIdentHelper(value) {
     return 'zSafehtmlz';
   }
   return str;
-};
+}
 
 /**
  * Matches all tags, HTML comments, and DOCTYPEs in tag soup HTML.
