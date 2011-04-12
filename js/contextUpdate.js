@@ -597,14 +597,15 @@ var processRawText = (function () {
   function unescapeHtml(html) {
     if (html.indexOf('&') < 0) { return html; }  // Fast path for common case.
     return html.replace(
-      /&(?:#(?:x([0-9a-f]+)|([0-9]+))|([a-z][0-9a-z]+));/gi,
+      /&(?:#(?:(x[0-9a-f]+)|([0-9]+))|(lt|gt|amp|quot|apos));/gi,
       function (entity, hex, decimal, entityName) {
-        if (hex) { return String.fromCharCode(parseInt(hex, 16)); }
-        if (decimal) { return String.fromCharCode(parseInt(decimal, 10)); }
+        if (hex || decimal) {
+          return String.fromCharCode(  // String.fromCharCode coerces its argument
+              /** @type {number} */
+              (0 + (hex || decimal)));
+        }
         // We don't need to escape all entities, just the ones that could be token boundaries.
-        var decoded = HTML_ENTITY_NAME_TO_TEXT[entityName]
-                      || HTML_ENTITY_NAME_TO_TEXT[entityName.toLowerCase()];
-        return (typeof decoded === 'string') ? decoded : entity;
+        return HTML_ENTITY_NAME_TO_TEXT[entityName.toLowerCase()];
       }
     );
   }
@@ -616,20 +617,13 @@ var processRawText = (function () {
    */
   function findEndOfAttributeValue(rawText, delim) {
     var rawTextLen = rawText.length;
-    switch (delim) {
-    case DELIM_TYPE_DOUBLE_QUOTE:
-    case DELIM_TYPE_SINGLE_QUOTE:
-      var quote = rawText.indexOf(DELIM_TEXT[delim]);
-      return quote >= 0 ? quote : rawTextLen;
-
-    case DELIM_TYPE_SPACE_OR_TAG_END:
+    if (delim === DELIM_TYPE_NONE) { return -1; }
+    if (delim === DELIM_TYPE_SPACE_OR_TAG_END) {
       var match = rawText.match(/[\s>]/);
       return match ? match.index : rawTextLen;
-
-    case DELIM_TYPE_NONE:
-      return -1;
     }
-    throw new Error(delim);  // Unrecognized delimiter
+    var quote = rawText.indexOf(DELIM_TEXT[delim]);
+    return quote >= 0 ? quote : rawTextLen;
   }
 
 
