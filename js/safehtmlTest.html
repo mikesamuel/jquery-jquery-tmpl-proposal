@@ -1,7 +1,9 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html><head>
 <title>Safe HTML Test</title>
+<script src="compat.js"></script>
 <script>
+// If the location contains ?compiled, then use the minified version.
 if (/[?&]compiled/.test(location.search)) {
   document.write('<script src="safehtml-compiled.js"><\/script>');
 } else {

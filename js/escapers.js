@@ -104,19 +104,14 @@ window['SanitizedUri'] = SanitizedUri;
  *
  * @param {*} value The string-like value to be escaped.  May not be a string,
  *     but the value will be coerced to a string.
- * @return {string} An escaped version of value.
+ * @return {string|SanitizedHtml} An escaped version of value.
  */
 function escapeHtml(value) {
   if (typeof value === 'object' && value &&
       value.contentKind === CONTENT_KIND_HTML) {
-    return value;
+    return /** @type {SanitizedHtml} */ (value);
   } else if (value instanceof Array) {
-    // In an HTML context, Array.map can generate lists and tables.
-    var escaped = [];
-    for (var i = 0, n = value.length; i < n; ++i) {
-      escaped[i] = escapeHtml(value[i]);
-    }
-    return escaped.join('');
+    return value.map(escapeHtml).join('');
   } else {
     return escapeHtmlHelper(value);
   }
@@ -819,7 +814,7 @@ function filterHtmlIdentHelper(value) {
  * @type {RegExp}
  * @private
  */
-var HTML_TAG_REGEX_ = /<(?:!|\/?[a-zA-Z])(?:[^>'"]|"[^"]*"|'[^']*')*>/g;
+var HTML_TAG_REGEX_ = /<(?:!|\/?[a-z])(?:[^>'"]|"[^"]*"|'[^']*')*>/gi;
 
 // END GENERATED CODE
 

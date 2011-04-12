@@ -597,7 +597,7 @@ var processRawText = (function () {
   function unescapeHtml(html) {
     if (html.indexOf('&') < 0) { return html; }  // Fast path for common case.
     return html.replace(
-      /&(?:#(?:[xX]([0-9a-fA-F]+)|([0-9]+))|([a-zA-Z][a-zA-Z0-9]+));/g,
+      /&(?:#(?:x([0-9a-f]+)|([0-9]+))|([a-z][0-9a-z]+));/gi,
       function (entity, hex, decimal, entityName) {
         if (hex) { return String.fromCharCode(parseInt(hex, 16)); }
         if (decimal) { return String.fromCharCode(parseInt(decimal, 10)); }
@@ -1035,16 +1035,16 @@ var processRawText = (function () {
     new ToTagTransition(/<xmp(?=[\s>\/]|$)/i, ELEMENT_TYPE_XMP),
     new ToTransition(/<\/?/, STATE_HTML_BEFORE_TAG_NAME)];
   TRANSITIONS[STATE_HTML_BEFORE_TAG_NAME] = [
-    new ToTransition(/^[a-zA-Z]+/, STATE_HTML_TAG_NAME),
-    new ToTransition(/^(?=[^a-zA-Z])/, STATE_HTML_PCDATA)];
+    new ToTransition(/^[a-z]+/i, STATE_HTML_TAG_NAME),
+    new ToTransition(/^(?=[^a-z])/i, STATE_HTML_PCDATA)];
   TRANSITIONS[STATE_HTML_TAG_NAME] = [
-    new TransitionToSelf(/^[a-zA-Z0-9:-]*(?:[a-zA-Z0-9]|$)/),
+    new TransitionToSelf(/^[a-z0-9:-]*(?:[a-z0-9]|$)/i),
     new ToTagTransition(/^(?=[\/\s>])/, ELEMENT_TYPE_NORMAL)];
   TRANSITIONS[STATE_HTML_TAG] = [
     // Allows {@code data-foo} and other dashed attribute names, but intentionally disallows
     // "--" as an attribute name so that a tag ending after a value-less attribute named "--"
     // cannot be confused with a HTML comment end ("-->").
-    new TransitionToAttrName(/^\s*([a-zA-Z][\w-]*)/),
+    new TransitionToAttrName(/^\s*([a-z][\w-]*)/i),
     new TagDoneTransition(/^\s*\/?>/),
     new TransitionToSelf(/^\s+$/)];
   TRANSITIONS[STATE_HTML_ATTRIBUTE_NAME] = [
