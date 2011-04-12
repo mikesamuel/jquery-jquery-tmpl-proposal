@@ -125,6 +125,14 @@ function testPcdata() {
   // Into attributes
   assertTransition("HTML_PCDATA", "<a onclick=\"", "JS NORMAL SCRIPT DOUBLE_QUOTE REGEX");
   assertTransition("HTML_PCDATA", "<a onclick=\'", "JS NORMAL SCRIPT SINGLE_QUOTE REGEX");
+  assertTransition("HTML_PCDATA", "<a onclick=\'alert(&apos;",
+                   "JS_SQ_STRING NORMAL SCRIPT SINGLE_QUOTE");
+  assertTransition("HTML_PCDATA", "<a onclick=\'alert(&#x27;",
+                   "JS_SQ_STRING NORMAL SCRIPT SINGLE_QUOTE");
+  assertTransition("HTML_PCDATA", "<a onclick=\'alert(&#34;",
+                   "JS_DQ_STRING NORMAL SCRIPT SINGLE_QUOTE");
+  assertTransition("HTML_PCDATA", "<a onclick=\'alert(&#034;",
+                   "JS_DQ_STRING NORMAL SCRIPT SINGLE_QUOTE");
   assertTransition("HTML_PCDATA", "<a onclick=", "HTML_BEFORE_ATTRIBUTE_VALUE NORMAL SCRIPT");
   assertTransition(
       "HTML_PCDATA", "<a onclick=\"</script>", "JS_REGEX NORMAL SCRIPT DOUBLE_QUOTE");
