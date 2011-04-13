@@ -495,7 +495,7 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
     var id = parseTreeNode.parseTreeNodeId;
     switch (parseTreeNode[0]) {
       case 'noAutoescape':
-        shouldSanitize = false;
+        shouldSanitize = FALSEY;
         return '';
       case '$':  // Add escaping directives.
         if (shouldSanitize) {
@@ -531,8 +531,8 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
   // Includes 
   for (var templateName in parsedTemplates) {
     if (hop.call(parsedTemplates, templateName)) {
-      shouldSanitize = true;
-      mutate(parsedTemplates[templateName], true);
+      shouldSanitize = TRUTHY;
+      mutate(parsedTemplates[templateName]);
     }
   }
 

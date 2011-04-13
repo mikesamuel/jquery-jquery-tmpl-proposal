@@ -184,15 +184,48 @@ function escapeHtmlAttributeNospace(value) {
 
 
 /**
- * Filters out strings that cannot be a substring of a valid HTML identifier.
+ * Filters out strings that cannot be a substring of a valid HTML attribute.
  *
  * @param {*} value The value to escape.  May not be a string, but the value
  *     will be coerced to a string.
- * @return {string} A valid HTML identifier part.  {@code "zZz"} if the input
- *     is invalid.
+ * @return {string} A valid HTML attribute name part or name/value pair.
+ *     {@code "zSafehtmlz"} if the input is invalid.
  */
-function filterHtmlIdent(value) {
-  return filterHtmlIdentHelper(value);
+function filterHtmlAttribute(value) {
+  var str = filterHtmlAttributeHelper(value);
+  var eq = str.indexOf('=');
+  if (eq >= 0) {
+    switch (str.charAt(str.length - 1)) {
+      case '"': case '\'':
+        break;
+      default:
+        // Quote any attribute values so that a contextually autoescaped whole
+        // attribute does not end up having a following value associated with
+        // it.
+        // The contextual autoescaper, since it propagates context left to
+        // right, is unable to distinguish
+        //    <div {$x}>
+        // from
+        //    <div {$x}={$y}>.
+        // If {$x} is "dir=ltr", and y is "foo" make sure the parser does not
+        // see the attribute "dir=ltr=foo".
+        return str.substring(0, eq + 1) + '"' + str.substring(eq + 1) + '"';
+    }
+  }
+  return str;
+}
+
+
+/**
+ * Filters out strings that cannot be a substring of a valid HTML element name.
+ *
+ * @param {*} value The value to escape.  May not be a string, but the value
+ *     will be coerced to a string.
+ * @return {string} A valid HTML element name part.
+ *     {@code "zSafehtmlz"} if the input is invalid.
+ */
+function filterHtmlElementName(value) {
+  return filterHtmlElementNameHelper(value);
 }
 
 
@@ -587,6 +620,7 @@ function REPLACER_FOR_NORMALIZE_URI__AND__FILTER_NORMALIZE_URI_(ch) {
  * Matches characters that need to be escaped for the named directives.
  * @type RegExp
  * @private
+ * @const
  */
 var MATCHER_FOR_ESCAPE_HTML_ = /[\x00\x22\x26\x27\x3c\x3e]/g;
 
@@ -594,6 +628,7 @@ var MATCHER_FOR_ESCAPE_HTML_ = /[\x00\x22\x26\x27\x3c\x3e]/g;
  * Matches characters that need to be escaped for the named directives.
  * @type RegExp
  * @private
+ * @const
  */
 var MATCHER_FOR_NORMALIZE_HTML_ = /[\x00\x22\x27\x3c\x3e]/g;
 
@@ -601,6 +636,7 @@ var MATCHER_FOR_NORMALIZE_HTML_ = /[\x00\x22\x27\x3c\x3e]/g;
  * Matches characters that need to be escaped for the named directives.
  * @type RegExp
  * @private
+ * @const
  */
 var MATCHER_FOR_ESCAPE_HTML_NOSPACE_ = /[\x00\x09-\x0d \x22\x26\x27\x2d\/\x3c-\x3e`\x85\xa0\u2028\u2029]/g;
 
@@ -608,6 +644,7 @@ var MATCHER_FOR_ESCAPE_HTML_NOSPACE_ = /[\x00\x09-\x0d \x22\x26\x27\x2d\/\x3c-\x
  * Matches characters that need to be escaped for the named directives.
  * @type RegExp
  * @private
+ * @const
  */
 var MATCHER_FOR_NORMALIZE_HTML_NOSPACE_ = /[\x00\x09-\x0d \x22\x27\x2d\/\x3c-\x3e`\x85\xa0\u2028\u2029]/g;
 
@@ -615,6 +652,7 @@ var MATCHER_FOR_NORMALIZE_HTML_NOSPACE_ = /[\x00\x09-\x0d \x22\x27\x2d\/\x3c-\x3
  * Matches characters that need to be escaped for the named directives.
  * @type RegExp
  * @private
+ * @const
  */
 var MATCHER_FOR_ESCAPE_JS_STRING_ = /[\x00\x08-\x0d\x22\x26\x27\/\x3c-\x3e\\\x85\u2028\u2029]/g;
 
@@ -622,6 +660,7 @@ var MATCHER_FOR_ESCAPE_JS_STRING_ = /[\x00\x08-\x0d\x22\x26\x27\/\x3c-\x3e\\\x85
  * Matches characters that need to be escaped for the named directives.
  * @type RegExp
  * @private
+ * @const
  */
 var MATCHER_FOR_ESCAPE_JS_REGEX_ = /[\x00\x08-\x0d\x22\x24\x26-\/\x3a\x3c-\x3f\x5b-\x5e\x7b-\x7d\x85\u2028\u2029]/g;
 
@@ -629,6 +668,7 @@ var MATCHER_FOR_ESCAPE_JS_REGEX_ = /[\x00\x08-\x0d\x22\x24\x26-\/\x3a\x3c-\x3f\x
  * Matches characters that need to be escaped for the named directives.
  * @type RegExp
  * @private
+ * @const
  */
 var MATCHER_FOR_ESCAPE_CSS_STRING_ = /[\x00\x08-\x0d\x22\x26-\x2a\/\x3a-\x3e@\\\x7b\x7d\x85\xa0\u2028\u2029]/g;
 
@@ -636,6 +676,7 @@ var MATCHER_FOR_ESCAPE_CSS_STRING_ = /[\x00\x08-\x0d\x22\x26-\x2a\/\x3a-\x3e@\\\
  * Matches characters that need to be escaped for the named directives.
  * @type RegExp
  * @private
+ * @const
  */
 var MATCHER_FOR_NORMALIZE_URI__AND__FILTER_NORMALIZE_URI_ = /[\x00- \x22\x27-\x29\x3c\x3e\\\x7b\x7d\x7f\x85\xa0\u2028\u2029\uff01\uff03\uff04\uff06-\uff0c\uff0f\uff1a\uff1b\uff1d\uff1f\uff20\uff3b\uff3d]/g;
 
@@ -643,6 +684,7 @@ var MATCHER_FOR_NORMALIZE_URI__AND__FILTER_NORMALIZE_URI_ = /[\x00- \x22\x27-\x2
  * A pattern that vets values produced by the named directives.
  * @type RegExp
  * @private
+ * @const
  */
 var FILTER_FOR_FILTER_CSS_VALUE_ = /^(?!-*(?:expression|(?:moz-)?binding))(?:[.#]?-?(?:[_a-z][_a-z0-9-]*)(?:-[_a-z][_a-z0-9-]*)*-?|-?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9])(?:[a-z]{1,2}|%)?|!important|)$/i;
 
@@ -650,6 +692,7 @@ var FILTER_FOR_FILTER_CSS_VALUE_ = /^(?!-*(?:expression|(?:moz-)?binding))(?:[.#
  * A pattern that vets values produced by the named directives.
  * @type RegExp
  * @private
+ * @const
  */
 var FILTER_FOR_FILTER_NORMALIZE_URI_ = /^(?:(?:https?|mailto):|[^&:\/?#]*(?:[\/?#]|$))/i;
 
@@ -657,8 +700,17 @@ var FILTER_FOR_FILTER_NORMALIZE_URI_ = /^(?:(?:https?|mailto):|[^&:\/?#]*(?:[\/?
  * A pattern that vets values produced by the named directives.
  * @type RegExp
  * @private
+ * @const
  */
-var FILTER_FOR_FILTER_HTML_IDENT_ = /^[a-z0-9_$:-]*$/i;
+var FILTER_FOR_FILTER_HTML_ATTRIBUTE_ = /^(?!style|on|action|archive|background|cite|classid|codebase|data|dsync|href|longdesc|src|usemap)(?:[a-z0-9_$:-]*|dir=(?:ltr|rtl))$/i;
+
+/**
+ * A pattern that vets values produced by the named directives.
+ * @type RegExp
+ * @private
+ * @const
+ */
+var FILTER_FOR_FILTER_HTML_ELEMENT_NAME_ = /^(?!script|style|title|textarea|xmp|no)[a-z0-9_$:-]*$/i;
 
 /**
  * A helper for the Soy directive |escapeHtml
@@ -785,13 +837,26 @@ function filterNormalizeUriHelper(value) {
 }
 
 /**
- * A helper for the Soy directive |filterHtmlIdent
+ * A helper for the Soy directive |filterHtmlAttribute
  * @param {*} value Can be of any type but will be coerced to a string.
  * @return {string} The escaped text.
  */
-function filterHtmlIdentHelper(value) {
+function filterHtmlAttributeHelper(value) {
   var str = String(value);
-  if (!FILTER_FOR_FILTER_HTML_IDENT_.test(str)) {
+  if (!FILTER_FOR_FILTER_HTML_ATTRIBUTE_.test(str)) {
+    return 'zSafehtmlz';
+  }
+  return str;
+}
+
+/**
+ * A helper for the Soy directive |filterHtmlElementName
+ * @param {*} value Can be of any type but will be coerced to a string.
+ * @return {string} The escaped text.
+ */
+function filterHtmlElementNameHelper(value) {
+  var str = String(value);
+  if (!FILTER_FOR_FILTER_HTML_ELEMENT_NAME_.test(str)) {
     return 'zSafehtmlz';
   }
   return str;
@@ -802,6 +867,7 @@ function filterHtmlIdentHelper(value) {
  *
  * @type {RegExp}
  * @private
+ * @const
  */
 var HTML_TAG_REGEX_ = /<(?:!|\/?[a-z])(?:[^>'"]|"[^"]*"|'[^']*')*>/gi;
 
@@ -811,8 +877,11 @@ var SANITIZER_FOR_ESC_MODE = [];
 SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML] = escapeHtml;
 SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML_RCDATA] = escapeHtmlRcdata;
 SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML_ATTRIBUTE] = escapeHtmlAttribute;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE] = escapeHtmlAttributeNospace;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_FILTER_HTML_IDENT] = filterHtmlIdent;
+SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE]
+    = escapeHtmlAttributeNospace;
+SANITIZER_FOR_ESC_MODE[ESC_MODE_FILTER_HTML_ELEMENT_NAME]
+    = filterHtmlElementName;
+SANITIZER_FOR_ESC_MODE[ESC_MODE_FILTER_HTML_ATTRIBUTE] = filterHtmlAttribute;
 SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_JS_STRING] = escapeJsString;
 SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_JS_VALUE] = escapeJsValue;
 SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_JS_REGEX] = escapeJsRegex;

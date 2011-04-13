@@ -746,15 +746,16 @@ function testDynamicAttrName() {
 
 function testDynamicElementName() {
   assertContextualRewriting(
-      join(
-          "{template foo autoescape=\"contextual\"}\n",
+      {
+        "foo": join(
             "<h${SAFEHTML_ESC[" + ESC_MODE_FILTER_HTML_ELEMENT_NAME
-                + "](headerLevel)}>Header" +
+                + "](headerLevel)}>Header",
             "</h${SAFEHTML_ESC[" + ESC_MODE_FILTER_HTML_ELEMENT_NAME
-                + "](headerLevel)}>"),
-      join(
-          "{template foo autoescape=\"contextual\"}\n",
-            "<h${headerLevel}>Header</h${headerLevel}>"));
+                + "](headerLevel)}>")
+      },
+      {
+        "foo": "<h${headerLevel}>Header</h${headerLevel}>"
+      });
 }
 
 function testOptionalValuelessAttributes() {

@@ -15,7 +15,9 @@ function parseContext(text) {
     case "HTML_TAG_NAME": state = STATE_HTML_TAG_NAME; break;
     case "HTML_TAG": state = STATE_HTML_TAG; break;
     case "HTML_ATTRIBUTE_NAME": state = STATE_HTML_ATTRIBUTE_NAME; break;
-    case "HTML_BEFORE_ATTRIBUTE_VALUE": state = STATE_HTML_BEFORE_ATTRIBUTE_VALUE; break;
+    case "HTML_BEFORE_ATTRIBUTE_VALUE":
+      state = STATE_HTML_BEFORE_ATTRIBUTE_VALUE;
+      break;
     case "HTML_COMMENT": state = STATE_HTML_COMMENT; break;
     case "HTML_NORMAL_ATTR_VALUE": state = STATE_HTML_NORMAL_ATTR_VALUE; break;
     case "CSS": state = STATE_CSS; break;
@@ -85,20 +87,24 @@ function parseContext(text) {
   }
 
   assertTrue(
-      "Got [" + text + "] but didn't use [" + parts.slice(i).join(' ') + "]", parts.length === i);
+      "Got [" + text + "] but didn't use [" + parts.slice(i).join(' ') + "]",
+      parts.length === i);
   return state | el | attr | delim | slash | uriPart;
 }
 
 function assertTransition(from, rawText, to) {
   var after = processRawText(rawText, parseContext(from));
-  assertEquals(rawText + ' in ' + from, contextToString(parseContext(to)), contextToString(after));
+  assertEquals(rawText + ' in ' + from, contextToString(parseContext(to)),
+               contextToString(after));
 }
 
 function testPcdata() {
   assertTransition("HTML_PCDATA", "", "HTML_PCDATA");
   assertTransition("HTML_PCDATA", "Hello, World!", "HTML_PCDATA");
-  assertTransition("HTML_PCDATA", "Jad loves ponies <3 <3 <3 !!!", "HTML_PCDATA");
-  assertTransition("HTML_PCDATA", "OMG! Ponies, Ponies, Ponies &lt;3", "HTML_PCDATA");
+  assertTransition(
+      "HTML_PCDATA", "Jad loves ponies <3 <3 <3 !!!", "HTML_PCDATA");
+  assertTransition(
+      "HTML_PCDATA", "OMG! Ponies, Ponies, Ponies &lt;3", "HTML_PCDATA");
   // Entering a tag
   assertTransition("HTML_PCDATA", "<", "HTML_BEFORE_TAG_NAME");
   assertTransition("HTML_PCDATA", "Hello, <", "HTML_BEFORE_TAG_NAME");
@@ -107,8 +113,10 @@ function testPcdata() {
   assertTransition("HTML_PCDATA", "&lt;a", "HTML_PCDATA");
   assertTransition("HTML_PCDATA", "<!--", "HTML_COMMENT");
   // Test special tags.
-  assertTransition("HTML_PCDATA", "<script type='text/javascript'", "HTML_TAG SCRIPT");
-  assertTransition("HTML_PCDATA", "<SCRIPT type='text/javascript'", "HTML_TAG SCRIPT");
+  assertTransition(
+      "HTML_PCDATA", "<script type='text/javascript'", "HTML_TAG SCRIPT");
+  assertTransition(
+      "HTML_PCDATA", "<SCRIPT type='text/javascript'", "HTML_TAG SCRIPT");
   assertTransition("HTML_PCDATA", "<style type='text/css'", "HTML_TAG STYLE");
   assertTransition("HTML_PCDATA", "<sTyLe type='text/css'", "HTML_TAG STYLE");
   assertTransition("HTML_PCDATA", "<textarea name='text'", "HTML_TAG TEXTAREA");
@@ -117,14 +125,17 @@ function testPcdata() {
   // Into tag
   assertTransition("HTML_PCDATA", "<script>", "JS REGEX");
   assertTransition("HTML_PCDATA", "<script >", "JS REGEX");
-  assertTransition("HTML_PCDATA", "<script type=\"text/javascript\">", "JS REGEX");
+  assertTransition(
+      "HTML_PCDATA", "<script type=\"text/javascript\">", "JS REGEX");
   assertTransition("HTML_PCDATA", "<a ", "HTML_TAG NORMAL");
   assertTransition("HTML_PCDATA", "<a title=foo id='x'", "HTML_TAG NORMAL");
   assertTransition("HTML_PCDATA", "<a title=\"foo\"", "HTML_TAG NORMAL");
   assertTransition("HTML_PCDATA", "<a title='foo'", "HTML_TAG NORMAL");
   // Into attributes
-  assertTransition("HTML_PCDATA", "<a onclick=\"", "JS NORMAL SCRIPT DOUBLE_QUOTE REGEX");
-  assertTransition("HTML_PCDATA", "<a onclick=\'", "JS NORMAL SCRIPT SINGLE_QUOTE REGEX");
+  assertTransition("HTML_PCDATA", "<a onclick=\"",
+                   "JS NORMAL SCRIPT DOUBLE_QUOTE REGEX");
+  assertTransition("HTML_PCDATA", "<a onclick=\'",
+                   "JS NORMAL SCRIPT SINGLE_QUOTE REGEX");
   assertTransition("HTML_PCDATA", "<a onclick=\'alert(&apos;",
                    "JS_SQ_STRING NORMAL SCRIPT SINGLE_QUOTE");
   assertTransition("HTML_PCDATA", "<a onclick=\'alert(&#x27;",
@@ -133,19 +144,28 @@ function testPcdata() {
                    "JS_DQ_STRING NORMAL SCRIPT SINGLE_QUOTE");
   assertTransition("HTML_PCDATA", "<a onclick=\'alert(&#034;",
                    "JS_DQ_STRING NORMAL SCRIPT SINGLE_QUOTE");
-  assertTransition("HTML_PCDATA", "<a onclick=", "HTML_BEFORE_ATTRIBUTE_VALUE NORMAL SCRIPT");
+  assertTransition("HTML_PCDATA", "<a onclick=",
+                   "HTML_BEFORE_ATTRIBUTE_VALUE NORMAL SCRIPT");
   assertTransition(
-      "HTML_PCDATA", "<a onclick=\"</script>", "JS_REGEX NORMAL SCRIPT DOUBLE_QUOTE");
-  assertTransition("HTML_PCDATA", "<xmp style=\"", "CSS XMP STYLE DOUBLE_QUOTE");
-  assertTransition("HTML_PCDATA", "<xmp style='/*", "CSS_COMMENT XMP STYLE SINGLE_QUOTE");
-  assertTransition("HTML_PCDATA", "<script src=", "HTML_BEFORE_ATTRIBUTE_VALUE SCRIPT URI");
+      "HTML_PCDATA", "<a onclick=\"</script>",
+      "JS_REGEX NORMAL SCRIPT DOUBLE_QUOTE");
   assertTransition(
-      "HTML_PCDATA", "<script src=/search?q=", "URI SCRIPT URI SPACE_OR_TAG_END QUERY");
+      "HTML_PCDATA", "<xmp style=\"", "CSS XMP STYLE DOUBLE_QUOTE");
   assertTransition(
-      "HTML_PCDATA", "<script src=/foo#", "URI SCRIPT URI SPACE_OR_TAG_END FRAGMENT");
-  assertTransition("HTML_PCDATA", "<img src=", "HTML_BEFORE_ATTRIBUTE_VALUE NORMAL URI");
+      "HTML_PCDATA", "<xmp style='/*", "CSS_COMMENT XMP STYLE SINGLE_QUOTE");
   assertTransition(
-      "HTML_PCDATA", "<a href=mailto:", "URI NORMAL URI SPACE_OR_TAG_END PRE_QUERY");
+      "HTML_PCDATA", "<script src=", "HTML_BEFORE_ATTRIBUTE_VALUE SCRIPT URI");
+  assertTransition(
+      "HTML_PCDATA", "<script src=/search?q=",
+      "URI SCRIPT URI SPACE_OR_TAG_END QUERY");
+  assertTransition(
+      "HTML_PCDATA", "<script src=/foo#",
+      "URI SCRIPT URI SPACE_OR_TAG_END FRAGMENT");
+  assertTransition(
+      "HTML_PCDATA", "<img src=", "HTML_BEFORE_ATTRIBUTE_VALUE NORMAL URI");
+  assertTransition(
+      "HTML_PCDATA", "<a href=mailto:",
+      "URI NORMAL URI SPACE_OR_TAG_END PRE_QUERY");
   assertTransition(
       "HTML_PCDATA", "<input type=button value= onclick=",
       "HTML_BEFORE_ATTRIBUTE_VALUE NORMAL SCRIPT");
@@ -155,7 +175,8 @@ function testPcdata() {
 function testBeforeTagName() {
   assertTransition("HTML_BEFORE_TAG_NAME", "", "HTML_BEFORE_TAG_NAME");
   assertTransition("HTML_BEFORE_TAG_NAME", "h", "HTML_TAG_NAME");
-  assertTransition("HTML_BEFORE_TAG_NAME", "svg:font-face id='x'", "HTML_TAG NORMAL");
+  assertTransition(
+      "HTML_BEFORE_TAG_NAME", "svg:font-face id='x'", "HTML_TAG NORMAL");
   assertTransition("HTML_BEFORE_TAG_NAME", ">", "HTML_PCDATA");
   assertTransition("HTML_BEFORE_TAG_NAME", "><", "HTML_BEFORE_TAG_NAME");
 }
@@ -169,17 +190,26 @@ function testTagName() {
   assertTransition("HTML_TAG_NAME", "\tid='x'", "HTML_TAG NORMAL");
   assertTransition("HTML_TAG_NAME", ">", "HTML_PCDATA");
   assertTransition("HTML_TAG_NAME", "/>", "HTML_PCDATA");
-  assertTransition("HTML_TAG_NAME", " href=", "HTML_BEFORE_ATTRIBUTE_VALUE NORMAL URI");
-  assertTransition("HTML_TAG_NAME", " href=\"", "URI NORMAL URI DOUBLE_QUOTE START");
-  assertTransition("HTML_TAG_NAME", " href='", "URI NORMAL URI SINGLE_QUOTE START");
-  assertTransition("HTML_TAG_NAME", " href=#", "URI NORMAL URI SPACE_OR_TAG_END FRAGMENT");
-  assertTransition("HTML_TAG_NAME", " href=>", "HTML_PCDATA");
-  assertTransition("HTML_TAG_NAME", " onclick=\"", "JS NORMAL SCRIPT DOUBLE_QUOTE REGEX");
-  assertTransition("HTML_TAG_NAME", " style=\"", "CSS NORMAL STYLE DOUBLE_QUOTE");
   assertTransition(
-      "HTML_TAG_NAME", " stylez=\"", "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT DOUBLE_QUOTE");
+      "HTML_TAG_NAME", " href=", "HTML_BEFORE_ATTRIBUTE_VALUE NORMAL URI");
   assertTransition(
-      "HTML_TAG_NAME", " title=\"", "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT DOUBLE_QUOTE");
+      "HTML_TAG_NAME", " href=\"", "URI NORMAL URI DOUBLE_QUOTE START");
+  assertTransition(
+      "HTML_TAG_NAME", " href='", "URI NORMAL URI SINGLE_QUOTE START");
+  assertTransition(
+      "HTML_TAG_NAME", " href=#", "URI NORMAL URI SPACE_OR_TAG_END FRAGMENT");
+  assertTransition(
+      "HTML_TAG_NAME", " href=>", "HTML_PCDATA");
+  assertTransition(
+      "HTML_TAG_NAME", " onclick=\"", "JS NORMAL SCRIPT DOUBLE_QUOTE REGEX");
+  assertTransition(
+      "HTML_TAG_NAME", " style=\"", "CSS NORMAL STYLE DOUBLE_QUOTE");
+  assertTransition(
+      "HTML_TAG_NAME", " stylez=\"",
+      "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT DOUBLE_QUOTE");
+  assertTransition(
+      "HTML_TAG_NAME", " title=\"",
+      "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT DOUBLE_QUOTE");
   assertTransition("HTML_TAG_NAME", "=foo>", "ERROR");
 }
 
@@ -194,11 +224,16 @@ function testTag() {
   assertTransition("HTML_TAG NORMAL", " -->", "ERROR");
   assertTransition("HTML_TAG NORMAL", "=foo>", "ERROR");
   // As in <foo on{$handlerType}="jsHere()">
-  assertTransition("HTML_TAG NORMAL", " on", "HTML_ATTRIBUTE_NAME NORMAL SCRIPT");
-  assertTransition("HTML_TAG NORMAL", " ONCLICK", "HTML_ATTRIBUTE_NAME NORMAL SCRIPT");
-  assertTransition("HTML_TAG NORMAL", " style", "HTML_ATTRIBUTE_NAME NORMAL STYLE");
-  assertTransition("HTML_TAG NORMAL", " HREF", "HTML_ATTRIBUTE_NAME NORMAL URI");
-  assertTransition("HTML_TAG XMP", " title", "HTML_ATTRIBUTE_NAME XMP PLAIN_TEXT");
+  assertTransition(
+      "HTML_TAG NORMAL", " on", "HTML_ATTRIBUTE_NAME NORMAL SCRIPT");
+  assertTransition(
+      "HTML_TAG NORMAL", " ONCLICK", "HTML_ATTRIBUTE_NAME NORMAL SCRIPT");
+  assertTransition(
+      "HTML_TAG NORMAL", " style", "HTML_ATTRIBUTE_NAME NORMAL STYLE");
+  assertTransition(
+      "HTML_TAG NORMAL", " HREF", "HTML_ATTRIBUTE_NAME NORMAL URI");
+  assertTransition(
+      "HTML_TAG XMP", " title", "HTML_ATTRIBUTE_NAME XMP PLAIN_TEXT");
   assertTransition("HTML_TAG NORMAL", " checked ", "HTML_TAG NORMAL");
 }
 
@@ -218,7 +253,8 @@ function testHtmlComment() {
 }
 
 function testAttrName() {
-  assertTransition("HTML_ATTRIBUTE_NAME XMP URI", "=", "HTML_BEFORE_ATTRIBUTE_VALUE XMP URI");
+  assertTransition(
+      "HTML_ATTRIBUTE_NAME XMP URI", "=", "HTML_BEFORE_ATTRIBUTE_VALUE XMP URI");
   assertTransition(
       "HTML_ATTRIBUTE_NAME TEXTAREA PLAIN_TEXT", "=",
       "HTML_BEFORE_ATTRIBUTE_VALUE TEXTAREA PLAIN_TEXT");
@@ -229,11 +265,14 @@ function testAttrName() {
 
 function testBeforeAttrValue() {
   assertTransition(
-      "HTML_BEFORE_ATTRIBUTE_VALUE NORMAL URI", "\"", "URI NORMAL URI DOUBLE_QUOTE START");
+      "HTML_BEFORE_ATTRIBUTE_VALUE NORMAL URI", "\"",
+      "URI NORMAL URI DOUBLE_QUOTE START");
   assertTransition(
-      "HTML_BEFORE_ATTRIBUTE_VALUE NORMAL SCRIPT", "'", "JS NORMAL SCRIPT SINGLE_QUOTE REGEX");
+      "HTML_BEFORE_ATTRIBUTE_VALUE NORMAL SCRIPT", "'",
+      "JS NORMAL SCRIPT SINGLE_QUOTE REGEX");
   assertTransition(
-      "HTML_BEFORE_ATTRIBUTE_VALUE NORMAL STYLE", "\"", "CSS NORMAL STYLE DOUBLE_QUOTE");
+      "HTML_BEFORE_ATTRIBUTE_VALUE NORMAL STYLE", "\"",
+      "CSS NORMAL STYLE DOUBLE_QUOTE");
   assertTransition(
       "HTML_BEFORE_ATTRIBUTE_VALUE TEXTAREA STYLE", "color",
       "CSS TEXTAREA STYLE SPACE_OR_TAG_END");
@@ -243,8 +282,11 @@ function testBeforeAttrValue() {
   assertTransition(
       "HTML_BEFORE_ATTRIBUTE_VALUE TITLE PLAIN_TEXT", "\"",
       "HTML_NORMAL_ATTR_VALUE TITLE PLAIN_TEXT DOUBLE_QUOTE");
-  assertTransition("HTML_BEFORE_ATTRIBUTE_VALUE NORMAL PLAIN_TEXT", ">", "HTML_PCDATA");
-  assertTransition("HTML_BEFORE_ATTRIBUTE_VALUE TITLE PLAIN_TEXT", ">", "HTML_RCDATA TITLE");
+  assertTransition(
+      "HTML_BEFORE_ATTRIBUTE_VALUE NORMAL PLAIN_TEXT", ">", "HTML_PCDATA");
+  assertTransition(
+      "HTML_BEFORE_ATTRIBUTE_VALUE TITLE PLAIN_TEXT", ">",
+      "HTML_RCDATA TITLE");
 }
 
 function testAttr() {
@@ -267,20 +309,26 @@ function testAttr() {
       "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT SPACE_OR_TAG_END", "foo",
       "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT SPACE_OR_TAG_END");
   assertTransition(
-      "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT DOUBLE_QUOTE", "\"", "HTML_TAG NORMAL");
+      "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT DOUBLE_QUOTE", "\"",
+      "HTML_TAG NORMAL");
   assertTransition(
-      "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT SINGLE_QUOTE", "'", "HTML_TAG NORMAL");
+      "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT SINGLE_QUOTE", "'",
+      "HTML_TAG NORMAL");
   assertTransition(
-      "HTML_NORMAL_ATTR_VALUE SCRIPT PLAIN_TEXT SINGLE_QUOTE", "'", "HTML_TAG SCRIPT");
+      "HTML_NORMAL_ATTR_VALUE SCRIPT PLAIN_TEXT SINGLE_QUOTE", "'",
+      "HTML_TAG SCRIPT");
   assertTransition(
       "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT SPACE_OR_TAG_END", " x='",
       "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT SINGLE_QUOTE");
   assertTransition(
-      "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT SPACE_OR_TAG_END", " x='y'", "HTML_TAG NORMAL");
+      "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT SPACE_OR_TAG_END", " x='y'",
+      "HTML_TAG NORMAL");
   assertTransition(
-      "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT SPACE_OR_TAG_END", ">", "HTML_PCDATA");
+      "HTML_NORMAL_ATTR_VALUE NORMAL PLAIN_TEXT SPACE_OR_TAG_END", ">",
+      "HTML_PCDATA");
   assertTransition(
-      "HTML_NORMAL_ATTR_VALUE SCRIPT PLAIN_TEXT SPACE_OR_TAG_END", ">", "JS REGEX");
+      "HTML_NORMAL_ATTR_VALUE SCRIPT PLAIN_TEXT SPACE_OR_TAG_END", ">",
+      "JS REGEX");
 }
 
 function testCss() {
@@ -304,10 +352,13 @@ function testCss() {
   assertTransition("CSS", "url(\"", "CSS_DQ_URI START");
   assertTransition("CSS", "url(\"/search?q=", "CSS_DQ_URI QUERY");
   assertTransition("CSS", "url(\"/foo#bar", "CSS_DQ_URI FRAGMENT");
-  assertTransition("CSS", "</style", "HTML_TAG NORMAL");  // Not a start tag so NORMAL.
+  // Not a start tag so NORMAL.
+  assertTransition("CSS", "</style", "HTML_TAG NORMAL");
   assertTransition("CSS", "</Style", "HTML_TAG NORMAL");
-  // Close style tag in attribute value is not a break.  Ok to transition to ERROR.
-  assertTransition("CSS NORMAL STYLE DOUBLE_QUOTE", "</style", "CSS NORMAL STYLE DOUBLE_QUOTE");
+  // Close style tag in attribute value is not a break.  Ok to transition to
+  // ERROR.
+  assertTransition("CSS NORMAL STYLE DOUBLE_QUOTE", "</style",
+                   "CSS NORMAL STYLE DOUBLE_QUOTE");
 }
 
 function testCssComment() {
@@ -318,7 +369,8 @@ function testCssComment() {
   assertTransition("CSS_COMMENT", "**/", "CSS");
   assertTransition("CSS_COMMENT", "\\*/", "CSS");
   assertTransition(
-      "CSS_COMMENT NORMAL STYLE SPACE_OR_TAG_END", "*/", "CSS NORMAL STYLE SPACE_OR_TAG_END");
+      "CSS_COMMENT NORMAL STYLE SPACE_OR_TAG_END", "*/",
+      "CSS NORMAL STYLE SPACE_OR_TAG_END");
 }
 
 function testCssDqString() {
@@ -346,7 +398,8 @@ function testCssSqString() {
   assertTransition("CSS_SQ_STRING", "\n", "ERROR");
   assertTransition("CSS_SQ_STRING", "</style>", "HTML_PCDATA");  // Or error.
   assertTransition(
-      "CSS_SQ_STRING NORMAL STYLE SPACE_OR_TAG_END", "'", "CSS NORMAL STYLE SPACE_OR_TAG_END");
+      "CSS_SQ_STRING NORMAL STYLE SPACE_OR_TAG_END", "'",
+      "CSS NORMAL STYLE SPACE_OR_TAG_END");
 }
 
 function testCssUri() {
@@ -356,18 +409,24 @@ function testCssUri() {
   assertTransition("CSS_URI START", "#anchor )", "CSS");
   assertTransition("CSS_URI START", "/do+not+panic", "CSS_URI PRE_QUERY");
   assertTransition("CSS_SQ_URI START", "/don%27t+panic", "CSS_SQ_URI PRE_QUERY");
-  assertTransition("CSS_SQ_URI START", "Muhammed+\"The+Greatest!\"+Ali", "CSS_SQ_URI PRE_QUERY");
-  assertTransition("CSS_SQ_URI START", "(/don%27t+panic)", "CSS_SQ_URI PRE_QUERY");
+  assertTransition("CSS_SQ_URI START", "Muhammed+\"The+Greatest!\"+Ali",
+                   "CSS_SQ_URI PRE_QUERY");
   assertTransition(
-      "CSS_DQ_URI START", "Muhammed+%22The+Greatest!%22+Ali", "CSS_DQ_URI PRE_QUERY");
+      "CSS_SQ_URI START", "(/don%27t+panic)", "CSS_SQ_URI PRE_QUERY");
+  assertTransition(
+      "CSS_DQ_URI START", "Muhammed+%22The+Greatest!%22+Ali",
+      "CSS_DQ_URI PRE_QUERY");
   assertTransition("CSS_DQ_URI START", "/don't+panic", "CSS_DQ_URI PRE_QUERY");
   assertTransition("CSS_SQ_URI START", "#foo'", "CSS");
   assertTransition(
-      "CSS_URI NORMAL STYLE SPACE_OR_TAG_END START", ")", "CSS NORMAL STYLE SPACE_OR_TAG_END");
+      "CSS_URI NORMAL STYLE SPACE_OR_TAG_END START", ")",
+      "CSS NORMAL STYLE SPACE_OR_TAG_END");
   assertTransition(
-      "CSS_DQ_URI NORMAL STYLE SINGLE_QUOTE PRE_QUERY", "\"", "CSS NORMAL STYLE SINGLE_QUOTE");
+      "CSS_DQ_URI NORMAL STYLE SINGLE_QUOTE PRE_QUERY", "\"",
+      "CSS NORMAL STYLE SINGLE_QUOTE");
   assertTransition(
-      "CSS_SQ_URI NORMAL STYLE DOUBLE_QUOTE FRAGMENT", "#x'", "CSS NORMAL STYLE DOUBLE_QUOTE");
+      "CSS_SQ_URI NORMAL STYLE DOUBLE_QUOTE FRAGMENT", "#x'",
+      "CSS NORMAL STYLE DOUBLE_QUOTE");
 }
 
 function testJsBeforeRegex() {
@@ -445,7 +504,8 @@ function testJsBeforeDivOp() {
 function testJsLineComment() {
   assertTransition("JS_LINE_COMMENT DIV_OP", "", "JS_LINE_COMMENT DIV_OP");
   assertTransition("JS_LINE_COMMENT DIV_OP", "*/", "JS_LINE_COMMENT DIV_OP");
-  assertTransition("JS_LINE_COMMENT DIV_OP", "Hello, World!", "JS_LINE_COMMENT DIV_OP");
+  assertTransition("JS_LINE_COMMENT DIV_OP", "Hello, World!",
+                   "JS_LINE_COMMENT DIV_OP");
   assertTransition("JS_LINE_COMMENT DIV_OP", "\"'/", "JS_LINE_COMMENT DIV_OP");
   assertTransition("JS_LINE_COMMENT DIV_OP", "\n", "JS DIV_OP");
   assertTransition(
@@ -454,7 +514,8 @@ function testJsLineComment() {
   assertTransition("JS_LINE_COMMENT DIV_OP", "</script>", "HTML_PCDATA");
   assertTransition("JS_LINE_COMMENT REGEX", "", "JS_LINE_COMMENT REGEX");
   assertTransition("JS_LINE_COMMENT REGEX", "*/", "JS_LINE_COMMENT REGEX");
-  assertTransition("JS_LINE_COMMENT REGEX", "Hello, World!", "JS_LINE_COMMENT REGEX");
+  assertTransition("JS_LINE_COMMENT REGEX", "Hello, World!",
+                   "JS_LINE_COMMENT REGEX");
   assertTransition("JS_LINE_COMMENT REGEX", "\"'/", "JS_LINE_COMMENT REGEX");
   assertTransition("JS_LINE_COMMENT REGEX", "\n", "JS REGEX");
   assertTransition("JS_LINE_COMMENT REGEX", "</script>", "HTML_PCDATA");
@@ -463,7 +524,8 @@ function testJsLineComment() {
 function testJsBlockComment() {
   assertTransition("JS_BLOCK_COMMENT DIV_OP", "", "JS_BLOCK_COMMENT DIV_OP");
   assertTransition("JS_BLOCK_COMMENT DIV_OP", "\n", "JS_BLOCK_COMMENT DIV_OP");
-  assertTransition("JS_BLOCK_COMMENT DIV_OP", "Hello, World!", "JS_BLOCK_COMMENT DIV_OP");
+  assertTransition("JS_BLOCK_COMMENT DIV_OP", "Hello, World!",
+                   "JS_BLOCK_COMMENT DIV_OP");
   assertTransition("JS_BLOCK_COMMENT DIV_OP", "\"'/", "JS_BLOCK_COMMENT DIV_OP");
   assertTransition("JS_BLOCK_COMMENT DIV_OP", "*/", "JS DIV_OP");
   assertTransition(
@@ -472,10 +534,12 @@ function testJsBlockComment() {
   assertTransition("JS_BLOCK_COMMENT DIV_OP", "</script>", "HTML_PCDATA");
   assertTransition("JS_BLOCK_COMMENT REGEX", "", "JS_BLOCK_COMMENT REGEX");
   assertTransition("JS_BLOCK_COMMENT REGEX", "\r\n", "JS_BLOCK_COMMENT REGEX");
-  assertTransition("JS_BLOCK_COMMENT REGEX", "Hello, World!", "JS_BLOCK_COMMENT REGEX");
+  assertTransition("JS_BLOCK_COMMENT REGEX", "Hello, World!",
+                   "JS_BLOCK_COMMENT REGEX");
   assertTransition("JS_BLOCK_COMMENT REGEX", "\"'/", "JS_BLOCK_COMMENT REGEX");
   assertTransition("JS_BLOCK_COMMENT REGEX", "*/", "JS REGEX");
-  assertTransition("JS_BLOCK_COMMENT REGEX", "</script>", "HTML_PCDATA");  // Or error.
+  // Or error.
+  assertTransition("JS_BLOCK_COMMENT REGEX", "</script>", "HTML_PCDATA");
 }
 
 function testJsDqString() {
@@ -486,7 +550,8 @@ function testJsDqString() {
       "JS_DQ_STRING NORMAL SCRIPT SINGLE_QUOTE", "Hello, World!",
       "JS_DQ_STRING NORMAL SCRIPT SINGLE_QUOTE");
   assertTransition(
-      "JS_DQ_STRING NORMAL SCRIPT SINGLE_QUOTE", "\"", "JS NORMAL SCRIPT SINGLE_QUOTE DIV_OP");
+      "JS_DQ_STRING NORMAL SCRIPT SINGLE_QUOTE", "\"",
+      "JS NORMAL SCRIPT SINGLE_QUOTE DIV_OP");
   assertTransition("JS_DQ_STRING", "</script>", "HTML_PCDATA");  // Or error.
   assertTransition("JS_DQ_STRING", "</p>", "JS_DQ_STRING");
 }
@@ -505,7 +570,8 @@ function testJsSqString() {
       "JS_SQ_STRING NORMAL SCRIPT DOUBLE_QUOTE", "Hello, World!",
       "JS_SQ_STRING NORMAL SCRIPT DOUBLE_QUOTE");
   assertTransition(
-      "JS_SQ_STRING NORMAL SCRIPT DOUBLE_QUOTE", "'", "JS NORMAL SCRIPT DOUBLE_QUOTE DIV_OP");
+      "JS_SQ_STRING NORMAL SCRIPT DOUBLE_QUOTE", "'",
+      "JS NORMAL SCRIPT DOUBLE_QUOTE DIV_OP");
   assertTransition("JS_SQ_STRING", "</script>", "HTML_PCDATA");  // Or error.
   assertTransition("JS_SQ_STRING", "</s>", "JS_SQ_STRING");
 }
@@ -519,13 +585,15 @@ function testJsRegex() {
   assertTransition("JS_REGEX", "\\x27", "JS_REGEX");
   assertTransition("JS_REGEX", "\\'", "JS_REGEX");
   assertTransition("JS_REGEX", "\r", "ERROR");
-  assertTransition("JS_REGEX", "\\\rn", "ERROR");  // Line continuations not allowed in RegExps.
+  // Line continuations not allowed in RegExps.
+  assertTransition("JS_REGEX", "\\\rn", "ERROR");
   assertTransition("JS_REGEX", "/", "JS DIV_OP");
   assertTransition(
       "JS_REGEX NORMAL SCRIPT DOUBLE_QUOTE", "Hello, World!",
       "JS_REGEX NORMAL SCRIPT DOUBLE_QUOTE");
   assertTransition(
-      "JS_REGEX NORMAL SCRIPT DOUBLE_QUOTE", "/", "JS NORMAL SCRIPT DOUBLE_QUOTE DIV_OP");
+      "JS_REGEX NORMAL SCRIPT DOUBLE_QUOTE", "/",
+      "JS NORMAL SCRIPT DOUBLE_QUOTE DIV_OP");
   assertTransition("JS_REGEX", "</script>", "HTML_PCDATA");  // Or error.
 }
 
