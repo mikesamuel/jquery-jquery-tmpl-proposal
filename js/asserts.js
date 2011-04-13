@@ -1,6 +1,9 @@
 // Simple unit-testing utilities used by *Test.js and *Test.html
 
-/** May be called with 2 or 3 parameters.  If called with 3 then the first is a message. */
+/**
+ * May be called with 2 or 3 parameters.  If called with 3 then the first is a
+ * message.
+ */
 function assertEquals(msg, a, b) {
   if (arguments.length === 2) {
     b = arguments[1];
@@ -16,8 +19,8 @@ function assertEquals(msg, a, b) {
       console.trace();
     }
     throw new Error(
-        (msg || 'Inequal') + ': Expected\n\t(' + a + ' : ' + (typeof a) + ')\nbut was\n\t('
-        + b + ' : ' + (typeof b) + ')');
+        (msg || 'Inequal') + ': Expected\n\t(' + a + ' : ' + (typeof a)
+        + ')\nbut was\n\t(' + b + ' : ' + (typeof b) + ')');
   }
 }
 
@@ -35,6 +38,15 @@ function assertTrue(msg, cond) {
       console.trace();
     }
     throw new Error(
-        (msg || 'Inequal') + ': Condition was not true\n\t(' + cond + ' : ' + (typeof cond) + ')');
+        (msg || 'Inequal') + ': Condition was not true\n\t(' + cond + ' : '
+        + (typeof cond) + ')');
   }
+}
+
+function fail(msg) {
+  if (typeof console !== 'undefined') {
+    console.error(msg);
+    console.trace();
+  }
+  throw new Error(msg);
 }

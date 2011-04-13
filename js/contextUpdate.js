@@ -3,14 +3,21 @@
 // ==/ClosureCompiler==
 
 
-/** Outside an HTML tag, directive, or comment.  (Parsed character data).  @const */
+/** @define{boolean} */
+var DEBUG = true;
+
+
+/**
+ * Outside an HTML tag, directive, or comment.  (Parsed character data).
+ * @const
+ */
 var STATE_HTML_PCDATA = 0;
 
 /**
- * Inside an element whose content is RCDATA where text and entities can appear but where nested
- * elements cannot.
- * The content of {@code <title>} and {@code <textarea>} fall into this category since they
- * cannot contain nested elements in HTML.
+ * Inside an element whose content is RCDATA where text and entities
+ * can appear but where nested elements cannot.
+ * The content of {@code <title>} and {@code <textarea>} fall into
+ * this category since they cannot contain nested elements in HTML.
  * @const
  */
 var STATE_HTML_RCDATA = 1;
@@ -27,7 +34,10 @@ var STATE_HTML_TAG = 4;
 /** Inside an HTML attribute name.  @const */
 var STATE_HTML_ATTRIBUTE_NAME = 5;
 
-/** Following an equals sign (<tt>=</tt>) after an attribute name in an HTML tag.  @const */
+/**
+ * Following an equals sign (<tt>=</tt>) after an attribute name in an HTML tag.
+ * @const
+ */
 var STATE_HTML_BEFORE_ATTRIBUTE_VALUE = 6;
 
 /** Inside an HTML comment.  @const */
@@ -97,10 +107,18 @@ var ELEMENT_TYPE_SCRIPT = 1 << 5;
 /** A style element whose content is raw CSS.  @const */
 var ELEMENT_TYPE_STYLE = 2 << 5;
 
-/** A textarea element whose content is encoded HTML but which cannot contain elements.  @const */
+/**
+ * A textarea element whose content is encoded HTML but which cannot contain
+ * elements.
+ * @const
+ */
 var ELEMENT_TYPE_TEXTAREA = 3 << 5;
 
-/** A title element whose content is encoded HTML but which cannot contain elements.  @const */
+/**
+ * A title element whose content is encoded HTML but which cannot contain
+ * elements.
+ * @const
+ */
 var ELEMENT_TYPE_TITLE = 4 << 5;
 
 /** A listing element whose content is raw CDATA.  @const */
@@ -109,7 +127,10 @@ var ELEMENT_TYPE_LISTING = 5 << 5;
 /** An XMP element whose content is raw CDATA.  @const */
 var ELEMENT_TYPE_XMP = 6 << 5;
 
-/** An element whose content is normal mixed PCDATA and child elements.  @const */
+/**
+ * An element whose content is normal mixed PCDATA and child elements.
+ * @const
+ */
 var ELEMENT_TYPE_NORMAL = 7 << 5;
 
 /** All of the element bits set.  @const */
@@ -131,7 +152,11 @@ var ATTR_TYPE_STYLE = 2 << 8;
 /** A URI or URI reference.  @const */
 var ATTR_TYPE_URI = 3 << 8;
 
-/** Other content.  Human readable or other non-structured plain text or keyword values.  @const */
+/**
+ * Other content.  Human readable or other non-structured plain text or keyword
+ * values.
+ * @const
+ */
 var ATTR_TYPE_PLAIN_TEXT = 4 << 8;
 
 /** All of the attribute type bits set.  @const */
@@ -161,12 +186,14 @@ function delimTypeOf(context) { return context & DELIM_TYPE_ALL; }
 
 
 /**
- * Describes what a slash ({@code /}) means when parsing JavaScript source code.
- * A slash that is not followed by another slash or an asterisk (<tt>*</tt>) can either start a
- * regular expression literal or start a division operator.
- * This determination is made based on the full grammar, but Waldemar defined a very close to
- * accurate grammar for a JavaScript 1.9 draft based purely on a regular lexical grammar which is
- * what we use in the autoescaper.
+ * Describes what a slash ({@code /}) means when parsing JavaScript
+ * source code.  A slash that is not followed by another slash or an
+ * asterisk (<tt>*</tt>) can either start a regular expression literal
+ * or start a division operator.
+ * This determination is made based on the full grammar, but Waldemar
+ * defined a very close to accurate grammar for a JavaScript 1.9 draft
+ * based purely on a regular lexical grammar which is what we use in
+ * the autoescaper.
  *
  * @see #isRegexPreceder
  */
@@ -174,15 +201,18 @@ function delimTypeOf(context) { return context & DELIM_TYPE_ALL; }
 /** Not in JavaScript.  @const */
 var JS_FOLLOWING_SLASH_NONE = 0;
 
-/** A slash as the next token would start a regular expression literal.  @const */
+/**
+ * A slash as the next token would start a regular expression literal.
+ * @const
+ */
 var JS_FOLLOWING_SLASH_REGEX = 1 << 13;
 
 /** A slash as the next token would start a division operator.  @const */
 var JS_FOLLOWING_SLASH_DIV_OP = 2 << 13;
 
 /**
- * We do not know what a slash as the next token would start so it is an error for the next
- * token to be a slash.
+ * We do not know what a slash as the next token would start so it is
+ * an error for the next token to be a slash.
  * @const
  */
 var JS_FOLLOWING_SLASH_UNKNOWN = 3 << 13;
@@ -206,19 +236,33 @@ function jsFollowingSlashOf(context) { return context & JS_FOLLOWING_SLASH_ALL; 
 /** Not in a URI.  @const */
 var URI_PART_NONE = 0;
 
-/** Where a scheme might be seen.  At ^ in {@code ^http://host/path?k=v#frag}.  @const */
+/**
+ * Where a scheme might be seen.  At ^ in {@code ^http://host/path?k=v#frag}.
+ * @const
+ */
 var URI_PART_START = 1 << 15;
 
-/** In the scheme, authority, or path.  Between ^s in {@code h^ttp://host/path^?k=v#frag}.  @const */
+/**
+ * In the scheme, authority, or path.
+ * Between ^s in {@code h^ttp://host/path^?k=v#frag}.
+ * @const
+ */
 var URI_PART_PRE_QUERY = 2 << 15;
 
-/** In the query portion.  Between ^s in {@code http://host/path?^k=v^#frag}.  @const */
+/**
+ * In the query portion.  Between ^s in {@code http://host/path?^k=v^#frag}.
+ * @const
+ */
 var URI_PART_QUERY = 3 << 15;
 
 /** In the fragment.  After ^ in {@code http://host/path?k=v#^frag}.  @const */
 var URI_PART_FRAGMENT = 4 << 15;
 
-/** Not {@link #NONE} or {@link #FRAGMENT}, but unknown.  Used to join different contexts.  @const */
+/**
+ * Not {@link #NONE} or {@link #FRAGMENT}, but unknown.  Used to join different
+ * contexts.
+ * @const
+ */
 var URI_PART_UNKNOWN_PRE_FRAGMENT = 5 << 15;
 
 /** Not {@link #NONE}, but unknown.  Used to join different contexts.  @const */
@@ -237,20 +281,25 @@ DELIM_TEXT[DELIM_TYPE_SPACE_OR_TAG_END] = '';
 /** Encodes HTML special characters.  @const */
 var ESC_MODE_ESCAPE_HTML = 0;
 
-/** Like {@link #ESCAPE_HTML} but normalizes known safe HTML since RCDATA can't contain tags.  @const */
+/**
+ * Like {@link #ESCAPE_HTML} but normalizes known safe HTML since RCDATA can't
+ * contain tags.
+ * @const
+ */
 var ESC_MODE_ESCAPE_HTML_RCDATA = 1;
 
 /**
- * Encodes HTML special characters, including quotes, so that the value can appear as part of a
- * quoted attribute value.
- * This differs from {@link #ESCAPE_HTML} in that it strips tags from known safe HTML.
+ * Encodes HTML special characters, including quotes, so that the
+ * value can appear as part of a quoted attribute value.  This differs
+ * from {@link #ESCAPE_HTML} in that it strips tags from known safe
+ * HTML.
  * @const
  */
 var ESC_MODE_ESCAPE_HTML_ATTRIBUTE = 2;
 
 /**
- * Encodes HTML special characters and spaces so that the value can appear as part of an unquoted
- * attribute.
+ * Encodes HTML special characters and spaces so that the value can
+ * appear as part of an unquoted attribute.
  * @const
  */
 var ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE = 3;
@@ -263,15 +312,16 @@ var ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE = 3;
 var ESC_MODE_FILTER_HTML_IDENT = 4;
 
 /**
- * Encode all HTML special characters and quotes, and JS newlines as if to allow them to appear
- * literally in a JS string.
+ * Encode all HTML special characters and quotes, and JS newlines as
+ * if to allow them to appear literally in a JS string.
  * @const
  */
 var ESC_MODE_ESCAPE_JS_STRING = 5;
 
 /**
- * If a number or boolean, output as a JS literal.  Otherwise surround in quotes and escape.
- * Make sure all HTML and space characters are quoted.
+ * If a number or boolean, output as a JS literal.  Otherwise surround
+ * in quotes and escape.  Make sure all HTML and space characters are
+ * quoted.
  * @const
  */
 var ESC_MODE_ESCAPE_JS_VALUE = 6;
@@ -284,40 +334,45 @@ var ESC_MODE_ESCAPE_JS_VALUE = 6;
 var ESC_MODE_ESCAPE_JS_REGEX = 7;
 
 /**
- * Must escape all quotes, newlines, and the close parenthesis using {@code \} followed by hex
- * followed by a space.
+ * Must escape all quotes, newlines, and the close parenthesis using
+ * {@code \} followed by hex followed by a space.
  * @const
  */
 var ESC_MODE_ESCAPE_CSS_STRING = 8;
 
 /**
- * If the value is numeric, renders it as a numeric value so that <code>{$n}px</code> works as
- * expected, otherwise if it is a valid CSS identifier, outputs it without escaping, otherwise
- * surrounds in quotes and escapes like {@link #ESCAPE_CSS_STRING}.
+ * If the value is numeric, renders it as a numeric value so that
+ * <code>{$n}px</code> works as expected, otherwise if it is a valid
+ * CSS identifier, outputs it without escaping, otherwise surrounds in
+ * quotes and escapes like {@link #ESCAPE_CSS_STRING}.
  * @const
  */
 var ESC_MODE_FILTER_CSS_VALUE = 9;
 
 /**
- * Percent encode all URI special characters and characters that cannot appear unescaped in a URI
- * such as spaces.  Make sure to encode pluses and parentheses.
+ * Percent encode all URI special characters and characters that
+ * cannot appear unescaped in a URI such as spaces.  Make sure to
+ * encode pluses and parentheses.
  * This corresponds to the JavaScript function {@code encodeURIComponent}.
  * @const
  */
 var ESC_MODE_ESCAPE_URI = 10;
 
 /**
- * Percent encode non-URI characters that cannot appear unescaped in a URI such as spaces, and
- * encode characters that are not special in URIs that are special in languages that URIs are
- * embedded in such as parentheses and quotes.
- * This corresponds to the JavaScript function {@code encodeURI} but additionally encodes quotes
- * parentheses, and percent signs that are not followed by two hex digits.
+ * Percent encode non-URI characters that cannot appear unescaped in a
+ * URI such as spaces, and encode characters that are not special in
+ * URIs that are special in languages that URIs are embedded in such
+ * as parentheses and quotes.  This corresponds to the JavaScript
+ * function {@code encodeURI} but additionally encodes quotes
+ * parentheses, and percent signs that are not followed by two hex
+ * digits.
  * @const
  */
 var ESC_MODE_NORMALIZE_URI = 11;
 
 /**
- * Like {@link #NORMALIZE_URI}, but filters out schemes like {@code javascript:} that load code.
+ * Like {@link #NORMALIZE_URI}, but filters out schemes like {@code javascript:}
+ * that load code.
  * @const
  */
 var ESC_MODE_FILTER_NORMALIZE_URI = 12;
@@ -401,7 +456,8 @@ ESC_MODE_FOR_STATE[STATE_HTML_TAG] = ESC_MODE_FILTER_HTML_IDENT;
 ESC_MODE_FOR_STATE[STATE_HTML_ATTRIBUTE_NAME] = ESC_MODE_FILTER_HTML_IDENT;
 //ESC_MODE_FOR_STATE[STATE_HTML_BEFORE_ATTRIBUTE_VALUE] = void 0;
 ESC_MODE_FOR_STATE[STATE_HTML_COMMENT] = ESC_MODE_ESCAPE_HTML_RCDATA;
-ESC_MODE_FOR_STATE[STATE_HTML_NORMAL_ATTR_VALUE] = ESC_MODE_ESCAPE_HTML_ATTRIBUTE;
+ESC_MODE_FOR_STATE[STATE_HTML_NORMAL_ATTR_VALUE]
+    = ESC_MODE_ESCAPE_HTML_ATTRIBUTE;
 ESC_MODE_FOR_STATE[STATE_CSS] = ESC_MODE_FILTER_CSS_VALUE;
 //ESC_MODE_FOR_STATE[STATE_CSS_COMMENT] = void 0;
 ESC_MODE_FOR_STATE[STATE_CSS_DQ_STRING] = ESC_MODE_ESCAPE_CSS_STRING;
@@ -426,7 +482,8 @@ function contextToString(context) {
   case STATE_HTML_TAG_NAME: parts.push("HTML_TAG_NAME"); break;
   case STATE_HTML_TAG: parts.push("HTML_TAG"); break;
   case STATE_HTML_ATTRIBUTE_NAME: parts.push("HTML_ATTRIBUTE_NAME"); break;
-  case STATE_HTML_BEFORE_ATTRIBUTE_VALUE: parts.push("HTML_BEFORE_ATTRIBUTE_VALUE"); break;
+  case STATE_HTML_BEFORE_ATTRIBUTE_VALUE:
+    parts.push("HTML_BEFORE_ATTRIBUTE_VALUE"); break;
   case STATE_HTML_COMMENT: parts.push("HTML_COMMENT"); break;
   case STATE_HTML_NORMAL_ATTR_VALUE: parts.push("HTML_NORMAL_ATTR_VALUE"); break;
   case STATE_CSS: parts.push("CSS"); break;
@@ -497,25 +554,30 @@ var REGEX_PRECEDER_KEYWORDS = {
 };
 
 /**
- * True iff a slash after the given run of non-whitespace tokens starts a regular expression
- * instead of a div operator : (/ or /=).
+ * True iff a slash after the given run of non-whitespace tokens
+ * starts a regular expression instead of a div operator : (/ or /=).
  * <p>
- * This fails on some valid but nonsensical JavaScript programs like {@code x = ++/foo/i} which is
- * quite different than {@code x++/foo/i}, but is not known to fail on any known useful programs.
- * It is based on the draft
+ * This fails on some valid but nonsensical JavaScript programs like
+ * {@code x = ++/foo/i} which is quite different than
+ * {@code x++/foo/i}, but is not known to fail on any known useful
+ * programs.  It is based on the draft
  * <a href="http://www.mozilla.org/js/language/js20-2000-07/rationale/syntax.html">JavaScript 2.0
  * lexical grammar</a> and requires one token of lookbehind.
  *
- * @param {string} jsTokens A run of non-whitespace, non-comment, non string tokens not including
- *     the '/' character.  Non-empty.
+ * @param {string} jsTokens A run of non-whitespace, non-comment, non string
+ *     tokens not including the '/' character.  Non-empty.
  */
 function isRegexPreceder(jsTokens) {
   // Tokens that precede a regular expression in JavaScript.
-  // "!", "!=", "!==", "#", "%", "%=", "&", "&&", "&&=", "&=", "(", "*", "*=", "+", "+=", ",",
-  // "-", "-=", "->", ".", "..", "...", "/", "/=", ":", "::", ";", "<", "<<", "<<=", "<=", "=",
-  // "==", "===", ">", ">=", ">>", ">>=", ">>>", ">>>=", "?", "@", "[", "^", "^=", "^^", "^^=",
+  // "!", "!=", "!==", "#", "%", "%=", "&", "&&",
+  // "&&=", "&=", "(", "*", "*=", "+", "+=", ",",
+  // "-", "-=", "->", ".", "..", "...", "/", "/=",
+  // ":", "::", ";", "<", "<<", "<<=", "<=", "=",
+  // "==", "===", ">", ">=", ">>", ">>=", ">>>",
+  // ">>>=", "?", "@", "[", "^", "^=", "^^", "^^=",
   // "{", "|", "|=", "||", "||=", "~",
-  // "break", "case", "continue", "delete", "do", "else", "finally", "instanceof", "return",
+  // "break", "case", "continue", "delete", "do",
+  // "else", "finally", "instanceof", "return",
   // "throw", "try", "typeof"
 
   var jsTokensLen = jsTokens.length;
@@ -531,14 +593,14 @@ function isRegexPreceder(jsTokens) {
     }
     var numAdjacent = jsTokensLen - signStart;
     // True for odd numbers since "---" is the same as "-- -".
-    // False for even numbers since "----" is the same as "-- --" which ends with a decrement,
-    // not a minus sign.
+    // False for even numbers since "----" is the same as "-- --" which ends
+    // with a decrement, not a minus sign.
     return (numAdjacent & 1) === 1;
   case '.':
     if (jsTokensLen === 1) {
       return TRUTHY;
     }
-    // There is likely to be a .. or ... operator in newer versions of EcmaScript.
+    // There is likely to be a .. or ... operator in next version of EcmaScript.
     var ch = jsTokens.charAt(jsTokensLen - 2);
     return !('0' <= ch && ch <= '9');
   case '/':  // Match a div op, but not a regexp.
@@ -551,6 +613,96 @@ function isRegexPreceder(jsTokens) {
     var word = jsTokens.match(/[\w$]+$/);
     return word && REGEX_PRECEDER_KEYWORDS[word[0]] === TRUTHY;
   }
+}
+
+/**
+ * A context which is consistent with both contexts.  This should be
+ * used when multiple execution paths join, such as the path through
+ * the then-clause of an <code>{if}</code> command and the path
+ * through the else-clause.
+ * @return STATE_ERROR when there is no such context consistent with both.
+ */
+function contextUnion(a, b) {
+  if (a === b) {
+    return a;
+  }
+
+  if (a === ((b & ~JS_FOLLOWING_SLASH_ALL) | jsFollowingSlashOf(a))) {
+    return (a & ~JS_FOLLOWING_SLASH_ALL) | JS_FOLLOWING_SLASH_UNKNOWN;
+  }
+
+  var aUriPart = uriPartOf(a);
+  if (a === ((b & ~URI_PART_ALL) | aUriPart)) {
+    var bUriPart = uriPartOf(b);
+    return (a & ~URI_PART_ALL) | (
+        // If the parts differ but neither could be in the fragment then a
+        // ? will conclusively transition into the query state, so use
+        // UKNNOWN_PRE_FRAGMENT to allow ${...}s after '?'.
+        // With unknown, ${...}s are only allowed after a '#'.
+        aUriPart !== URI_PART_FRAGMENT && bUriPart !== URI_PART_FRAGMENT &&
+        aUriPart !== URI_PART_UNKNOWN && bUriPart !== URI_PART_UNKNOWN ?
+        URI_PART_UNKNOWN_PRE_FRAGMENT : URI_PART_UNKNOWN);
+  }
+
+  // Order by state so that we don't have to duplicate tests below.
+  var aState = stateOf(a), bState = stateOf(b);
+  if (aState > bState) {
+    var swap = a;
+    a = b;
+    b = swap;
+    swap = aState;
+    aState = bState;
+    bState = swap;
+  }
+
+  // If we start in a tag name and end between attributes, then treat us as
+  // between attributes.
+  // This handles <b{if $bool} attrName="value"{/if}>.
+  if (aState == STATE_HTML_TAG_NAME && bState == STATE_HTML_TAG) {
+    // We do not need to compare elementTypeOf(a) and elementTypeof(b) since in
+    // HTML_TAG_NAME, there is no tag name, so no loss of information.
+    return b;
+  }
+
+  if (aState === STATE_HTML_TAG && elementTypeOf(a) === elementTypeOf(b)) {
+    // If one branch is waiting for an attribute name and the other is waiting
+    // for an equal sign before an attribute value, then commit to the view that
+    // the attribute name was a valueless attribute and transition to a state
+    // waiting for another attribute name or the end of a tag.
+    if (bState === STATE_HTML_ATTRIBUTE_NAME ||
+        // In an attribute value ended by a delimiter.
+        delimTypeOf(b) === DELIM_TYPE_SPACE_OR_TAG_END) {
+      // TODO: do we need to require a space before any new attribute name?
+      return a;
+    }
+  }
+
+  return STATE_ERROR;
+}
+
+/**
+ * Some epsilon transitions need to be delayed until we get into a branch.
+ * For example, we do not transition into an unquoted attribute value
+ * context just because the raw text node that contained the "=" did
+ * not contain a quote character because the quote character may appear
+ * inside branches as in
+ *     {@code <a href={{if ...}}"..."{{else}}"..."{{/if}}>}
+ * which was derived from production code.
+ * <p>
+ * But we need to force epsilon transitions to happen consistentky before
+ * a dynamic value is considered as in
+ *    {@code <a href=${x}>}
+ * where we consider $x as happening in an unquoted attribute value context,
+ * not as occuring before an attribute value.
+ */
+function contextBeforeDynamicValue(context) {
+  var state = stateOf(context);
+  if (state === STATE_HTML_BEFORE_ATTRIBUTE_VALUE) {
+    context = computeContextAfterAttributeDelimiter(
+        elementTypeOf(context), attrTypeOf(context),
+        DELIM_TYPE_SPACE_OR_TAG_END);
+  }
+  return context;
 }
 
 function computeContextAfterAttributeDelimiter(elType, attrType, delim) {
@@ -1231,9 +1383,10 @@ var processRawText = (function () {
     }
     if (this.numCharsConsumed === 0 && stateOf(this.next) === stateOf(context)) {
       throw new Error(  // Infinite loop.
-          // Avoid an explicit dependency on contentToString.  If we're debugging uncompiled,
-          // then we get the benefit of it, but the compiler can treat it as dead code.
-          (global['contextToString'] ? global['contextToString'](context) : context));
+          // Avoid an explicit dependency on contentToString.  If we're
+          // debugging uncompiled, then we get the benefit of it, but the
+          // compiler can treat it as dead code.
+          (DEBUG ? contextToString(context) : context));
     }
   };
 
@@ -1245,11 +1398,14 @@ var processRawText = (function () {
    */
   function processRawText(rawText, context) {
     while (rawText) {
-      // If we are in an attribute value, then decode rawText (except for the delimiter) up to the
-      // next occurrence of delimiter.
 
-      // The end of the section to decode.  Either before a delimiter or > symbol that closes an
-      // attribute, at the end of the rawText, or -1 if no decoding needs to happen.
+      // If we are in an attribute value, then decode rawText (except
+      // for the delimiter) up to the next occurrence of delimiter.
+
+      // The end of the section to decode.  Either before a delimiter
+      // or > symbol that closes an attribute, at the end of the rawText,
+      // or -1 if no decoding needs to happen.
+
       var attrValueEnd = findEndOfAttributeValue(rawText, delimTypeOf(context));
       if (attrValueEnd === -1) {
         // Outside an attribute value.  No need to decode.
@@ -1261,34 +1417,42 @@ var processRawText = (function () {
       } else {
         // Inside an attribute value.  Find the end and decode up to it.
 
-        // All of the languages we deal with (HTML, CSS, and JS) use quotes as delimiters.
-        // When one language is embedded in the other, we need to decode delimiters before trying
-        // to parse the content in the embedded language.
+        // All of the languages we deal with (HTML, CSS, and JS) use
+        // quotes as delimiters.
+        // When one language is embedded in the other, we need to
+        // decode delimiters before trying to parse the content in the
+        // embedded language.
         //
         // For example, in
         //       <a onclick="alert(&quot;Hello {$world}&quot;)">
         // the decoded value of the event handler is
         //       alert("Hello {$world}")
-        // so to determine the appropriate escaping convention we decode the attribute value
-        // before delegating to processNextToken.
+        // so to determine the appropriate escaping convention we
+        // decode the attribute value before delegating to processNextToken.
         //
-        // We could take the cross-product of two languages to avoid decoding but that leads to
-        // either an explosion in the number of states, or the amount of lookahead required.
+
+        // We could take the cross-product of two languages to avoid
+        // decoding but that leads to either an explosion in the
+        // number of states, or the amount of lookahead required.
         var rawTextLen = rawText.length;
 
-        // The end of the attribute value.  At attrValueEnd, or attrValueend + 1 if a delimiter
-        // needs to be consumed.
+        // The end of the attribute value.  At attrValueEnd, or
+        // attrValueend + 1 if a delimiter needs to be consumed.
         var attrEnd = attrValueEnd < rawTextLen ?
             attrValueEnd + DELIM_TEXT[delimTypeOf(context)].length : -1;
 
         // Decode so that the JavaScript rules work on attribute values like
         //     <a onclick='alert(&quot;{$msg}!&quot;)'>
-        // If we've already processed the tokens "<a", " onclick='" to get into the
-        // single quoted JS attribute context, then we do three things:
-        //   (1) This class will decode "&quot;" to "\"" and work below to go from State.JS to
-        //       State.JS_DQ_STRING.
-        //   (2) Then the caller checks {$msg} and realizes that $msg is part of a JS string.
-        //   (3) Then, the above will identify the "'" as the end, and so we reach here with:
+
+        // If we've already processed the tokens "<a", " onclick='" to
+        // get into the single quoted JS attribute context, then we do
+        // three things:
+        //   (1) This class will decode "&quot;" to "\"" and work below to
+        //       go from STATE_JS to STATE_JS_DQ_STRING.
+        //   (2) Then the caller checks {$msg} and realizes that $msg is
+        //       part of a JS string.
+        //   (3) Then, the above will identify the "'" as the end, and so we
+        //       reach here with:
         //       r a w T e x t = " ! & q u o t ; ) ' > "
         //                                         ^ ^
         //                              attrValueEnd attrEnd
@@ -1306,8 +1470,8 @@ var processRawText = (function () {
           context = attrCu.next;
         }
 
-        // TODO: Maybe check that context is legal to leave an attribute in.  Throw if the attribute
-        // ends inside a quoted string.
+        // TODO: Maybe check that context is legal to leave an attribute in.
+        // Throw if the attribute ends inside a quoted string.
 
         if (attrEnd !== -1) {
           rawText = rawText.substring(attrEnd);
@@ -1328,16 +1492,61 @@ var processRawText = (function () {
   }
 
 
-  // TODO: If we need to deal with untrusted templates, then we need to make sure that tokens like
-  // <!--, </script>, etc. are never split with empty strings.
-  // We could do this by walking all possible paths through each template (both branches for ifs,
-  // each case for switches, and the 0,1, and 2+ iteration case for loops).
-  // For each template, tokenize the original's rawText nodes using RawTextContextUpdater and then
-  // tokenize one single rawText node made by concatenating all rawText.
-  // If one contains a sensitive token, e.g. <!--/ and the other doesn't, then we have a potential
-  // splitting attack.
-  // That and disallow unquoted attributes, and be paranoid about prints especially in the TAG_NAME
-  // productions.
+  // TODO: If we need to deal with untrusted templates, then we need to make
+  // sure that tokens like <!--, </script>, etc. are never split with empty
+  // strings.
+  // We could do this by walking all possible paths through each template
+  // (both branches for ifs, each case for switches, and the 0,1, and 2+
+  // iteration case for loops).
+  // For each template, tokenize the original's rawText nodes using
+  // RawTextContextUpdater and then tokenize one single rawText node made by
+  // concatenating all rawText.
+  // If one contains a sensitive token, e.g. <!--/ and the other doesn't, then
+  // we have a potential splitting attack.
+  // That and disallow unquoted attributes, and be paranoid about prints
+  // especially in the TAG_NAME productions.
 
   return processRawText;
 }());
+
+/**
+ * @param context the input context before the substitution.
+ * @param out
+ *   receives firstEscMode and secondEscMode properties with values from the
+  ESC_MODE_* enum.
+ */
+function computeEscapingModeForSubst(contextBefore, out) {
+  var context = contextBeforeDynamicValue(contextBefore);
+  var escMode = ESC_MODE_FOR_STATE[stateOf(context)];
+  switch (uriPartOf(context)) {
+    case URI_PART_START:
+      escMode = ESC_MODE_FILTER_NORMALIZE_URI;
+      context = (context & ~URI_PART_ALL) | URI_PART_PRE_QUERY;
+      break;
+    case URI_PART_QUERY: case URI_PART_FRAGMENT:
+      escMode = ESC_MODE_ESCAPE_URI; break;
+  }
+  var secondEscMode = null;
+  var delimType = delimTypeOf(context);
+  if (delimType !== DELIM_TYPE_NONE) {
+    switch (escMode) {
+      case ESC_MODE_ESCAPE_HTML: break;
+      case ESC_MODE_ESCAPE_HTML_ATTRIBUTE:
+        if (delimType === DELIM_TYPE_SPACE_OR_TAG_END) {
+          escMode = ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE;
+        }
+        break;
+      case ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE: break;
+      default:
+        if (!IS_ESC_MODE_HTML_EMBEDDABLE[escMode]) {
+          secondEscMode = delimType === DELIM_TYPE_SPACE_OR_TAG_END
+              ? ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE
+              : ESC_MODE_ESCAPE_HTML_ATTRIBUTE;
+        }
+        break;
+    }
+  }
+  out.firstEscMode = escMode;
+  out.secondEscMode = secondEscMode;
+  return context;
+}

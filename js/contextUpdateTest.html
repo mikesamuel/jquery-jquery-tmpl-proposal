@@ -16,29 +16,6 @@ h2.fail { color: red }
 <body>
 <h1>Context Update Test</h1>
 
-<script>
-(function () {
-
-  var nTests = 0;
-  for (var k in window) {
-    if (!/^test/.test(k)) { continue; }
-    ++nTests;
-    var header = document.createElement('H2');
-    header.appendChild(document.createTextNode(k));
-    document.body.appendChild(header);
-    if (typeof console !== 'undefined') { console.group(k); }
-    try {
-      window[k]();
-      header.className = 'pass';
-    } catch (e) {
-      header.className = 'fail';
-      document.body.appendChild(document.createTextNode(e.toString()));
-    }
-    if (typeof console !== 'undefined') { console.groupEnd(k); }
-  }
-
-  assertTrue(nTests > 0);
-})();
-</script>
+<script src="runtests.js"></script>
 
 </body></html>

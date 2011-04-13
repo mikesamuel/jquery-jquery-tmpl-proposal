@@ -561,3 +561,56 @@ function testRcdata() {
   assertTransition("HTML_RCDATA TEXTAREA", "</xmp>", "HTML_RCDATA TEXTAREA");
   assertTransition("HTML_RCDATA TEXTAREA", "</textarea>", "HTML_PCDATA");
 }
+
+function assertContextUnion(golden, a, b) {
+  var actual = contextUnion(a, b);
+  if (contextUnion(b, a) !== actual) {
+    fail('union( ' + contextToString(a) + ', ' + contextToString(b)
+         + ') not symmetric');
+  }
+  if (golden !== actual) {
+    fail('union( ' + contextToString(a) + ', ' + contextToString(b)
+         + ') = ' + contextToString(actual)
+         + ', not ' + contextToString(golden));
+  }
+}
+
+function testContextUnion() {
+  assertContextUnion(STATE_HTML_PCDATA, STATE_HTML_PCDATA, STATE_HTML_PCDATA);
+  assertContextUnion(
+      STATE_JS | JS_FOLLOWING_SLASH_UNKNOWN,
+      STATE_JS | JS_FOLLOWING_SLASH_DIV_OP,
+      STATE_JS | JS_FOLLOWING_SLASH_REGEX);
+  assertContextUnion(
+      STATE_JS | JS_FOLLOWING_SLASH_UNKNOWN | ATTR_TYPE_SCRIPT,
+      STATE_JS | JS_FOLLOWING_SLASH_DIV_OP | ATTR_TYPE_SCRIPT,
+      STATE_JS | JS_FOLLOWING_SLASH_REGEX | ATTR_TYPE_SCRIPT);
+  assertContextUnion(
+      STATE_URI | ATTR_TYPE_URI | URI_PART_START,
+      STATE_URI | ATTR_TYPE_URI | URI_PART_START,
+      STATE_URI | ATTR_TYPE_URI | URI_PART_START);
+  assertContextUnion(
+      STATE_URI | ATTR_TYPE_URI | URI_PART_UNKNOWN_PRE_FRAGMENT,
+      STATE_URI | ATTR_TYPE_URI | URI_PART_PRE_QUERY,
+      STATE_URI | ATTR_TYPE_URI | URI_PART_START);
+  assertContextUnion(
+      STATE_URI | ATTR_TYPE_URI | URI_PART_UNKNOWN_PRE_FRAGMENT,
+      STATE_URI | ATTR_TYPE_URI | URI_PART_PRE_QUERY,
+      STATE_URI | ATTR_TYPE_URI | URI_PART_QUERY);
+  assertContextUnion(
+      STATE_URI | ATTR_TYPE_URI | URI_PART_UNKNOWN,
+      STATE_URI | ATTR_TYPE_URI | URI_PART_FRAGMENT,
+      STATE_URI | ATTR_TYPE_URI | URI_PART_QUERY);
+  assertContextUnion(
+      STATE_HTML_TAG | ELEMENT_TYPE_SCRIPT,
+      STATE_HTML_TAG | ELEMENT_TYPE_SCRIPT,
+      STATE_HTML_TAG_NAME);
+  assertContextUnion(
+      STATE_HTML_TAG | ELEMENT_TYPE_STYLE,
+      STATE_HTML_TAG | ELEMENT_TYPE_STYLE,
+      STATE_HTML_ATTRIBUTE_NAME | ELEMENT_TYPE_STYLE |
+      DELIM_TYPE_SPACE_OR_TAG_END);
+  assertContextUnion(
+      STATE_ERROR,
+      STATE_HTML_PCDATA, STATE_HTML_RCDATA | ELEMENT_TYPE_TITLE);
+}
