@@ -756,11 +756,12 @@ var processRawText = (function () {
       /&(?:#(?:(x[0-9a-f]+)|([0-9]+))|(lt|gt|amp|quot|apos));/gi,
       function (entity, hex, decimal, entityName) {
         if (hex || decimal) {
-          return String.fromCharCode(  // String.fromCharCode coerces its argument
+          return String.fromCharCode(  // String.fromCharCode coerces its arg.
               /** @type {number} */
               (0 + (hex || decimal)));
         }
-        // We don't need to escape all entities, just the ones that could be token boundaries.
+        // We don't need to escape all entities, just the ones that could be
+        // token boundaries.
         return HTML_ENTITY_NAME_TO_TEXT[entityName.toLowerCase()];
       }
     );
@@ -768,8 +769,10 @@ var processRawText = (function () {
 
 
   /**
-   * @return The end of the attribute value of -1 if delim indicates we are not in an attribute.
-   *     {@code rawText.length} if we are in an attribute but the end does not appear in rawText.
+   * @return The end of the attribute value of -1 if delim indicates we are not
+   *     in an attribute.
+   *     {@code rawText.length} if we are in an attribute but the end does not
+   *     appear in rawText.
    */
   function findEndOfAttributeValue(rawText, delim) {
     var rawTextLen = rawText.length;
@@ -784,8 +787,8 @@ var processRawText = (function () {
 
 
   /**
-   * Encapsulates a grammar production and the context after that production is seen in a chunk of
-   * HTML/CSS/JS input.
+   * Encapsulates a grammar production and the context after that production is
+   * seen in a chunk of HTML/CSS/JS input.
    * @param {RegExp} pattern
    * @constructor
    */
@@ -861,11 +864,16 @@ var processRawText = (function () {
   TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_SCRIPT]
       = STATE_JS | JS_FOLLOWING_SLASH_REGEX;
   TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_STYLE] = STATE_CSS;
-  TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_NORMAL] = STATE_HTML_PCDATA;
-  TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_LISTING] = STATE_HTML_RCDATA;
-  TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_TEXTAREA] = STATE_HTML_RCDATA;
-  TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_TITLE] = STATE_HTML_RCDATA;
-  TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_XMP] = STATE_HTML_RCDATA;
+  TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_NORMAL]
+      = STATE_HTML_PCDATA;
+  TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_LISTING]
+      = STATE_HTML_RCDATA;
+  TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_TEXTAREA]
+      = STATE_HTML_RCDATA;
+  TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_TITLE]
+      = STATE_HTML_RCDATA;
+  TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[ELEMENT_TYPE_XMP]
+      = STATE_HTML_RCDATA;
 
   /**
    * @param {RegExp} regex
@@ -881,7 +889,8 @@ var processRawText = (function () {
         var elType = elementTypeOf(prior);
         var partialContext = TAG_DONE_ELEMENT_TYPE_TO_PARTIAL_CONTEXT[elType];
         if (typeof partialContext !== 'number') { throw new Error(elType); }
-        return partialContext === STATE_HTML_RCDATA ? partialContext | elType : partialContext;
+        return partialContext === STATE_HTML_RCDATA
+            ? partialContext | elType : partialContext;
       });
 
 
@@ -903,7 +912,8 @@ var processRawText = (function () {
 
   /**
    * Lower case names of attributes whose value is a URI.
-   * This does not identify attributes like {@code <meta content>} which is conditionally a URI
+   * This does not identify attributes like {@code <meta content>} which is
+   * conditionally a URI
    * depending on the value of other attributes.
    * @see <a href="http://www.w3.org/TR/html4/index/attributes.html">HTML4 attrs with type %URI</a>
    */
@@ -923,8 +933,10 @@ var processRawText = (function () {
     };
 
   /**
-   * A transition to a context in the name of an attribute whose type is determined from its name.
-   * @param {RegExp} regex A regular expression whose group 1 is a prefix of an attribute name.
+   * A transition to a context in the name of an attribute whose attribute type
+   * is determined by its name seen thus far.
+   * @param {RegExp} regex A regular expression whose group 1 is a prefix of an
+   *     attribute name.
    * @constructor
    * @extends Transition
    */
@@ -995,7 +1007,8 @@ var processRawText = (function () {
   TransitionSubclass(
       TransitionToJsString,
       function (prior, match) {
-        return (prior & (ELEMENT_TYPE_ALL | ATTR_TYPE_ALL | DELIM_TYPE_ALL)) | this.state;
+        return (prior & (ELEMENT_TYPE_ALL | ATTR_TYPE_ALL | DELIM_TYPE_ALL))
+            | this.state;
       });
 
   /**
@@ -1011,7 +1024,8 @@ var processRawText = (function () {
       function (prior, match) {
         switch (jsFollowingSlashOf(prior)) {
         case JS_FOLLOWING_SLASH_DIV_OP:
-          return (prior & ~(STATE_ALL | JS_FOLLOWING_SLASH_ALL)) | STATE_JS | JS_FOLLOWING_SLASH_REGEX;
+          return (prior & ~(STATE_ALL | JS_FOLLOWING_SLASH_ALL))
+              | STATE_JS | JS_FOLLOWING_SLASH_REGEX;
         case JS_FOLLOWING_SLASH_REGEX:
           return (prior & ~(STATE_ALL | JS_FOLLOWING_SLASH_ALL))
               | STATE_JS_REGEX | JS_FOLLOWING_SLASH_NONE;
@@ -1157,16 +1171,22 @@ var processRawText = (function () {
   TransitionSubclass(
       DivPreceder,
       function (prior, match) {
-        return (prior & ~(STATE_ALL | JS_FOLLOWING_SLASH_ALL)) | STATE_JS | JS_FOLLOWING_SLASH_DIV_OP;
+        return (prior & ~(STATE_ALL | JS_FOLLOWING_SLASH_ALL))
+            | STATE_JS | JS_FOLLOWING_SLASH_DIV_OP;
       });
 
-  /** Characters that break a line in JavaScript source suitable for use in a regex charset. */
+  /**
+   * Characters that break a line in JavaScript source suitable for use in a
+   * regex charset.
+   */
   var JS_LINEBREAKS = "\r\n\u2028\u2029";
 
   /**
-   * For each state, a group of rules for consuming raw text and how that affects the document
+   * For each state, a group of rules for consuming raw text and how that
+   * affects the document
    * context.
-   * The rules each have an associated pattern, and the rule whose pattern matches earliest in the
+   * The rules each have an associated pattern, and the rule whose pattern
+   * matches earliest in the
    * text wins.
    */
   var TRANSITIONS = [];
@@ -1186,24 +1206,25 @@ var processRawText = (function () {
     new TransitionToSelf(/^[a-z0-9:-]*(?:[a-z0-9]|$)/i),
     new ToTagTransition(/^(?=[\/\s>])/, ELEMENT_TYPE_NORMAL)];
   TRANSITIONS[STATE_HTML_TAG] = [
-    // Allows {@code data-foo} and other dashed attribute names, but intentionally disallows
-    // "--" as an attribute name so that a tag ending after a value-less attribute named "--"
-    // cannot be confused with a HTML comment end ("-->").
+    // Allows {@code data-foo} and other dashed attribute names, but
+    // intentionally disallows "--" as an attribute name so that a tag ending
+    // after a value-less attribute named "--" cannot be confused with a HTML
+    // comment end ("-->").
     new TransitionToAttrName(/^\s*([a-z][\w-]*)/i),
     new TagDoneTransition(/^\s*\/?>/),
     new TransitionToSelf(/^\s+$/)];
   TRANSITIONS[STATE_HTML_ATTRIBUTE_NAME] = [
     new TransitionToState(/^\s*=/, STATE_HTML_BEFORE_ATTRIBUTE_VALUE),
-    // For a value-less attribute, make an epsilon transition back to the tag body context to
-    // look for a tag end or another attribute name.
+    // For a value-less attribute, make an epsilon transition back to the tag
+    // body context to look for a tag end or another attribute name.
     new TransitionBackToTag(/^/)];
   TRANSITIONS[STATE_HTML_BEFORE_ATTRIBUTE_VALUE] = [
     new TransitionToAttrValue(/^\s*"/, DELIM_TYPE_DOUBLE_QUOTE),
     new TransitionToAttrValue(/^\s*'/, DELIM_TYPE_SINGLE_QUOTE),
-    new TransitionToAttrValue(/^(?=[^"'\s>])/,  // Matches any unquoted value part.
+    new TransitionToAttrValue(/^(?=[^"'\s>])/,  // Start of unquoted value.
                               DELIM_TYPE_SPACE_OR_TAG_END),
-    // Epsilon transition back if there is an empty value followed by an obvious attribute
-    // name or a tag end.
+    // Epsilon transition back if there is an empty value followed by an obvious
+    // attribute name or a tag end.
     // The first branch handles the blank value in:
     //    <input value=>
     // and the second handles the blank value in:
@@ -1215,10 +1236,12 @@ var processRawText = (function () {
     TRANSITION_TO_SELF];
   TRANSITIONS[STATE_HTML_NORMAL_ATTR_VALUE] = [
     TRANSITION_TO_SELF];
-  // The CSS transitions below are based on http://www.w3.org/TR/css3-syntax/#lexical
+  // The CSS transitions below are based on
+  // http://www.w3.org/TR/css3-syntax/#lexical
   TRANSITIONS[STATE_CSS] = [
     new TransitionToState(/\/\*/, STATE_CSS_COMMENT),
-    // TODO: Do we need to support non-standard but widely supported C++ style comments?
+    // TODO: Do we need to support non-standard but widely supported C++ style
+    // comments?
     new TransitionToState(/"/, STATE_CSS_DQ_STRING),
     new TransitionToState(/'/, STATE_CSS_SQ_STRING),
     new CssUriTransition(/\burl\s*\(\s*(["']?)/i),
@@ -1263,8 +1286,8 @@ var processRawText = (function () {
     new TransitionToJsString(/"/, STATE_JS_DQ_STRING),
     new TransitionToJsString(/'/, STATE_JS_SQ_STRING),
     new SlashTransition(/\//),
-    // Shuffle words, punctuation (besides /), and numbers off to an analyzer which does a
-    // quick and dirty check to update isRegexPreceder.
+    // Shuffle words, punctuation (besides /), and numbers off to an
+    // analyzer which does a quick and dirty check to update isRegexPreceder.
     new JsPuncTransition(/(?:[^<\/"'\s\\]|<(?!\/script))+/i),
     new TransitionToSelf(/\s+/),  // Space
     SCRIPT_TAG_END];
@@ -1509,35 +1532,46 @@ var processRawText = (function () {
 }());
 
 /**
- * @param context the input context before the substitution.
- * @param out
- *   receives firstEscMode and secondEscMode properties with values from the
-  ESC_MODE_* enum.
+ * @param contextBefore the input context before the substitution.
+ * @param out receives firstEscMode and secondEscMode properties with values
+ *     from the ESC_MODE_* enum.
  */
 function computeEscapingModeForSubst(contextBefore, out) {
   var context = contextBeforeDynamicValue(contextBefore);
-  var escMode = ESC_MODE_FOR_STATE[stateOf(context)];
+  var firstEscMode = ESC_MODE_FOR_STATE[stateOf(context)];
   switch (uriPartOf(context)) {
     case URI_PART_START:
-      escMode = ESC_MODE_FILTER_NORMALIZE_URI;
+      firstEscMode = ESC_MODE_FILTER_NORMALIZE_URI;
       context = (context & ~URI_PART_ALL) | URI_PART_PRE_QUERY;
       break;
-    case URI_PART_QUERY: case URI_PART_FRAGMENT:
-      escMode = ESC_MODE_ESCAPE_URI; break;
+    case URI_PART_QUERY:
+      firstEscMode = ESC_MODE_ESCAPE_URI;
+      break;
+    case URI_PART_NONE: break;
+    case URI_PART_FRAGMENT: case URI_PART_PRE_QUERY:
+      // TODO: Check this in Soy.
+      if (attrTypeOf(context) !== ATTR_TYPE_URI) {
+        firstEscMode = ESC_MODE_NORMALIZE_URI;
+      }
+      break;
+    default: return STATE_ERROR;  // Unknown URI part.
+  }
+  if (firstEscMode === void 0) {
+    return STATE_ERROR;
   }
   var secondEscMode = null;
   var delimType = delimTypeOf(context);
   if (delimType !== DELIM_TYPE_NONE) {
-    switch (escMode) {
+    switch (firstEscMode) {
       case ESC_MODE_ESCAPE_HTML: break;
       case ESC_MODE_ESCAPE_HTML_ATTRIBUTE:
         if (delimType === DELIM_TYPE_SPACE_OR_TAG_END) {
-          escMode = ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE;
+          firstEscMode = ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE;
         }
         break;
       case ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE: break;
       default:
-        if (!IS_ESC_MODE_HTML_EMBEDDABLE[escMode]) {
+        if (!IS_ESC_MODE_HTML_EMBEDDABLE[firstEscMode]) {
           secondEscMode = delimType === DELIM_TYPE_SPACE_OR_TAG_END
               ? ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE
               : ESC_MODE_ESCAPE_HTML_ATTRIBUTE;
@@ -1545,7 +1579,7 @@ function computeEscapingModeForSubst(contextBefore, out) {
         break;
     }
   }
-  out.firstEscMode = escMode;
+  out.firstEscMode = firstEscMode;
   out.secondEscMode = secondEscMode;
   return context;
 }

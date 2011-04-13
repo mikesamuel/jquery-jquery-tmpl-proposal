@@ -1,8 +1,5 @@
 // Utilities to parse JQuery templates.
 
-var FALSEY = 1;
-var TRUTHY = 1;
-
 function parseJqueryTemplate(templateText, opt_name) {
   // Figure out the set of block directives by looking at end markers.
   var blockDirectives = {};
@@ -18,7 +15,7 @@ function parseJqueryTemplate(templateText, opt_name) {
   var stack = [parseTree];
   var top = parseTree;
   var tokens = String(templateText).match(
-      /\$\{[^}]*\}|\{\{\/?[a-z][a-z0-9]*\b[^}]*\}\}|[\s\S][^{$]*/gi);
+      /\$\{[^}]*\}|\{\{\/?[a-z][a-z0-9]*\b(?:\}?[^}])*\}\}|[\s\S][^{$]*/gi);
   if (tokens) {
     var m;
     for (var i = 0, n = tokens.length; i < n; ++i) {
@@ -30,7 +27,7 @@ function parseJqueryTemplate(templateText, opt_name) {
           top.push(['$', m[1]]);
           continue;
         case '{{':
-          m = token.match(/^\{\{(\/?)([a-z][a-z0-9]*)([^\}]*)\}\}$/i);
+          m = token.match(/^\{\{(\/?)([a-z][a-z0-9]*)((?:\}?[^}])*)\}\}$/i);
           if (!m) { break; }
           var name = m[2], content = m[3];
           if (m[1]) {  // close
@@ -91,11 +88,17 @@ function renderJQueryTemplate(templateParseTree) {
       }
     }
   }
-  walkChildren(templateParseTree);
+  if (templateParseTree[0] === 'T') {
+    walkChildren(templateParseTree);
+  } else {
+    walk(templateParseTree);
+  }
   return tokens.join('');
 }
 
 function contextuallyEscapeTemplates(jqueryTemplatesByName) {
+  if (DEBUG && typeof jqueryTemplatesByName !== 'object') { throw new Error; }
+
   var hop = Object.hasOwnProperty;
   var parsedTemplates = {};
 
@@ -114,14 +117,13 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
   for (var templateName in jqueryTemplatesByName) {
     if (hop.call(jqueryTemplatesByName, templateName)) {
       var template = jqueryTemplatesByName[templateName];
+      if (typeof template === 'string') {
+        template = parseJqueryTemplate(template);
+      }
       template.jqueryTemplateName = templateName;
-      assignIds(
-          parsedTemplates[templateName] = typeof template === 'string'
-              ? parseJqueryTemplate(template) : template);
+      assignIds(parsedTemplates[templateName] = template);
     }
   }
-
-  console.log('parsedTemplates=' + JSON.stringify(parsedTemplates));
 
   var cloneJson;
   if (typeof JSON !== undefined) {
@@ -157,7 +159,7 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
   var inferences = {
     // Maps IDs of ${...} nodes to lists of escaping modes.
     escapingModes: {},
-    // For {tmpl} style calls, the context in which the template is called.
+    // For {{tmpl}}&{{wrap}} calls, the context in which the template is called.
     calleeName: {},
     // Maps template names to output contexts.
     outputContext: {},
@@ -169,6 +171,7 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
 
   function makeChildInferences(parent) {
     function derive(a) {
+      /** @constructor */
       function ctor() {}
       ctor.prototype = a;
       return new ctor;
@@ -196,9 +199,14 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
     }
   }
 
+  var limit = 10;
+
   // Propagates context across a template body to compute its output context.
   function getTemplateOutputContext(
       templateBody, inputContext, parentInferences) {
+    if (--limit <= 0) {
+      throw new Error('too much recursion');
+    }
 
     var templateId = templateBody.parseTreeNodeId;
 
@@ -217,31 +225,29 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
     inferences.outputContext[templateId] = inputContext;
 
     var outputContext = processTemplate(
-        templateBody, inputContext, parentInferences);
+        templateBody, inputContext, inferences);
 
     if (outputContext === inputContext) {
       // Our optimistic assumption was correct.
-      commitInferencesIntoParent(parentInferences);
-      console.log('inferred ' + inputContext + ' -> ' + outputContext + ' for ' + templateId);
-      return outputContext;
+    } else {
+
+      // Optimistically assume that we have a steady state.
+      inferences.outputContext[templateId] = outputContext;
+
+      inferences = makeChildInferences(parentInferences);
+      var outputContext2 = processTemplate(
+          templateBody, inputContext, inferences);
+      if (outputContext2 === outputContext) {
+        // Our second optimistic assumption was correct.
+      } else {
+        var name = templateBody.jqueryTemplateName;
+        throw new Error(
+            DEBUG ? 'Cannot determine an output context for ' + name : name);
+      }
     }
 
-    // Optimistically assume that we have a steady state.
-    inferences.outputContext[templateId] = outputContext;
-
-    inferences = makeChildInferences(parentInferences);
-    var outputContext2 = processTemplate(
-        templateBody, inputContext, parentInferences);
-    if (outputContext2 === outputContext) {
-      // Our second optimistic assumption was correct.
-      commitInferencesIntoParent(parentInferences);
-      console.log('inferred ' + inputContext + ' -> ' + outputContext + ' for ' + templateId);
-      return outputContext;
-    }
-
-    var name = templateBody.jqueryTemplateName;
-    throw new Error(
-        DEBUG ? 'Cannot determine an output context for ' + name : name);
+    commitInferencesIntoParent(inferences, parentInferences);
+    return outputContext;
   }
 
   function processTemplate(templateBody, inputContext, inferences) {
@@ -249,24 +255,31 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
 
     // Generate a debugging string for a template node.
     // Only used when DEBUG is true.
-    function errorLocation(root, parseTree) {
+    function errorLocation(parseTree) {
       var lineNum = 1;
       function walk(node) {
-        if (typeof parseTree === 'string') {
-          var m = parseTree.match(/\r\n?|\n/g);
+        if ((typeof node) === 'string') {
+          var m = node.match(/\r\n?|\n/g);
           if (m) { lineNum += m.length; }
         } else {
           if (node === parseTree) {
-            return name + ':' + lineNum;
+            var sourceAbbreviated = renderJQueryTemplate(parseTree)
+                .replace(/\s+/g, ' ');
+            var len = sourceAbbreviated.length;
+            if (len > 35) {
+              sourceAbbreviated = sourceAbbreviated.substring(0, 16) + '...'
+                  + sourceAbbreviated.substring(len - 16);
+            }
+            return name + ':' + lineNum + ':`' + sourceAbbreviated + '`';
           }
-          for (var i = 1, n = parseTree.length; i < n; ++i) {
-            var out = walk(parseTree[i]);
+          for (var i = 1, n = node.length; i < n; ++i) {
+            var out = walk(node[i]);
             if (out) { return out; }
           }
         }
         return void 0;
       }
-      return walk(root);
+      return walk(templateBody);
     }
 
     function process(parseTree, context) {
@@ -289,6 +302,7 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
           // If there is an else branch then we don't need to union the start
           // context with the output context of each branch.
           for (var j = n; --j >= 2;) {
+            var child = parseTree[j];
             if ('else' === child[0]) {
               if ('' === child[1]) {
                 outputContext = null;
@@ -320,57 +334,54 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
               }
               context = startContext;
             } else {
-              context = process(parseTree[i], context, inferences);
+              context = process(child, context);
             }
           }
           context = outputContext;
           break;
         case 'each':
           // Blank out the type tag so we can recurse over the body.
-          parseTree[0] = '';
-          try {
-            // Union with context in case the loop body is never
-            // entered.
-            var onceAcrossBody = contextUnion(
-                context, process(parseTree, context));
-            if (isErrorContext(onceAcrossBody)) {
+          for (var timeThroughLoop = 2; --timeThroughLoop >= 0;) {
+            var contextBefore = context, contextAfter;
+            parseTree[0] = '';
+            try {
+              // Union with context in case the loop body is never
+              // entered.
+              contextAfter = process(parseTree, context);
+              context = contextUnion(contextBefore, contextAfter);
+            } finally {
+              parseTree[0] = 'each';
+            }
+            if (isErrorContext(context)) {
               if (DEBUG) {
                 throw new Error(
                     errorLocation(parseTree)
                         + ': Loop ends in irreconcilable contexts '
-                        + contextToString(context) + ' and '
-                        + contextToString(onceAcrossBody));
+                        + contextToString(contextBefore) + ' and '
+                        + contextToString(contextAfter));
               } else {
                 throw new Error();
               }
             }
-            var nAcrossBody = process(parseTree, onceAcrossBody);
-            if (nAcrossBody !== onceAcrossBody) {
-              if (DEBUG) {
-                throw new Error(
-                    errorLocation(parseTree)
-                        + ': Loop ends in irreconcilable contexts '
-                        + contextToString(onceAcrossBody) + ' and '
-                        + contextToString(nAcrossBody));
-              } else {
-                throw new Error();
-              }
-            }
-            context = nAcrossBody;
-          } finally {
-            parseTree[0] = 'each';
           }
           break;
         case 'tmpl':
           // Expect content of the form '#' + templateName
-          var m = parseTree[1].match(/^\s*#(\S+)\s*$/);
-          if (m) {
-            var calleeBaseName = m[1];
+          var calleeBaseName = getCalleeName(parseTree);
+          if (calleeBaseName) {
             if (!/__C\d+$/.test(calleeBaseName)) {
               var callee = getTemplateParseTree(calleeBaseName, context);
-              inferences.calleeName[parseTree.parseTreeNodeId]
-                  = callee.jqueryTemplateName;
-              context = processTemplate(callee, context);
+              if (callee) {
+                inferences.calleeName[parseTree.parseTreeNodeId]
+                    = callee.jqueryTemplateName;
+                context = getTemplateOutputContext(callee, context, inferences);
+              }
+            }
+          } else {
+            if (DEBUG) {
+              throw new Error(errorLocation(parseTree) + ': Malformed call');
+            } else {
+              throw new Error();
             }
           }
           break;
@@ -401,7 +412,8 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
             }
           }
           // Do not add escaping directives if there is an existing one.
-          if (!/^SAFEHTML_ESC\[\d+\]\(/.test(parseTree[1])) {
+          if (!/^\s*(?:SAFEHTML_ESC\[\d+\]|noAutoescape)\s*\(/
+              .test(parseTree[1])) {
             if (typeof escapingModes.firstEscMode === 'number') {
               var modes = [];
               modes[0] = escapingModes.firstEscMode;
@@ -415,7 +427,7 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
           break;
         default:
           for (; i < n; ++i) {
-            context = process(parseTree[i], context, inferences);
+            context = process(parseTree[i], context);
           }
           break;
       }
@@ -425,43 +437,102 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
     return process(templateBody, inputContext);
   }
 
-  // Type each template.
+  function getCalleeName(parseTree) {
+    var m = parseTree[1].match(/(?:^|\))\s*#([^)\s]+)\s*$/);
+    return m && m[1];
+  }
+
+  function callsTypable(parseTree) {
+    var typeTag = parseTree[0];
+    if (typeTag === 'tmpl' || typeTag === 'wrap') {
+      var calleeName = getCalleeName(parseTree);
+      if (calleeName && checkWhetherToType(calleeName)) {
+        return TRUTHY;        
+      }
+    }
+    for (var i = parseTree.length; --i >= 2;) {
+      if (callsTypable(parseTree[i])) { return TRUTHY; }
+    }
+    return FALSEY;
+  }
+
+  var shouldTypeByName = {};
+  function checkWhetherToType(templateName) {
+    if (hop.call(shouldTypeByName, templateName)) {
+      return shouldTypeByName[templateName];
+    }
+    var template = parsedTemplates[templateName];
+    if (template) {
+      for (var i = template.length; --i >= 0;) {
+        if ('noAutoescape' === template[i][0]) {
+          shouldTypeByName[templateName] = FALSEY;
+          return shouldTypeByName[templateName] = callsTypable(template);
+        }
+      }
+      return shouldTypeByName[templateName] = TRUTHY;
+    }
+    return void 0;
+  }
+
   for (var templateName in parsedTemplates) {
     if (hop.call(parsedTemplates, templateName)) {
+      checkWhetherToType(templateName);
+    }
+  }
+
+  // Type each template.
+  for (var templateName in shouldTypeByName) {
+    if (TRUTHY === shouldTypeByName[templateName]) {
       getTemplateOutputContext(
           parsedTemplates[templateName], STATE_HTML_PCDATA, inferences);
     }
   }
 
+  var shouldSanitize;
+
   // Apply the changes suggested in inferences.
   function mutate(parseTreeNode) {
-    if (typeof parseTreeNode === 'string') { return; }
     var id = parseTreeNode.parseTreeNodeId;
     switch (parseTreeNode[0]) {
+      case 'noAutoescape':
+        shouldSanitize = false;
+        return '';
       case '$':  // Add escaping directives.
-        var escapingModes = inferences.escapingModes[id];
-        if (escapingModes) {
-          var expr = parseTreeNode[1];
-          for (var i = 0; i < escapingModes.length; ++i) {
-            expr = 'SAFEHTML_ESC[' + escapingModes[i] + '](' + expr + ')';
+        if (shouldSanitize) {
+          var escapingModes = inferences.escapingModes[id];
+          if (escapingModes) {
+            var expr = parseTreeNode[1];
+            for (var i = 0; i < escapingModes.length; ++i) {
+              expr = 'SAFEHTML_ESC[' + escapingModes[i] + '](' + expr + ')';
+            }
+            parseTreeNode[1] = expr;
           }
-          parseTreeNode[1] = expr;
         }
         break;
       case 'tmpl':  // Rewrite calls in context.
         var calleeName = inferences.calleeName[id];
         if (calleeName) {
-          parseTreeNode[1] = ' #' + calleeName;
+          // The form of a {{tmpl}}'s content is
+          //    ['(' [<data>[, <options>]] ')'] '#'<name>
+          parseTreeNode[1] = parseTreeNode[1].replace(
+              /\s*#[^)\s]+\s*$/, ' #' + calleeName);
         }
         break;
     }
     for (var i = 2, n = parseTreeNode.length; i < n; ++i) {
-      mutate(parseTreeNode[i]);
+      var child = parseTreeNode[i];
+      if (typeof child !== 'string') {
+        parseTreeNode[i] = mutate(child);
+      }
     }
+    return parseTreeNode;
   }
+
+  // Includes 
   for (var templateName in parsedTemplates) {
     if (hop.call(parsedTemplates, templateName)) {
-      mutate(parsedTemplates[templateName]);
+      shouldSanitize = true;
+      mutate(parsedTemplates[templateName], true);
     }
   }
 

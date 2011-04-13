@@ -1,8 +1,13 @@
 (function () {
 
+  var filter = /^test/;
+  
+  var m = document.location.search.match(/[&?]testFilter=([^&#]*)/);
+  if (m) { filter = new RegExp(decodeURIComponent(m[1])); }
+
   var nTests = 0;
   for (var k in window) {
-    if (!/^test/.test(k)) { continue; }
+    if (!(/^test/.test(k) && filter.test(k))) { continue; }
     ++nTests;
     var header = document.createElement('H2');
     header.appendChild(document.createTextNode(k));

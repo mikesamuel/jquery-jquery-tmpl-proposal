@@ -614,3 +614,49 @@ function testContextUnion() {
       STATE_ERROR,
       STATE_HTML_PCDATA, STATE_HTML_RCDATA | ELEMENT_TYPE_TITLE);
 }
+
+function testIsRegexPreceder() {
+  function assertIsRegexPreceder(jsTokens) {
+    assertTruthy(jsTokens, isRegexPreceder(jsTokens));
+  }
+
+  function assertIsDivOpPreceder(jsTokens) {
+    assertFalsey(jsTokens, isRegexPreceder(jsTokens));
+  }
+
+  // Statement terminators precede regexs.
+  assertIsRegexPreceder(";");
+  assertIsRegexPreceder("}");
+  // But expression terminators precede div ops.
+  assertIsDivOpPreceder(")");
+  assertIsDivOpPreceder("]");
+  // At the start of an expression or statement, expect a regex.
+  assertIsRegexPreceder("(");
+  assertIsRegexPreceder("[");
+  assertIsRegexPreceder("{");
+  // Assignment operators precede regexs.
+  assertIsRegexPreceder("=");
+  assertIsRegexPreceder("+=");
+  assertIsRegexPreceder("*=");
+  // Whether the + or - is infix or prefix, it cannot precede a div op.
+  assertIsRegexPreceder("+");
+  assertIsRegexPreceder("-");
+  // An incr/decr op precedes a div operator.
+  assertIsDivOpPreceder("--");
+  assertIsDivOpPreceder("++");
+  assertIsDivOpPreceder("x--");
+  // When we have many dashes or pluses, then they are grouped left to right.
+  assertIsRegexPreceder("x---");  // A postfix -- then a -.
+  // return followed by a slash returns the regex literal.
+  assertIsRegexPreceder("return");
+  // Identifiers can be divided by.
+  assertIsDivOpPreceder("x");
+  assertIsDivOpPreceder("preturn");
+  // Dots precede regexs.
+  assertIsRegexPreceder("..");
+  assertIsRegexPreceder("...");
+  // But not if part of a number.
+  assertIsDivOpPreceder("0.");
+  // Numbers precede div ops.
+  assertIsDivOpPreceder("0");
+}

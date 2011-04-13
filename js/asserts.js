@@ -24,6 +24,10 @@ function assertEquals(msg, a, b) {
   }
 }
 
+function assertTruthy(msg, cond) {
+  assertTrue(msg, !!cond);
+}
+
 function assertTrue(msg, cond) {
   if (arguments.length === 1) {
     cond = arguments[0];
@@ -33,6 +37,29 @@ function assertTrue(msg, cond) {
     if (typeof console !== 'undefined') {
       console.error(
         '%s: Condition was not true\n\t(%o : %s)',
+        msg || 'Inequal',
+        cond, typeof cond);
+      console.trace();
+    }
+    throw new Error(
+        (msg || 'Inequal') + ': Condition was not true\n\t(' + cond + ' : '
+        + (typeof cond) + ')');
+  }
+}
+
+function assertFalsey(msg, cond) {
+  assertFalse(msg, !!cond);
+}
+
+function assertFalse(msg, cond) {
+  if (arguments.length === 1) {
+    cond = arguments[0];
+    msg = null;
+  }
+  if (cond !== false) {
+    if (typeof console !== 'undefined') {
+      console.error(
+        '%s: Condition was not false\n\t(%o : %s)',
         msg || 'Inequal',
         cond, typeof cond);
       console.trace();
