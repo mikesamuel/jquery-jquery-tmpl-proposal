@@ -95,6 +95,10 @@ var STATE_ERROR = 23;
 var STATE_ALL = 31;
 function stateOf(context) { return context & STATE_ALL; }
 
+function isErrorContext(context) {
+  return stateOf(context) === STATE_ERROR;
+}
+
 
 /** A type of HTML element. */
 
@@ -776,11 +780,6 @@ var processRawText = (function () {
     }
     var quote = rawText.indexOf(DELIM_TEXT[delim]);
     return quote >= 0 ? quote : rawTextLen;
-  }
-
-
-  function isErrorContext(context) {
-    return stateOf(context) === STATE_ERROR;
   }
 
 
