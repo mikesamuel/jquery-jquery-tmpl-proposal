@@ -1,161 +1,227 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html><head>
 <title>Sanitized JQuery Templates Test</title>
+<script src="js/jquery-1.5.2.js"></script>
+<script src="js/jquery.tmpl.js"></script>
 <script src="js/compat.js"></script>
 <script src="js/contextUpdate.js"></script>
 <script src="js/escapers.js"></script>
 <script src="js/jquery-templates.js"></script>
+<script src="js/fixupJson.js"></script>
 <style>
 body { padding: .5em }
+small { font-size: 50% }
 body, td, th { font-size: 150%; vertical-align: top }
 textarea { font-size: 100% }
 #htmlContent, #data {
-  width:100%; padding: .25em; border: 3px solid #aaf;
+  width:100%; padding: .25em; border: 4px solid #9cf;
   font-family: monospace
 }
 table { empty-cells: show }
+.error { color: red }
+pre { white-space: pre-wrap }
+.leftrow { border-right: 2px solid #9cf }
+.rightrow { border-left: 2px solid #9cf }
+#permalink {
+  border: 2px solid #fc0;
+  padding: .125em;
+  background-color: #ffe;
+  white-space: pre-wrap;
+  font-family: monospace;
+  width: 100%
+}
 </style>
 <script>
-function fixupJson(str) {
-  var tokens = str.match(
-      /[{}\[\]]|"(?:[^\r\n\\"]|\\.)*"|'(?:[^\r\n\\']|\\.)*'|[^\s{}\[\]:,"']+/g
-      );
-  var indent = 0;
-  var fixed = [];
-  var first = true;
-  var stack = [];
-  var state = 0;  // 1 in array, 2 in object expect key, 3 in object expect value
-  function start(forceNewline, suppressComma) {
-    if (!first && !suppressComma) { fixed.push(state == 3 ? ':' : ','); }
-    if (fixed.length && (first || forceNewline)) {
-      fixed.push('\n');
-      for (var i = stack.length; --i >= 0;) { fixed.push('  '); }
-    } else if (!first && !suppressComma) {
-      fixed.push(' ');
-    }
-    first = false;
-  }
-  function nextState() {
-    switch (state) {
-      case 2: state = 3; break;
-      case 3: state = 2; break;
+function compile() {
+  var inputContainer = $('#htmlContent')[0];
+  var outputContainer = $('#sanitizer-output');
+  var templateSelect = $('#template-select');
+  var jqueryTemplateText = inputContainer.value;
+
+  // Find <script type="text/x-jquery-tmpl">...<\/script> blocks.
+  var scriptRe = /<script((?:[^>"']|"[^"]*"|'[^\x27]*')*)>((?:[^<]+|<(?!=!--|\/script)|<!--[\s\S]*?-->)*)<\/script[^>]*>/ig;
+  var parsed = jqueryTemplateText.match(scriptRe);
+
+  var templates = {};
+  for (var i = 0, n = parsed.length; i !== n; ++i) {
+    var m = scriptRe.exec(parsed[i]);
+    var attrs = m[1], body = m[2].replace(/^\n[ \t]*|\n[ \t]*$/g, '');
+    if (/\btype\s*=\s*[\x22\x27]?\s*text\/x-jquery-tmpl\b/i.test(attrs)) {
+      var name = 'template' + i;
+      var m = attrs.match(/\bid\s*=\s*[\x22\x27?]([\w.:-]+)/i);
+      if (m) { name = m[1]; }
+      templates[name] = body;
     }
   }
-  for (var i = 0; i < tokens.length; ++i) {
-    var token = tokens[i];
-    switch (token.charAt(0)) {
-      case '{':
-        if (state === 2) { continue; }
-        stack.push('}');
-        start();
-        fixed.push('{');
-        first = true;
-        state = 2;
-        break;
-      case '[':
-        if (state === 2) { continue; }
-        stack.push(']');
-        start();
-        fixed.push('[');
-        first = true;
-        state = 1;
-        break;
-      case '}': case ']':
-        if (!stack.length) continue;
-        if (state === 3) { continue; }
-        token = stack[stack.length - 1];
-        --stack.length;
-        start(true, true);
-        fixed.push(token);
-        state = stack[stack.length - 1] === '}' ? 2 : 1;
-        break;
-      case 'n': case 't': case 'f':
-        if (state === 2 || !/^(null|true|false)$/.test(token)) {
-          token = '"' + token + '"';
-        }
-        start(true);
-        fixed.push(token);
-        nextState();
-        break;
-      default:
-        if (state != 2
-            && /^[+-]?(0|[1-9][0-9]*)(\.[0-9]+)?(e[+-]?[0-9]+)?$/.test(token)) {
-          start();
-          fixed.push(token);
-          nextState();
-          break;
-        }
-        token = token.replace(/^'|'$/g, '');
-        var accum = '\x22';
-        var escaped = false;
-        for (var j = 0, n = token.length; j < n; ++j) {
-          var ch = token.charAt(j);
-          if (ch === '\\') { escaped = !escaped; }
-          else {
-            if (ch === '\x22' && !escaped) { accum += '\\'; }
-            escaped = false;
-          }
-          accum += ch;
-        }
-        token = accum + '\x22';
-        // fall-through
-      case '\x22':
-        start();
-        fixed.push(token);
-        nextState();
-        break;
+
+  var compiledTemplates;
+  try {
+    compiledTemplates = contextuallyEscapeTemplates(templates);
+  } catch (e) {
+    showError(e, outputContainer);
+    return;
+  }
+
+  var outputHtml = $('<div/>');
+  var outputTemplateText = {};
+  for (var k in compiledTemplates) {
+    if (Object.hasOwnProperty.call(compiledTemplates, k)) {
+      var compiledTemplateText = renderJQueryTemplate(compiledTemplates[k]);
+      var isNew = !Object.hasOwnProperty($.template, k);
+      var compiledTemplate = jQuery.template(k, compiledTemplateText);
+      $('<h3/>').text(k).appendTo(outputHtml);
+      $('<pre/>').text(compiledTemplateText).appendTo(outputHtml);
+      if (isNew) {
+        $('<option/>', { value: k, title: compiledTemplateText })
+            .text(k).appendTo(templateSelect);
+      }
     }
   }
-  return fixed.join('');
+  outputContainer.empty();            
+  outputHtml.appendTo(outputContainer);
+
+  $('html, body').animate({
+    scrollTop: outputContainer.offset().top
+  }, 1000);
+}
+
+function runTemplate() {
+  var templateName = $('#template-select')[0].value;
+  var outputContainer = $('#template-output');
+  var data;
+  try {
+    var dataInput = $('#data')[0];
+    data = JSON.parse(fixupJson(dataInput.value));
+  } catch (e) {
+    showError(e, outputContainer);
+    return;
+  }
+
+  var templateResult;
+  try {
+    templateResult = $.tmpl(templateName, data);
+  } catch (e) {
+    showError(e, outputContainer);
+    return;
+  }
+
+  var wrapper = $('<div/>');
+  templateResult.appendTo(wrapper);
+  var resultHtml = '' + wrapper.html();
+
+  outputContainer.empty();
+  $('<h3/>').text('Result for ' + templateName).appendTo(outputContainer);
+  templateResult.appendTo(outputContainer);
+  $('<h3/>').text('Result source').appendTo(outputContainer);
+  $('<pre/>').text(resultHtml).appendTo(outputContainer);
+
+  $('html, body').animate({
+    scrollTop: outputContainer.offset().top
+  }, 1000);
+}
+
+function showError(err, container) {
+  container.empty();
+  $('<pre/>', { 'class': 'error' })
+      .text(err && (err.description || err.message || err))
+      .appendTo(container);
+  $('html, body').animate({
+    scrollTop: container.offset().top
+  }, 1000);
+}
+
+function showLink() {
+  var queryParts = [];
+  function inputToLink() {
+    if (this.id) {
+      queryParts.push(
+          encodeURIComponent(this.id) + '=' + encodeURIComponent(this.value));
+    }
+  }
+  $('textarea').each(inputToLink);
+  var url = location.href.replace(/[#?][\s\S]*$/, '')
+      + '?' + queryParts.join('&');
+  var permalink = $('#permalink')
+  permalink.text(url);
+  permalink.fadeIn(500, null, function () { this.focus(); this.select(); });
+}
+
+function populateInputsFromLink() {
+  var attribs = {};
+  if (location.search) {
+    location.search.replace(/[?&]([^&=]+)=([^&#]*)/g, function (_, k, v) {
+      var id = decodeURIComponent(k);
+      var value = decodeURIComponent(v);
+      $('#' + id).each(function () {
+        this.value = value;
+      });
+    });
+  }
 }
 </script>
 </head>
 
 <body>
-<h1>Sanitized JQuery Templates Test</h1>
+<h1>
+  Sanitized JQuery Templates Test
+  <small>[<a onclick="showLink()" href="produces: a link you can email"
+    >permalink</a>]</small>
+</h1>
+
+<!-- Initially invisible but displayed when filled with a permalink.
+  - Onblur, we hide again so it does not get out of sync with edited
+  - textareas.
+  -->
+<textarea id="permalink" style="display:none" onclick="this.select()"
+ onblur="$('#permalink').fadeOut(500)"
+ ></textarea>
 
 <div style="left: 0; right: -1em; position: relative">
-<table width=100% cols=2 cellpadding=0 cellspacing=10>
+<table width=100% cols=2 cellpadding=10 cellspacing=0>
   <tr>
-    <td width=50%>
+    <td width=50% class=leftrow>
       Enter your jQuery templates below or select from the dropdown to
       prefill with an example.
-   <td width=50%>
-     <p>
-     Enter JSON data to pass to the template below.
-     </p>
-   </tr>
-   <tr>
-     <td>
-      <textarea rows=20 id=htmlContent>
-<script type="x-jquery-template" name="helloWorld">
-Hello, ${world}!
+    <td width=50% class=rightrow>
+      <p>
+      Enter JSON data to pass to the template below.
+      </p>
+  </tr>
+  <tr>
+    <td class=leftrow>
+      <textarea rows=15 id=htmlContent>
+<!-- A jQuery template named "helloWorld" -->
+<script type="text/x-jquery-tmpl" id="helloWorld">
+Hello, <b onclick="alert(${world})">${world}</b>!
 </script>
 </textarea>
-   <td>
-    <textarea rows=20 id=data onblur="this.value = fixupJson(this.value)">
-{ value: 42, color: red, name: 'John Doe', "bars": ['foo1', 'foo2'], foo: 'bar' }
+    <td class=rightrow>
+      <textarea rows=15 id=data onblur="this.value = fixupJson(this.value)">
+{ value: 42, color: red, name: 'John Doe', "bars": ['foo1', 'foo2'], world: 'Cincinatti' }
 </textarea>
-   </tr>
-   <tr align=center>
-     <td><button>Compile templates</button></td>
-     <td>
-       <button id=runbutton disabled onclick="runTemplate()"
-        >Run template</button>
-       <select onchange="
-	 document.getElementById('runbutton').disabled = !(
-	     this.selectedIndex > 0)">
-	 <option>Choose a template&hellip;</option>
-       </select></td>
-   </tr>
-   <tr>
-     <td id=sanitizer-output></td>
-     <td id=template-output></td>
-   </tr>
+  </tr>
+  <tr align=center>
+    <td class=leftrow>
+      <button onclick="compile()">Compile templates</button>
+    </td>
+    <td class=rightrow>
+      <button id=runbutton disabled onclick="runTemplate()"
+       >Run template</button>
+      <select id=template-select onchange="
+       document.getElementById('runbutton').disabled = !(this.selectedIndex > 0)
+       ">
+        <option>Choose a template&hellip;</option>
+      </select></td>
+  </tr>
+  <tr>
+    <td class=leftrow id=sanitizer-output></td>
+    <td class=rightrow id=template-output></td>
+  </tr>
 </table>
 
+<script>populateInputsFromLink()</script>
 
-<hr>
-<address></address>
-<!-- hhmts start -->Last modified: Wed Apr 13 19:17:34 PDT 2011 <!-- hhmts end -->
-</body> </html>
+<br>
+<center><small>
+<!-- hhmts start -->Last modified: Thu Apr 14 12:24:11 PDT 2011 <!-- hhmts end --></small></center>
+</body></html>
