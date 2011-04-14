@@ -1,0 +1,161 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html><head>
+<title>Sanitized JQuery Templates Test</title>
+<script src="js/compat.js"></script>
+<script src="js/contextUpdate.js"></script>
+<script src="js/escapers.js"></script>
+<script src="js/jquery-templates.js"></script>
+<style>
+body { padding: .5em }
+body, td, th { font-size: 150%; vertical-align: top }
+textarea { font-size: 100% }
+#htmlContent, #data {
+  width:100%; padding: .25em; border: 3px solid #aaf;
+  font-family: monospace
+}
+table { empty-cells: show }
+</style>
+<script>
+function fixupJson(str) {
+  var tokens = str.match(
+      /[{}\[\]]|"(?:[^\r\n\\"]|\\.)*"|'(?:[^\r\n\\']|\\.)*'|[^\s{}\[\]:,"']+/g
+      );
+  var indent = 0;
+  var fixed = [];
+  var first = true;
+  var stack = [];
+  var state = 0;  // 1 in array, 2 in object expect key, 3 in object expect value
+  function start(forceNewline, suppressComma) {
+    if (!first && !suppressComma) { fixed.push(state == 3 ? ':' : ','); }
+    if (fixed.length && (first || forceNewline)) {
+      fixed.push('\n');
+      for (var i = stack.length; --i >= 0;) { fixed.push('  '); }
+    } else if (!first && !suppressComma) {
+      fixed.push(' ');
+    }
+    first = false;
+  }
+  function nextState() {
+    switch (state) {
+      case 2: state = 3; break;
+      case 3: state = 2; break;
+    }
+  }
+  for (var i = 0; i < tokens.length; ++i) {
+    var token = tokens[i];
+    switch (token.charAt(0)) {
+      case '{':
+        if (state === 2) { continue; }
+        stack.push('}');
+        start();
+        fixed.push('{');
+        first = true;
+        state = 2;
+        break;
+      case '[':
+        if (state === 2) { continue; }
+        stack.push(']');
+        start();
+        fixed.push('[');
+        first = true;
+        state = 1;
+        break;
+      case '}': case ']':
+        if (!stack.length) continue;
+        if (state === 3) { continue; }
+        token = stack[stack.length - 1];
+        --stack.length;
+        start(true, true);
+        fixed.push(token);
+        state = stack[stack.length - 1] === '}' ? 2 : 1;
+        break;
+      case 'n': case 't': case 'f':
+        if (state === 2 || !/^(null|true|false)$/.test(token)) {
+          token = '"' + token + '"';
+        }
+        start(true);
+        fixed.push(token);
+        nextState();
+        break;
+      default:
+        if (state != 2
+            && /^[+-]?(0|[1-9][0-9]*)(\.[0-9]+)?(e[+-]?[0-9]+)?$/.test(token)) {
+          start();
+          fixed.push(token);
+          nextState();
+          break;
+        }
+        token = token.replace(/^'|'$/g, '');
+        var accum = '\x22';
+        var escaped = false;
+        for (var j = 0, n = token.length; j < n; ++j) {
+          var ch = token.charAt(j);
+          if (ch === '\\') { escaped = !escaped; }
+          else {
+            if (ch === '\x22' && !escaped) { accum += '\\'; }
+            escaped = false;
+          }
+          accum += ch;
+        }
+        token = accum + '\x22';
+        // fall-through
+      case '\x22':
+        start();
+        fixed.push(token);
+        nextState();
+        break;
+    }
+  }
+  return fixed.join('');
+}
+</script>
+</head>
+
+<body>
+<h1>Sanitized JQuery Templates Test</h1>
+
+<div style="left: 0; right: -1em; position: relative">
+<table width=100% cols=2 cellpadding=0 cellspacing=10>
+  <tr>
+    <td width=50%>
+      Enter your jQuery templates below or select from the dropdown to
+      prefill with an example.
+   <td width=50%>
+     <p>
+     Enter JSON data to pass to the template below.
+     </p>
+   </tr>
+   <tr>
+     <td>
+      <textarea rows=20 id=htmlContent>
+<script type="x-jquery-template" name="helloWorld">
+Hello, ${world}!
+</script>
+</textarea>
+   <td>
+    <textarea rows=20 id=data onblur="this.value = fixupJson(this.value)">
+{ value: 42, color: red, name: 'John Doe', "bars": ['foo1', 'foo2'], foo: 'bar' }
+</textarea>
+   </tr>
+   <tr align=center>
+     <td><button>Compile templates</button></td>
+     <td>
+       <button id=runbutton disabled onclick="runTemplate()"
+        >Run template</button>
+       <select onchange="
+	 document.getElementById('runbutton').disabled = !(
+	     this.selectedIndex > 0)">
+	 <option>Choose a template&hellip;</option>
+       </select></td>
+   </tr>
+   <tr>
+     <td id=sanitizer-output></td>
+     <td id=template-output></td>
+   </tr>
+</table>
+
+
+<hr>
+<address></address>
+<!-- hhmts start -->Last modified: Wed Apr 13 19:17:34 PDT 2011 <!-- hhmts end -->
+</body> </html>
