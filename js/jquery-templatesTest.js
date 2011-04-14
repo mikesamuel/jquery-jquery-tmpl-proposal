@@ -703,7 +703,8 @@ function testOptionalAttributes() {
               "{{if alt || alt == ''}}",
                 "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE + "](alt)}",
               "{{else title}}",
-                "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE + "](title)}",
+                "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE
+                    + "](title)}",
               "{{/if}}\"",
             ">")
       },

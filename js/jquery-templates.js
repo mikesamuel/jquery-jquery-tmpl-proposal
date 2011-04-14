@@ -447,7 +447,7 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
     if (typeTag === 'tmpl' || typeTag === 'wrap') {
       var calleeName = getCalleeName(parseTree);
       if (calleeName && checkWhetherToType(calleeName)) {
-        return TRUTHY;        
+        return TRUTHY;
       }
     }
     for (var i = parseTree.length; --i >= 2;) {
@@ -528,7 +528,7 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
     return parseTreeNode;
   }
 
-  // Includes 
+  // This loop includes any cloned templates.
   for (var templateName in parsedTemplates) {
     if (hop.call(parsedTemplates, templateName)) {
       shouldSanitize = TRUTHY;

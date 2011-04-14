@@ -254,7 +254,8 @@ function testHtmlComment() {
 
 function testAttrName() {
   assertTransition(
-      "HTML_ATTRIBUTE_NAME XMP URI", "=", "HTML_BEFORE_ATTRIBUTE_VALUE XMP URI");
+      "HTML_ATTRIBUTE_NAME XMP URI", "=",
+      "HTML_BEFORE_ATTRIBUTE_VALUE XMP URI");
   assertTransition(
       "HTML_ATTRIBUTE_NAME TEXTAREA PLAIN_TEXT", "=",
       "HTML_BEFORE_ATTRIBUTE_VALUE TEXTAREA PLAIN_TEXT");
@@ -389,7 +390,8 @@ function testCssDqString() {
 function testCssSqString() {
   assertTransition("CSS_SQ_STRING", "", "CSS_SQ_STRING");
   assertTransition("CSS_SQ_STRING", "Hello, World!", "CSS_SQ_STRING");
-  assertTransition("CSS_SQ_STRING", "M. \"The Greatest!\" Ali", "CSS_SQ_STRING");
+  assertTransition(
+      "CSS_SQ_STRING", "M. \"The Greatest!\" Ali", "CSS_SQ_STRING");
   assertTransition("CSS_SQ_STRING", "'", "CSS");
   assertTransition("CSS_SQ_STRING", "\\22", "CSS_SQ_STRING");
   assertTransition("CSS_SQ_STRING", "\\22 ", "CSS_SQ_STRING");
@@ -408,7 +410,8 @@ function testCssUri() {
   assertTransition("CSS_URI START", "#anchor)", "CSS");
   assertTransition("CSS_URI START", "#anchor )", "CSS");
   assertTransition("CSS_URI START", "/do+not+panic", "CSS_URI PRE_QUERY");
-  assertTransition("CSS_SQ_URI START", "/don%27t+panic", "CSS_SQ_URI PRE_QUERY");
+  assertTransition(
+      "CSS_SQ_URI START", "/don%27t+panic", "CSS_SQ_URI PRE_QUERY");
   assertTransition("CSS_SQ_URI START", "Muhammed+\"The+Greatest!\"+Ali",
                    "CSS_SQ_URI PRE_QUERY");
   assertTransition(
@@ -526,7 +529,8 @@ function testJsBlockComment() {
   assertTransition("JS_BLOCK_COMMENT DIV_OP", "\n", "JS_BLOCK_COMMENT DIV_OP");
   assertTransition("JS_BLOCK_COMMENT DIV_OP", "Hello, World!",
                    "JS_BLOCK_COMMENT DIV_OP");
-  assertTransition("JS_BLOCK_COMMENT DIV_OP", "\"'/", "JS_BLOCK_COMMENT DIV_OP");
+  assertTransition(
+      "JS_BLOCK_COMMENT DIV_OP", "\"'/", "JS_BLOCK_COMMENT DIV_OP");
   assertTransition("JS_BLOCK_COMMENT DIV_OP", "*/", "JS DIV_OP");
   assertTransition(
       "JS_BLOCK_COMMENT NORMAL SCRIPT DOUBLE_QUOTE DIV_OP", "*/",

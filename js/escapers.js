@@ -71,7 +71,8 @@ var SanitizedHtml = defineSanitizedContentSubclass(CONTENT_KIND_HTML);
  *     <b>OR</b> a string of JS that does not reference any variables or have
  *     any side effects not known statically to the app authors.
  */
-var SanitizedJsStrChars = defineSanitizedContentSubclass(CONTENT_KIND_JS_STR_CHARS);
+var SanitizedJsStrChars
+    = defineSanitizedContentSubclass(CONTENT_KIND_JS_STR_CHARS);
 
 
 /**
@@ -638,7 +639,8 @@ var MATCHER_FOR_NORMALIZE_HTML_ = /[\x00\x22\x27\x3c\x3e]/g;
  * @private
  * @const
  */
-var MATCHER_FOR_ESCAPE_HTML_NOSPACE_ = /[\x00\x09-\x0d \x22\x26\x27\x2d\/\x3c-\x3e`\x85\xa0\u2028\u2029]/g;
+var MATCHER_FOR_ESCAPE_HTML_NOSPACE_
+    = /[\x00\x09-\x0d \x22\x26\x27\x2d\/\x3c-\x3e`\x85\xa0\u2028\u2029]/g;
 
 /**
  * Matches characters that need to be escaped for the named directives.
@@ -646,7 +648,8 @@ var MATCHER_FOR_ESCAPE_HTML_NOSPACE_ = /[\x00\x09-\x0d \x22\x26\x27\x2d\/\x3c-\x
  * @private
  * @const
  */
-var MATCHER_FOR_NORMALIZE_HTML_NOSPACE_ = /[\x00\x09-\x0d \x22\x27\x2d\/\x3c-\x3e`\x85\xa0\u2028\u2029]/g;
+var MATCHER_FOR_NORMALIZE_HTML_NOSPACE_
+    = /[\x00\x09-\x0d \x22\x27\x2d\/\x3c-\x3e`\x85\xa0\u2028\u2029]/g;
 
 /**
  * Matches characters that need to be escaped for the named directives.
@@ -654,7 +657,8 @@ var MATCHER_FOR_NORMALIZE_HTML_NOSPACE_ = /[\x00\x09-\x0d \x22\x27\x2d\/\x3c-\x3
  * @private
  * @const
  */
-var MATCHER_FOR_ESCAPE_JS_STRING_ = /[\x00\x08-\x0d\x22\x26\x27\/\x3c-\x3e\\\x85\u2028\u2029]/g;
+var MATCHER_FOR_ESCAPE_JS_STRING_
+    = /[\x00\x08-\x0d\x22\x26\x27\/\x3c-\x3e\\\x85\u2028\u2029]/g;
 
 /**
  * Matches characters that need to be escaped for the named directives.
@@ -694,7 +698,8 @@ var FILTER_FOR_FILTER_CSS_VALUE_ = /^(?!-*(?:expression|(?:moz-)?binding))(?:[.#
  * @private
  * @const
  */
-var FILTER_FOR_FILTER_NORMALIZE_URI_ = /^(?:(?:https?|mailto):|[^&:\/?#]*(?:[\/?#]|$))/i;
+var FILTER_FOR_FILTER_NORMALIZE_URI_
+    = /^(?:(?:https?|mailto):|[^&:\/?#]*(?:[\/?#]|$))/i;
 
 /**
  * A pattern that vets values produced by the named directives.
@@ -710,7 +715,8 @@ var FILTER_FOR_FILTER_HTML_ATTRIBUTE_ = /^(?!style|on|action|archive|background|
  * @private
  * @const
  */
-var FILTER_FOR_FILTER_HTML_ELEMENT_NAME_ = /^(?!script|style|title|textarea|xmp|no)[a-z0-9_$:-]*$/i;
+var FILTER_FOR_FILTER_HTML_ELEMENT_NAME_
+    = /^(?!script|style|title|textarea|xmp|no)[a-z0-9_$:-]*$/i;
 
 /**
  * A helper for the Soy directive |escapeHtml

@@ -223,7 +223,9 @@ var JS_FOLLOWING_SLASH_UNKNOWN = 3 << 13;
 
 /** All of the JS following slash bits set.  @const */
 var JS_FOLLOWING_SLASH_ALL = 3 << 13;
-function jsFollowingSlashOf(context) { return context & JS_FOLLOWING_SLASH_ALL; }
+function jsFollowingSlashOf(context) {
+  return context & JS_FOLLOWING_SLASH_ALL;
+}
 
 
 /**
@@ -450,7 +452,8 @@ CONTENT_KIND_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML] = CONTENT_KIND_HTML;
 //CONTENT_KIND_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE] = null;
 //CONTENT_KIND_FOR_ESC_MODE[ESC_MODE_FILTER_HTML_ELEMENT_NAME] = null;
 //CONTENT_KIND_FOR_ESC_MODE[ESC_MODE_FILTER_HTML_ATTRIBUTE_NAME] = null;
-CONTENT_KIND_FOR_ESC_MODE[ESC_MODE_ESCAPE_JS_STRING] = CONTENT_KIND_JS_STR_CHARS;
+CONTENT_KIND_FOR_ESC_MODE[ESC_MODE_ESCAPE_JS_STRING]
+    = CONTENT_KIND_JS_STR_CHARS;
 CONTENT_KIND_FOR_ESC_MODE[ESC_MODE_NORMALIZE_URI] = CONTENT_KIND_URI;
 CONTENT_KIND_FOR_ESC_MODE[ESC_MODE_ESCAPE_URI] = CONTENT_KIND_URI;
 //CONTENT_KIND_FOR_ESC_MODE[ESC_MODE_ESCAPE_JS_VALUE] = null;
@@ -499,7 +502,8 @@ function contextToString(context) {
   case STATE_HTML_BEFORE_ATTRIBUTE_VALUE:
     parts.push("HTML_BEFORE_ATTRIBUTE_VALUE"); break;
   case STATE_HTML_COMMENT: parts.push("HTML_COMMENT"); break;
-  case STATE_HTML_NORMAL_ATTR_VALUE: parts.push("HTML_NORMAL_ATTR_VALUE"); break;
+  case STATE_HTML_NORMAL_ATTR_VALUE:
+    parts.push("HTML_NORMAL_ATTR_VALUE"); break;
   case STATE_CSS: parts.push("CSS"); break;
   case STATE_CSS_COMMENT: parts.push("CSS_COMMENT"); break;
   case STATE_CSS_DQ_STRING: parts.push("CSS_DQ_STRING"); break;
@@ -1189,7 +1193,7 @@ var processRawText = (function () {
    * Characters that break a line in JavaScript source suitable for use in a
    * regex charset.
    */
-  var JS_LINEBREAKS = "\r\n\u2028\u2029";
+  var NLS = "\r\n\u2028\u2029";
 
   /**
    * For each state, a group of rules for consuming raw text and how that
@@ -1263,13 +1267,13 @@ var processRawText = (function () {
     TRANSITION_TO_SELF];
   TRANSITIONS[STATE_CSS_DQ_STRING] = [
     new TransitionToState(/"/, STATE_CSS),
-    new TransitionToSelf(/\\(?:\r\n?|[\n\f"])/),  // Line continuation or escape.
+    new TransitionToSelf(/\\(?:\r\n?|[\n\f"])/), // Line continuation or escape.
     new ToTransition(/[\n\r\f]/, STATE_ERROR),
     STYLE_TAG_END,  // TODO: Make this an error transition?
     TRANSITION_TO_SELF];
   TRANSITIONS[STATE_CSS_SQ_STRING] = [
     new TransitionToState(/'/, STATE_CSS),
-    new TransitionToSelf(/\\(?:\r\n?|[\n\f'])/),  // Line continuation or escape.
+    new TransitionToSelf(/\\(?:\r\n?|[\n\f'])/), // Line continuation or escape.
     new ToTransition(/[\n\r\f]/, STATE_ERROR),
     STYLE_TAG_END,  // TODO: Make this an error transition?
     TRANSITION_TO_SELF];
@@ -1281,13 +1285,13 @@ var processRawText = (function () {
   TRANSITIONS[STATE_CSS_SQ_URI] = [
     new TransitionToState(/'/, STATE_CSS),
     URI_PART_TRANSITION,
-    new TransitionToSelf(/\\(?:\r\n?|[\n\f'])/),  // Line continuation or escape.
+    new TransitionToSelf(/\\(?:\r\n?|[\n\f'])/), // Line continuation or escape.
     new ToTransition(/[\n\r\f]/, STATE_ERROR),
     STYLE_TAG_END];
   TRANSITIONS[STATE_CSS_DQ_URI] = [
     new TransitionToState(/"/, STATE_CSS),
     URI_PART_TRANSITION,
-    new TransitionToSelf(/\\(?:\r\n?|[\n\f"])/),  // Line continuation or escape.
+    new TransitionToSelf(/\\(?:\r\n?|[\n\f"])/), // Line continuation or escape.
     new ToTransition(/[\n\r\f]/, STATE_ERROR),
     STYLE_TAG_END];
   TRANSITIONS[STATE_JS] = [
@@ -1307,19 +1311,19 @@ var processRawText = (function () {
     TRANSITION_TO_SELF];
   // Line continuations are not allowed in line comments.
   TRANSITIONS[STATE_JS_LINE_COMMENT] = [
-    new TransitionToState(new RegExp("[" + JS_LINEBREAKS + "]"), STATE_JS),
+    new TransitionToState(new RegExp("[" + NLS + "]"), STATE_JS),
     SCRIPT_TAG_END,
     TRANSITION_TO_SELF];
   TRANSITIONS[STATE_JS_DQ_STRING] = [
     new DivPreceder(/"/),
     SCRIPT_TAG_END,
     new TransitionToSelf(new RegExp(
-              "^(?:" +                              // Case-insensitively, from start of string
-                "[^\"\\\\" + JS_LINEBREAKS + "<]" + // match any chars except newlines, quotes, \s;
-                "|\\\\(?:" +                        // or backslash followed by a
-                  "\\r\\n?" +                       // line continuation
-                  "|[^\\r<]" +                      // or an escape
-                  "|<(?!/script)" +                 // or less-than that doesn't close the script.
+              "^(?:" +                    // Case-insensitively, from start
+                "[^\"\\\\" + NLS + "<]" + // match chars - newlines, quotes, \s;
+                "|\\\\(?:" +              // or backslash followed by a
+                  "\\r\\n?" +             // line continuation
+                  "|[^\\r<]" +            // or an escape
+                  "|<(?!/script)" +       // or non-closing less-than.
                 ")" +
                 "|<(?!/script)" +
               ")+", 'i'))];
@@ -1327,12 +1331,12 @@ var processRawText = (function () {
     new DivPreceder(/'/),
     SCRIPT_TAG_END,
     new TransitionToSelf(new RegExp(
-              "^(?:" +                              // Case-insensitively, from start of string
-                "[^'\\\\" + JS_LINEBREAKS + "<]" +  // match any chars except newlines, quotes, \s;
-                "|\\\\(?:" +                        // or a backslash followed by a
-                  "\\r\\n?" +                       // line continuation
-                  "|[^\\r<]" +                      // or an escape;
-                  "|<(?!/script)" +                 // or less-than that doesn't close the script.
+              "^(?:" +                    // Case-insensitively, from start
+                "[^'\\\\" + NLS + "<]" +  // match chars - newlines, quotes, \s;
+                "|\\\\(?:" +              // or a backslash followed by a
+                  "\\r\\n?" +             // line continuation
+                  "|[^\\r<]" +            // or an escape;
+                  "|<(?!/script)" +       // or non-closing less-than.
                 ")" +
                 "|<(?!/script)" +
               ")+", 'i'))];
@@ -1341,20 +1345,21 @@ var processRawText = (function () {
     SCRIPT_TAG_END,
     new TransitionToSelf(new RegExp(
               "^(?:" +
-                // We have to handle [...] style character sets specially since in /[/]/, the
-                // second solidus doesn't end the regular expression.
-                "[^\\[\\\\/<" + JS_LINEBREAKS + "]" +      // A non-charset, non-escape token;
-                "|\\\\[^" + JS_LINEBREAKS + "]" +          // an escape;
+                // We have to handle [...] style character sets specially since
+                // in /[/]/, the second solidus doesn't end the RegExp.
+                "[^\\[\\\\/<" + NLS + "]" + // A non-charset, non-escape token;
+                "|\\\\[^" + NLS + "]" +   // an escape;
                 "|\\\\?<(?!/script)" +
-                "|\\[" +                                   // or a character set containing
-                  "(?:[^\\]\\\\<" + JS_LINEBREAKS + "]" +  // a normal character,
-                  "|\\\\(?:[^" + JS_LINEBREAKS + "]))*" +  // or an escape;
-                  "|\\\\?<(?!/script)" +                   // or an angle bracket possibly escaped.
+                "|\\[" +                  // or a character set containing
+                  "(?:[^\\]\\\\<" + NLS + "]" +  // normal characters,
+                  "|\\\\(?:[^" + NLS + "]))*" +  // and escapes;
+                  "|\\\\?<(?!/script)" +  // or non-closing angle less-than.
                 "\\]" +
               ")+", 'i'))];
-    // TODO: Do we need to recognize URI attributes that start with javascript:, data:text/html,
-    // etc. and transition to JS instead with a second layer of percent decoding triggered by
-    // a protocol in (DATA, JAVASCRIPT, NONE) added to Context?
+    // TODO: Do we need to recognize URI attributes that start with javascript:,
+    // data:text/html, etc. and transition to JS instead with a second layer of
+    // percent decoding triggered by a protocol in (DATA, JAVASCRIPT, NONE)
+    // added to Context?
   TRANSITIONS[STATE_URI] = [URI_PART_TRANSITION];
   TRANSITIONS[STATE_HTML_RCDATA] = [
     new RcdataEndTagTransition(/<\/(\w+)\b/),
@@ -1413,7 +1418,8 @@ var processRawText = (function () {
       this.next = STATE_ERROR;
       this.numCharsConsumed = text.length;
     }
-    if (this.numCharsConsumed === 0 && stateOf(this.next) === stateOf(context)) {
+    if (this.numCharsConsumed === 0
+        && stateOf(this.next) === stateOf(context)) {
       throw new Error(  // Infinite loop.
           // Avoid an explicit dependency on contentToString.  If we're
           // debugging uncompiled, then we get the benefit of it, but the
