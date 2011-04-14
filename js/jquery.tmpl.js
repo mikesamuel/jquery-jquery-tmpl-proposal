@@ -311,8 +311,10 @@
 
 	// Generate a reusable function that will serve to render a template against data
 	function buildTmplFn( markup ) {
-		return new Function("jQuery","$item",
-			"var $=jQuery,call,_=[],$data=$item.data;" +
+                var functionBody;
+                try {
+		var f = new Function("jQuery","$item",
+			functionBody = ("var $=jQuery,call,_=[],$data=$item.data;" +
 
 			// Introduce the data as local variables using with(){}
 			"with($data){_.push('" +
@@ -359,7 +361,14 @@
 						"_.push('";
 				}) +
 			"');}return _;"
-		);
+		));
+                }catch (ex) {
+                  if (typeof console !== 'undefined') {
+                    console.log(functionBody);
+                  }
+                  throw ex;
+                }
+          return f;
 	}
 	function updateWrapped( options, wrapped ) {
 		// Build the wrapped content. 

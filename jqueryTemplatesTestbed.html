@@ -8,6 +8,7 @@
 <script src="js/escapers.js"></script>
 <script src="js/jquery-templates.js"></script>
 <script src="js/fixupJson.js"></script>
+<script src="js/jqueryTemplatesTestbed.js"></script>
 <style>
 body { padding: .5em }
 small { font-size: 50% }
@@ -19,156 +20,35 @@ textarea { font-size: 100% }
 }
 table { empty-cells: show }
 .error { color: red }
-pre { white-space: pre-wrap }
+pre, textarea { white-space: pre-wrap }
 .leftrow { border-right: 2px solid #9cf }
 .rightrow { border-left: 2px solid #9cf }
 #permalink {
   border: 2px solid #fc0;
   padding: .125em;
   background-color: #ffe;
-  white-space: pre-wrap;
   font-family: monospace;
   width: 100%
 }
+.escapingMode { background-color: #9cf }
+#exampleList { float: right }
 </style>
-<script>
-function compile() {
-  var inputContainer = $('#htmlContent')[0];
-  var outputContainer = $('#sanitizer-output');
-  var templateSelect = $('#template-select');
-  var jqueryTemplateText = inputContainer.value;
-
-  // Find <script type="text/x-jquery-tmpl">...<\/script> blocks.
-  var scriptRe = /<script((?:[^>"']|"[^"]*"|'[^\x27]*')*)>((?:[^<]+|<(?!=!--|\/script)|<!--[\s\S]*?-->)*)<\/script[^>]*>/ig;
-  var parsed = jqueryTemplateText.match(scriptRe);
-
-  var templates = {};
-  for (var i = 0, n = parsed.length; i !== n; ++i) {
-    var m = scriptRe.exec(parsed[i]);
-    var attrs = m[1], body = m[2].replace(/^\n[ \t]*|\n[ \t]*$/g, '');
-    if (/\btype\s*=\s*[\x22\x27]?\s*text\/x-jquery-tmpl\b/i.test(attrs)) {
-      var name = 'template' + i;
-      var m = attrs.match(/\bid\s*=\s*[\x22\x27?]([\w.:-]+)/i);
-      if (m) { name = m[1]; }
-      templates[name] = body;
-    }
-  }
-
-  var compiledTemplates;
-  try {
-    compiledTemplates = contextuallyEscapeTemplates(templates);
-  } catch (e) {
-    showError(e, outputContainer);
-    return;
-  }
-
-  var outputHtml = $('<div/>');
-  var outputTemplateText = {};
-  for (var k in compiledTemplates) {
-    if (Object.hasOwnProperty.call(compiledTemplates, k)) {
-      var compiledTemplateText = renderJQueryTemplate(compiledTemplates[k]);
-      var isNew = !Object.hasOwnProperty($.template, k);
-      var compiledTemplate = jQuery.template(k, compiledTemplateText);
-      $('<h3/>').text(k).appendTo(outputHtml);
-      $('<pre/>').text(compiledTemplateText).appendTo(outputHtml);
-      if (isNew) {
-        $('<option/>', { value: k, title: compiledTemplateText })
-            .text(k).appendTo(templateSelect);
-      }
-    }
-  }
-  outputContainer.empty();            
-  outputHtml.appendTo(outputContainer);
-
-  $('html, body').animate({
-    scrollTop: outputContainer.offset().top
-  }, 1000);
-}
-
-function runTemplate() {
-  var templateName = $('#template-select')[0].value;
-  var outputContainer = $('#template-output');
-  var data;
-  try {
-    var dataInput = $('#data')[0];
-    data = JSON.parse(fixupJson(dataInput.value));
-  } catch (e) {
-    showError(e, outputContainer);
-    return;
-  }
-
-  var templateResult;
-  try {
-    templateResult = $.tmpl(templateName, data);
-  } catch (e) {
-    showError(e, outputContainer);
-    return;
-  }
-
-  var wrapper = $('<div/>');
-  templateResult.appendTo(wrapper);
-  var resultHtml = '' + wrapper.html();
-
-  outputContainer.empty();
-  $('<h3/>').text('Result for ' + templateName).appendTo(outputContainer);
-  templateResult.appendTo(outputContainer);
-  $('<h3/>').text('Result source').appendTo(outputContainer);
-  $('<pre/>').text(resultHtml).appendTo(outputContainer);
-
-  $('html, body').animate({
-    scrollTop: outputContainer.offset().top
-  }, 1000);
-}
-
-function showError(err, container) {
-  container.empty();
-  $('<pre/>', { 'class': 'error' })
-      .text(err && (err.description || err.message || err))
-      .appendTo(container);
-  $('html, body').animate({
-    scrollTop: container.offset().top
-  }, 1000);
-}
-
-function showLink() {
-  var queryParts = [];
-  function inputToLink() {
-    if (this.id) {
-      queryParts.push(
-          encodeURIComponent(this.id) + '=' + encodeURIComponent(this.value));
-    }
-  }
-  $('textarea').each(inputToLink);
-  var url = location.href.replace(/[#?][\s\S]*$/, '')
-      + '?' + queryParts.join('&');
-  var permalink = $('#permalink')
-  permalink.text(url);
-  permalink.fadeIn(500, null, function () { this.focus(); this.select(); });
-}
-
-function populateInputsFromLink() {
-  var attribs = {};
-  if (location.search) {
-    location.search.replace(/[?&]([^&=]+)=([^&#]*)/g, function (_, k, v) {
-      var id = decodeURIComponent(k);
-      var value = decodeURIComponent(v);
-      $('#' + id).each(function () {
-        this.value = value;
-      });
-    });
-  }
-}
-</script>
 </head>
 
 <body>
+<select id="exampleList" onchange="this.value && prefillExample(this.value)">
+  <option value="">Choose an example&hellip;</option>
+</select>
+<script>populateExampleDropdown()</script>
+
 <h1>
   Sanitized JQuery Templates Test
   <small>[<a onclick="showLink()" href="produces: a link you can email"
     >permalink</a>]</small>
 </h1>
 
-<!-- Initially invisible but displayed when filled with a permalink.
+<!--
+  - Initially invisible but displayed when filled with a permalink.
   - Onblur, we hide again so it does not get out of sync with edited
   - textareas.
   -->
@@ -180,8 +60,8 @@ function populateInputsFromLink() {
 <table width=100% cols=2 cellpadding=10 cellspacing=0>
   <tr>
     <td width=50% class=leftrow>
-      Enter your jQuery templates below or select from the dropdown to
-      prefill with an example.
+      Enter your jQuery templates below or select from the dropdown at
+      top-right to prefill with an example.
     <td width=50% class=rightrow>
       <p>
       Enter JSON data to pass to the template below.
@@ -189,10 +69,11 @@ function populateInputsFromLink() {
   </tr>
   <tr>
     <td class=leftrow>
-      <textarea rows=15 id=htmlContent>
+      <textarea rows="15" id="htmlContent">
 <!-- A jQuery template named "helloWorld" -->
 <script type="text/x-jquery-tmpl" id="helloWorld">
-Hello, <b onclick="alert(${world})">${world}</b>!
+Hello,
+<b onclick="alert(${world})"> ${world} </b>!
 </script>
 </textarea>
     <td class=rightrow>
@@ -202,7 +83,7 @@ Hello, <b onclick="alert(${world})">${world}</b>!
   </tr>
   <tr align=center>
     <td class=leftrow>
-      <button onclick="compile()">Compile templates</button>
+      <button onclick="sanitize()">Sanitize templates</button>
     </td>
     <td class=rightrow>
       <button id=runbutton disabled onclick="runTemplate()"
@@ -223,5 +104,5 @@ Hello, <b onclick="alert(${world})">${world}</b>!
 
 <br>
 <center><small>
-<!-- hhmts start -->Last modified: Thu Apr 14 12:24:11 PDT 2011 <!-- hhmts end --></small></center>
+<!-- hhmts start -->Last modified: Thu Apr 14 16:20:15 PDT 2011 <!-- hhmts end --></small></center>
 </body></html>

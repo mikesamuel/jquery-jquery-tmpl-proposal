@@ -366,7 +366,7 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
           }
           break;
         case 'tmpl':
-          // Expect content of the form '#' + templateName
+          // Expect content of the form '#' + templateName in double quotes.
           var calleeBaseName = getCalleeName(parseTree);
           if (calleeBaseName) {
             if (!/__C\d+$/.test(calleeBaseName)) {
@@ -438,7 +438,7 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
   }
 
   function getCalleeName(parseTree) {
-    var m = parseTree[1].match(/(?:^|\))\s*#([^)\s]+)\s*$/);
+    var m = parseTree[1].match(/(?:^|\))\s*"#([^)\s]+)"\s*$/);
     return m && m[1];
   }
 
@@ -513,9 +513,9 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
         var calleeName = inferences.calleeName[id];
         if (calleeName) {
           // The form of a {{tmpl}}'s content is
-          //    ['(' [<data>[, <options>]] ')'] '#'<name>
+          //    ['(' [<data>[, <options>]] ')'] '"#'<name>'"'
           parseTreeNode[1] = parseTreeNode[1].replace(
-              /\s*#[^)\s]+\s*$/, ' #' + calleeName);
+              /\s*"#[^)\s]+"\s*$/, ' "#' + calleeName + '"');
         }
         break;
     }
@@ -539,4 +539,19 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
   return parsedTemplates;
 }
 
-window['SAFEHTML_ESC'] = SANITIZER_FOR_ESC_MODE;
+window['SAFEHTML_ESC'] = (function () {
+  function f() {}
+  f.prototype = SANITIZER_FOR_ESC_MODE;
+  var escapers = new f;
+  escapers[ESC_MODE_ESCAPE_HTML] = function (value) {
+    var v = escapeHtml(value);
+    if (v && v.contentKind === CONTENT_KIND_HTML) {
+      var span = document.createElement('SPAN');
+      span.innerHTML = '' + v;
+      // TODO: get rid of this unnecessary span.
+      v = $(span);
+    }
+    return v;
+  };
+  return escapers;
+})();

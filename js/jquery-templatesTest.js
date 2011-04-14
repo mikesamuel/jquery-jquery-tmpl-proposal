@@ -19,7 +19,7 @@ function rewrittenSource(input) {
   for (var k in templates) {
     if (Object.hasOwnProperty.call(templates, k)) {
       actual[k] = renderJQueryTemplate(templates[k]).replace(
-          /(\{\{(else|noAutoescape|tmpl)(?:\}?[^}])*\}\})\{\{\/\2\}\}/g, '$1');
+          /(\{\{(else|tmpl)(?:\}?[^}])*\}\})\{\{\/\2\}\}/g, '$1');
     }
   }
   return actual;
@@ -339,11 +339,11 @@ function testSimpleEachLoop() {
 function testCall() {
   assertContextualRewriting(
       {
-        "foo": "{{tmpl #bar}}",
+        "foo": "{{tmpl \"#bar\"}}",
         "bar": "Hello, ${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](world)}!"
       },
       {
-        "foo": "{{tmpl #bar}}",
+        "foo": "{{tmpl \"#bar\"}}",
         "bar": "Hello, ${world}!"
       });
 }
@@ -351,11 +351,11 @@ function testCall() {
 function testCallWithParams() {
   assertContextualRewriting(
       {
-        "foo": "{{tmpl ({ x: y }) #bar}}",
+        "foo": "{{tmpl ({ x: y }) \"#bar\"}}",
         "bar": "Hello, ${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](world)}!"
       },
       {
-        "foo": "{{tmpl ({ x: y }) #bar}}",
+        "foo": "{{tmpl ({ x: y }) \"#bar\"}}",
         "bar": "Hello, ${world}!"
       });
 }
@@ -364,9 +364,9 @@ function testSameTemplateCalledInDifferentContexts() {
   assertContextualRewriting(
       {
         "foo": join(
-            "{{tmpl #bar}}",
+            "{{tmpl \"#bar\"}}",
             "<script>",
-            "alert('{{tmpl #bar__C20}}');",
+            "alert('{{tmpl \"#bar__C20\"}}');",
             "</script>"),
         "bar": "Hello, ${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](world)}!",
         "bar__C20": "Hello, ${SAFEHTML_ESC["
@@ -374,9 +374,9 @@ function testSameTemplateCalledInDifferentContexts() {
       },
       {
         "foo": join(
-            "{{tmpl #bar}}",
+            "{{tmpl \"#bar\"}}",
             "<script>",
-            "alert('{{tmpl #bar}}');",
+            "alert('{{tmpl \"#bar\"}}');",
             "</script>"),
         "bar": "Hello, ${world}!"
       });
@@ -387,25 +387,25 @@ function testRecursiveTemplateGuessWorks() {
       {
         "foo": join(
             "<script>",
-              "x = [{{tmpl #countDown__C8208}}]",
+              "x = [{{tmpl \"#countDown__C8208\"}}]",
             "</script>"),
         "countDown": join(
             "{{if x > 0}}",
               "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](--x)},",
-              "{{tmpl #countDown}}",
+              "{{tmpl \"#countDown\"}}",
             "{{/if}}"),
         "countDown__C8208": join(
             "{{if x > 0}}",
               "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_JS_VALUE + "](--x)},",
-              "{{tmpl #countDown__C8208}}",
+              "{{tmpl \"#countDown__C8208\"}}",
             "{{/if}}")
       },
       {
         "foo": join(
             "<script>",
-              "x = [{{tmpl #countDown}}]",
+              "x = [{{tmpl \"#countDown\"}}]",
             "</script>"),
-        "countDown": "{{if x > 0}}${--x},{{tmpl #countDown}}{{/if}}"
+        "countDown": "{{if x > 0}}${--x},{{tmpl \"#countDown\"}}{{/if}}"
       });
 }
 
@@ -415,7 +415,7 @@ function testTemplateWithUnknownJsSlash() {
         "foo": join(
             "<script>",
               "{{if declare}}var {{/if}}",
-              "x = {{tmpl #bar__C8208}}\n",
+              "x = {{tmpl \"#bar__C8208\"}}\n",
               "y = 2",
             "</script>"),
         "bar": join(
@@ -433,7 +433,7 @@ function testTemplateWithUnknownJsSlash() {
         "foo": join(
             "<script>",
               "{{if declare}}var {{/if}}",
-              "x = {{tmpl #bar}}\n",
+              "x = {{tmpl \"#bar\"}}\n",
               // At this point we don't know whether or not a slash would start
               // a RegExp or not, but we don't see a slash so it doesn't matter.
               "y = 2",
@@ -454,7 +454,7 @@ function testTemplateUnknownJsSlashMatters() {
         "foo": join(
             "<script>",
               "{{if declare}}var {{/if}}",
-              "x = {{tmpl #bar}}\n",
+              "x = {{tmpl \"#bar\"}}\n",
               // At this point we don't know whether or not a slash would start
               // a RegExp or not, so this constitutes an error.
               "/ 2",
@@ -502,10 +502,10 @@ function testRecursiveTemplateGuessFails() {
       {
         "foo": join(
             "<script>",
-              "{{tmpl #quot}}",
+              "{{tmpl \"#quot\"}}",
             "</script>"),
         "quot": join(
-            "\" {{if Math.random() < 0.5}}{{tmpl #quot}}{{/if}}")
+            "\" {{if Math.random() < 0.5}}{{tmpl \"#quot\"}}{{/if}}")
       },
       "quot__C19:1:`{{if Math.random...{{/tmpl}}{{/if}}`:"
       + " Branch ends in irreconcilable contexts [Context JS_DQ_STRING]"
@@ -573,11 +573,11 @@ function testNoInterferenceWithNonContextualTemplates() {
         "foo": "Hello ${world}",
         "bar": join(
             "{{noAutoescape}}",
-            "{{if $x}}\n",
+            "{{if x}}\n",
               "<!--\n",
             "{{/if}}\n",
             // Cannot reconcile contexts HTML_COMMENT and HTML_PCDATA.
-            "{{tmpl #foo}}")
+            "{{tmpl \"#foo\"}}")
       });
 
   // But if it doesn't, it's none of our business.
@@ -585,7 +585,7 @@ function testNoInterferenceWithNonContextualTemplates() {
       {
         "foo": "Hello ${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](world)}",
         "bar": join(
-            "{{if $x}}",
+            "{{if x}}",
               "<!--",
             "{{/if}}")
           // No call to foo in this version.
@@ -594,7 +594,7 @@ function testNoInterferenceWithNonContextualTemplates() {
         "foo": "Hello ${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](world)}",
         "bar": join(
             "{{noAutoescape}}",
-            "{{if $x}}",
+            "{{if x}}",
               "<!--",
             "{{/if}}")
           // No call to foo in this version.
@@ -606,14 +606,15 @@ function testExternTemplates() {
       {
         "foo": join(
             "<script>",
-              "var x = {{tmpl #bar}},",  // Undefined in this compilation unit.
+              "var x = {{tmpl \"#bar\"}},",
               "y = ${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_JS_VALUE + "](y)};",
             "</script>")
       },
       {
         "foo": join(
             "<script>",
-              "var x = {{tmpl #bar}},",  // Undefined in this compilation unit.
+              // Undefined in this compilation unit.
+              "var x = {{tmpl \"#bar\"}},",
               "y = ${y};",
             "</script>")
       });
@@ -623,21 +624,21 @@ function testNonContextualCallers() {
   assertContextualRewriting(
       {
         "foo": "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](x)}",
-        "bar": "<b>{{tmpl #foo}}</b> ${y}"
+        "bar": "<b>{{tmpl \"#foo\"}}</b> ${y}"
       },
       {
         "foo": "${x}",
-        "bar": "{{noAutoescape}}<b>{{tmpl #foo}}</b> ${y}"
+        "bar": "{{noAutoescape}}<b>{{tmpl \"#foo\"}}</b> ${y}"
       });
 
   assertContextualRewriting(
       {
         "ns.foo": "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](x)}",
-        "ns.bar": "<b>{{tmpl #.foo}}</b> ${y}"
+        "ns.bar": "<b>{{tmpl \"#ns.foo\"}}</b> ${y}"
       },
       {
         "ns.foo": "${x}",
-        "ns.bar": "{{noAutoescape}}<b>{{tmpl #.foo}}</b> ${y}"
+        "ns.bar": "{{noAutoescape}}<b>{{tmpl \"#ns.foo\"}}</b> ${y}"
       });
 }
 

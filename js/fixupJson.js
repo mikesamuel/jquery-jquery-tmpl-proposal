@@ -12,6 +12,7 @@ function fixupJson(str) {
   var state = 0;  // 1 in array, 2 in object expect key, 3 in object expect value
   function start(forceNewline, suppressComma) {
     if (!first && !suppressComma) { fixed.push(state == 3 ? ':' : ','); }
+    if (!first && !suppressComma && state === 2) { forceNewline = true; }
     if (fixed.length && (first || forceNewline)) {
       fixed.push('\n');
       for (var i = stack.length; --i >= 0;) { fixed.push('  '); }
