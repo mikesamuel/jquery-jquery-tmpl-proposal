@@ -15,7 +15,7 @@ small { font-size: 50% }
 body, td, th { vertical-align: top }
 textarea { font-size: 100%; margin: 0 }
 #htmlContent, #data {
-  width:100%; padding: .25em; border: 4px solid #9cf;
+  width:100%; padding: .25em;
   font-family: monospace
 }
 table { empty-cells: show }
@@ -32,20 +32,24 @@ textarea#htmlContent { white-space: pre }
 .sanitizer { text-decoration: underline }
 h1,h2,h3 { margin-bottom: 0 }
 hr { height: 3px; background-color: #9cf; width: 90% }
-#sanitizer-output, #template-output {
+#sanitizer-output pre, #template-output > pre, #template-output > p {
   background-color: #eee;
   border: 4px solid #aaa;
   padding: .25em
 }
-.arrowbtn { font-size: 150%; -moz-border-radius: .25em;
-            border-radius: .25em; }
+.arrowbtn {
+  font-size: 150%; -moz-border-radius: .25em;
+  border-radius: .25em; width: 100%;
+  margin-bottom: .5em
+}
+.headerrow th { padding-top: 2em }
+.col0, .col2 { max-width: 45%; width: 45%; overflow: auto }
+.col1 { max-width: 10%; width: 10% }
 </style>
 </head>
 
 <body>
-<h1>
-  Sanitized JQuery Templates Test
-</h1>
+<h1>Sanitized JQuery Templates Test</h1>
 
 <p>
 <a href="http://api.jquery.com/category/plugins/templates/">JQuery templates</a>
@@ -64,7 +68,8 @@ and <a href="http://code.google.com/p/js-quasis-libraries-and-repl/source/browse
 <p>Examples: <span id="exampleList"></span></p>
 <script>populateExampleDropdown()</script>
 
-<hr>
+
+<div style="padding-top: 1em; border-top: 3px solid #ccc">
 
 <div style="text-align: right"><small>[
   <a onclick="showLink()" href="produces: a link you can email">permalink</a>
@@ -80,11 +85,11 @@ and <a href="http://code.google.com/p/js-quasis-libraries-and-repl/source/browse
  ></textarea>
 
 <div style="left: 0; right: -1em; position: relative">
-<table cols=2 cellpadding=0 cellspacing=4 border=0>
-  <tr>
-    <th><h3>Template Source</h3></th>
-    <td></td>
-    <th><h3>Template Source w/ sanitizers</h3></tr>
+<table cols=2 cellpadding=0 cellspacing=10 border=0 width=100%>
+  <tr class=headerrow>
+    <th class=col0><h3>Template Source</h3></th>
+    <td class=col1></td>
+    <th class=col2><h3>Template Source w/ sanitizers</h3></tr>
 
   <tr align=center>
     <td colspan=3>
@@ -92,7 +97,7 @@ and <a href="http://code.google.com/p/js-quasis-libraries-and-repl/source/browse
       to prefill with an example.</tr>
   
   <tr>
-    <td>
+    <td class=col0>
       <textarea rows="15" id="htmlContent">
 <!-- A jQuery template named "helloWorld" -->
 <script type="text/x-jquery-tmpl" id="helloWorld">
@@ -100,29 +105,30 @@ Hello,
 <b onclick="alert(${world})"> ${world} </b>!
 </script>
 </textarea>
-    <td align=center>
+    <td align=center class=col1>
       <button onclick="sanitize()" title="Sanitize Templates" class="arrowbtn"
        id="sanitize-button">&#x21f0;<br><small>rewrite</small></button></td>
-    <td id=sanitizer-output></tr>
+    <td id=sanitizer-output class=col2></tr>
 
-  <tr>
-    <th><h3>Data for Template</h3></th>
-    <td></td>
-    <th><h3>Rendered Template</h3></tr>
+  <tr class=headerrow>
+    <th class=col0><h3>Data for Template</h3></th>
+    <td class=col1></td>
+    <th class=col2><h3>Rendered Template</h3></tr>
   <tr align=center>
     <td colspan=3>Enter JSON data to pass to the template below.</tr>
   <tr>
-    <td>
+    <td class=col0>
       <textarea rows=15 id=data onblur="this.value = fixupJson(this.value)">
 { value: 42, color: red, name: 'John Doe', "bars": ['foo1', 'foo2'], world: 'Cincinatti' }
 </textarea>
-    <td id="runbuttons" align="center"></td>
-    <td id="template-output"></tr>
+    <td id="runbuttons" align="center" class=col1></td>
+    <td id="template-output" class=col2></tr>
 </table>
+</div>
 
 <script>populateInputsFromLink()</script>
 
 <br>
 <center><small>
-<!-- hhmts start -->Last modified: Fri Apr 15 14:04:26 PDT 2011 <!-- hhmts end --></small></center>
+<!-- hhmts start -->Last modified: Fri Apr 15 16:23:00 PDT 2011 <!-- hhmts end --></small></center>
 </body></html>

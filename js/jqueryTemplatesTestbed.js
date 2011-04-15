@@ -184,7 +184,9 @@ function runTemplate(templateName) {
 
   outputContainer.empty();
   $('<h3/>').text('Result for ' + templateName).appendTo(outputContainer);
-  templateResult.appendTo(outputContainer);
+  var resultContainer = $('<p/>');
+  templateResult.appendTo(resultContainer);
+  resultContainer.appendTo(outputContainer);
   $('<h3/>').text('Result source').appendTo(outputContainer);
   $('<pre/>').text(resultHtml).appendTo(outputContainer);
 
