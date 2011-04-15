@@ -31,21 +31,19 @@ pre, textarea { white-space: pre-wrap }
   width: 100%
 }
 .escapingMode { background-color: #9cf }
-#exampleList { float: right }
+h1 { margin-bottom: 0 }
 </style>
 </head>
 
 <body>
-<select id="exampleList" onchange="this.value && prefillExample(this.value)">
-  <option value="">Choose an example&hellip;</option>
-</select>
-<script>populateExampleDropdown()</script>
-
 <h1>
   Sanitized JQuery Templates Test
   <small>[<a onclick="showLink()" href="produces: a link you can email"
     >permalink</a>]</small>
 </h1>
+
+<p id="exampleList"></p>
+<script>populateExampleDropdown()</script>
 
 <!--
   - Initially invisible but displayed when filled with a permalink.
@@ -106,5 +104,5 @@ Hello,
 
 <br>
 <center><small>
-<!-- hhmts start -->Last modified: Fri Apr 15 11:21:27 PDT 2011 <!-- hhmts end --></small></center>
+<!-- hhmts start -->Last modified: Fri Apr 15 11:53:39 PDT 2011 <!-- hhmts end --></small></center>
 </body></html>

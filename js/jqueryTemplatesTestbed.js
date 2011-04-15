@@ -231,6 +231,11 @@ var CANNED_EXAMPLES = [
   {
     desc: 'Safe substitution into scripts',
     html: [
+      '<!--',
+      '  - ${...} can appear many places inside JavaScript',
+      '  - and the autosanitizer chooses an appropriate',
+      '  - sanitizer for each.',
+      ' -->',
       '<script type="text/x-jquery-tmpl" id="main">',
       '<button onclick="',
       '    sendMessageTo(',
@@ -252,6 +257,14 @@ var CANNED_EXAMPLES = [
   {
     desc: 'Safely generated CSS',
     html: [
+      '<!--',
+      '  - ${...} can appear many places inside CSS and the',
+      '  - autosanitizer chooses an appropriate sanitizer',
+      '  - for each.',
+      '  - Substitutions that could affect the protocol of',
+      '  - the URL, e.g. to specify javascript: degrade',
+      '  - gracefully.',
+      ' -->',
       '<script type="text/x-jquery-tmpl" id="main">',
       '<style>',
       '  p${class1} { border-${bidi}-color: ${okColor} }',
@@ -273,6 +286,11 @@ var CANNED_EXAMPLES = [
   {
     desc: 'Dual use template',
     html: [
+      '<!--',
+      '  - The same template is called in two different contexts.',
+      '  - The first time it is called where a JavaScript value is expected,',
+      '  - and the second time where HTML tags and text are expected.',
+      ' -->',
       '<script type="text/x-jquery-tmpl" id="aliceInTemplateLand">',
       '  <button onclick="alert(\'Viewing {{tmpl "#chapter"}}\')">',
       '    Say Chapter',
@@ -292,7 +310,12 @@ var CANNED_EXAMPLES = [
   {
     desc: 'Pre-sanitized HTML',
     html: [
-      '<!-- The same template is called in two different contexts -->',
+      '<!--',
+      '  - The names list can contain a mixture of plain text and ',
+      '  - pre-sanitized HTML.  The plain text is escaped, the',
+      '  - pre-sanitized HTML is not over-escaped, and tags are',
+      '  - not emitted inside attributes.',
+      ' -->',
       '<script type="text/x-jquery-tmpl" id="main">',
       '  <ul>',
       '    {{each names}}',
@@ -312,16 +335,15 @@ var CANNED_EXAMPLES = [
 function populateExampleDropdown() {
   var exampleDropdown = $('#exampleList');
   $.each(CANNED_EXAMPLES,
-         function (index, value) {
-           $('<option/>', { value: index }).text(value.desc)
-             .appendTo(exampleDropdown);
+         function (_, example) {
+           $('<button>', { onclick: prefillExample(example) })
+               .text(example.desc).appendTo(exampleDropdown);
          });
 }
 
-function prefillExample(exampleIndex) {
-  var example = CANNED_EXAMPLES[exampleIndex];
-  if (example) {
+function prefillExample(example) {
+  return function () {
     $('#htmlContent').text(example.html.join('\n'));
     $('#data').text(fixupJson(JSON.stringify(example.data)));
-  }
+  };
 }
