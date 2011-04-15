@@ -258,17 +258,15 @@ function escapeJsValue(value) {
   // identifiers by accident.
   // We could use parentheses but those might be interpreted as a function call.
   if (value == null) {  // Intentionally matches undefined.
-    // Java returns null from maps where there is no corresponding key while
-    // JS returns undefined.
-    // We always output null for compatibility with Java which does not have a
-    // distinct undefined value.
+    // We always output null for compatibility with Java/python server side
+    // frameworks which do not have a distinct undefined value.
     return ' null ';
   }
   switch (typeof value) {
     case 'boolean': case 'number':
       return ' ' + value + ' ';
     default:
-      return "'" + escapeJsStringHelper(value) + "'";
+      return "'" + escapeJsString(value) + "'";
   }
 }
 
@@ -879,6 +877,8 @@ var HTML_TAG_REGEX_ = /<(?:!|\/?[a-z])(?:[^>'"]|"[^"]*"|'[^']*')*>/gi;
 
 // END GENERATED CODE
 
+function noAutoescape(x) { return x; }
+
 var SANITIZER_FOR_ESC_MODE = [];
 SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML] = escapeHtml;
 SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML_RCDATA] = escapeHtmlRcdata;
@@ -896,4 +896,4 @@ SANITIZER_FOR_ESC_MODE[ESC_MODE_FILTER_CSS_VALUE] = filterCssValue;
 SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_URI] = escapeUri;
 SANITIZER_FOR_ESC_MODE[ESC_MODE_NORMALIZE_URI] = normalizeUri;
 SANITIZER_FOR_ESC_MODE[ESC_MODE_FILTER_NORMALIZE_URI] = filterNormalizeUri;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_NO_AUTOESCAPE] = function (x) { return x; };
+SANITIZER_FOR_ESC_MODE[ESC_MODE_NO_AUTOESCAPE] = noAutoescape;

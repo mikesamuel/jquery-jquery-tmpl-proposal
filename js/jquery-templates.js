@@ -412,7 +412,7 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
             }
           }
           // Do not add escaping directives if there is an existing one.
-          if (!/^\s*(?:\$\.encode\[\d+\]|noAutoescape)\s*\(/
+          if (!/^\s*(?:escape|filter|normalize|noAutoescape)\w*\s*\(/
               .test(parseTree[1])) {
             if (typeof escapingModes.firstEscMode === 'number') {
               var modes = [];
@@ -503,7 +503,8 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
           if (escapingModes) {
             var expr = parseTreeNode[1];
             for (var i = 0; i < escapingModes.length; ++i) {
-              expr = '$.encode[' + escapingModes[i] + '](' + expr + ')';
+              expr = SANITIZER_FOR_ESC_MODE[escapingModes[i]].name
+                  + '(' + expr + ')';
             }
             parseTreeNode[1] = expr;
           }
@@ -539,4 +540,10 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
   return parsedTemplates;
 }
 
-window['$']['extend'](window['$']['encode'], SANITIZER_FOR_ESC_MODE);
+$.each(SANITIZER_FOR_ESC_MODE,
+    function (i, value) {
+      if (value && !value['name']) {
+console.log('value=' + value);
+        value['name'] = ('' + value).match(/^function\s+(\w+)/)[0];
+      }
+    });

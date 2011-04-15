@@ -346,7 +346,7 @@
 					fnargs = unescape( fnargs );
 					return "');" + 
 						tag[ slash ? "close" : "open" ]
-							.split( "$notnull_1" ).join( target ? "typeof(" + target + ")!=='undefined' && (" + target + ")!=null" : "true" )
+							.split( "$notnull_1" ).join( target ? "typeof(t___=" + target + ")!=='undefined' && t___!=null" : "true" )
 							.split( "$1a" ).join( exprAutoFnDetect )
 							.split( "$1" ).join( expr )
 							.split( "$2" ).join( fnargs ?

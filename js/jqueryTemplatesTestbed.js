@@ -104,33 +104,33 @@ function sanitize(opt_runFirst) {
 }
 
 // Title text for escaping declarations in the template output box.
-var ESC_MODE_HELP = [];
-ESC_MODE_HELP[ESC_MODE_ESCAPE_HTML] = 'text \u2192 HTML';
-ESC_MODE_HELP[ESC_MODE_ESCAPE_HTML_RCDATA] = 'text \u2192 RCDATA';
-ESC_MODE_HELP[ESC_MODE_ESCAPE_HTML_ATTRIBUTE] = 'text \u2192 HTML attr';
-ESC_MODE_HELP[ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE]
-    = 'text \u2192 unquoted attr';
-ESC_MODE_HELP[ESC_MODE_FILTER_HTML_ELEMENT_NAME] = 'filters element names';
-ESC_MODE_HELP[ESC_MODE_FILTER_HTML_ATTRIBUTE] = 'filters attribute names';
-ESC_MODE_HELP[ESC_MODE_ESCAPE_JS_STRING] = 'fo\o \u2192 fo\\o';
-ESC_MODE_HELP[ESC_MODE_ESCAPE_JS_VALUE] = 'foo \u2192 "foo"';
-ESC_MODE_HELP[ESC_MODE_ESCAPE_JS_REGEX] = 'a+b \u2192 a\+b';
-ESC_MODE_HELP[ESC_MODE_ESCAPE_CSS_STRING] = 'fo\o \u2192 fo\\o for CSS';
-ESC_MODE_HELP[ESC_MODE_FILTER_CSS_VALUE] = 'filter CSS values';
-ESC_MODE_HELP[ESC_MODE_ESCAPE_URI] = 'text \u2192 URI';
-ESC_MODE_HELP[ESC_MODE_NORMALIZE_URI] = 'normalizes quotes in URIs';
-ESC_MODE_HELP[ESC_MODE_FILTER_NORMALIZE_URI]
+var ESC_MODE_HELP = {};
+ESC_MODE_HELP[escapeHtml.name] = '1<2 \u2192 1&lt;2';
+ESC_MODE_HELP[escapeHtmlRcdata.name] = 'text to RCDATA';
+ESC_MODE_HELP[escapeHtmlAttribute.name] = 'text to attribute value';
+ESC_MODE_HELP[escapeHtmlAttributeNospace.name]
+    = 'text to unquoted attribute value';
+ESC_MODE_HELP[filterHtmlElementName.name] = 'filters element names';
+ESC_MODE_HELP[filterHtmlAttribute.name] = 'filters attribute names';
+ESC_MODE_HELP[escapeJsString.name] = 'fo\o \u2192 fo\\o';
+ESC_MODE_HELP[escapeJsValue.name] = 'fo\o \u2192 "fo\\o"';
+ESC_MODE_HELP[escapeJsRegex.name] = 'a+b \u2192 a\+b';
+ESC_MODE_HELP[escapeCssString.name] = 'fo\o \u2192 fo\\o for CSS';
+ESC_MODE_HELP[filterCssValue.name] = 'filters CSS values';
+ESC_MODE_HELP[escapeUri.name] = '1<2 \u2912 1%C32';
+ESC_MODE_HELP[normalizeUri.name] = 'normalizes quotes in URIs';
+ESC_MODE_HELP[filterNormalizeUri.name]
     = 'normalizes URI and rejects javascript:';
-ESC_MODE_HELP[ESC_MODE_NO_AUTOESCAPE] = 'does nothing';
+ESC_MODE_HELP[noAutoescape.name] = 'does nothing';
 
 // Adds help text to 
 function markupSanitizedTemplates(templateText) {
   templateText = escapeHtml(templateText);
   templateText = templateText.replace(
-      /\bSAFEHTML_ESC\[(\d+)\]/g,
-      function (_, escMode) {
-        return '<abbr class="escapingMode"'
-            + ' title="' + escapeHtml(ESC_MODE_HELP[escMode] || '') + '">'
+      /[{(]((?:escape|normalize|filter)\w+)(?=\()/g,
+      function (_, sanitizer) {
+        return '<abbr class="sanitizer"'
+            + ' title="' + escapeHtml(ESC_MODE_HELP[sanitizer] || '') + '">'
             + _ + '</abbr>';
       });
   return templateText;
@@ -330,7 +330,6 @@ var CANNED_EXAMPLES = [
     }
   }
 ];
-
 
 function populateExampleDropdown() {
   var exampleDropdown = $('#exampleList');
