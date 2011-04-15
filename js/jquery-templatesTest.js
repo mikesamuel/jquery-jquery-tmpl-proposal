@@ -132,7 +132,7 @@ function testTrivialTemplate() {
 function testPrintInText() {
   assertContextualRewriting(
       {
-        foo: "Hello, ${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](world)}!"
+        foo: "Hello, ${$.encode[" + ESC_MODE_ESCAPE_HTML + "](world)}!"
       },
       {
         foo: "Hello, ${world}!"
@@ -143,8 +143,8 @@ function testPrintInTextAndLink() {
   assertContextualRewriting(
       {
         foo: "Hello, <a href=\"worlds?world="
-            + "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_URI + "](world)}\">"
-            + "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](world)}</a>!"
+            + "${$.encode[" + ESC_MODE_ESCAPE_URI + "](world)}\">"
+            + "${$.encode[" + ESC_MODE_ESCAPE_HTML + "](world)}</a>!"
       },
       {
         foo: "Hello, <a href=\"worlds?world=${world}\">${world}</a>!"
@@ -157,9 +157,9 @@ function testConditional() {
         "bar": join(
           "Hello,",
           "{{if x == 1}}",
-            "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](y)}",
+            "${$.encode[" + ESC_MODE_ESCAPE_HTML + "](y)}",
           "{{else x == 2}}",
-            "<script>foo(${SAFEHTML_ESC["
+            "<script>foo(${$.encode["
                 + ESC_MODE_ESCAPE_JS_VALUE + "](z)})</script>",
           "{{else}}",
             "World!",
@@ -186,17 +186,17 @@ function testConditionalEndsInDifferentContext() {
         "bar": join(
             "<a",
             "{{if $url}}",
-              " href='${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE
-                  + "](SAFEHTML_ESC[" + ESC_MODE_FILTER_NORMALIZE_URI
+              " href='${$.encode[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE
+                  + "]($.encode[" + ESC_MODE_FILTER_NORMALIZE_URI
                   + "](url))}'>",
             "{{else $name}}",
-              " name='${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE
+              " name='${$.encode[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE
                   + "](name)}'>",
             "{{else}}",
               ">",
             "{{/if}}",
             // Not escapeJsValue because we are not inside a tag.
-            " onclick='alert(${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML
+            " onclick='alert(${$.encode[" + ESC_MODE_ESCAPE_HTML
                 + "](value)})'")
       },
       {
@@ -240,17 +240,17 @@ function testPrintInsideScript() {
       {
         "bar": join(
             "<script>\n",
-              "foo(${SAFEHTML_ESC["
+              "foo(${$.encode["
                   + ESC_MODE_ESCAPE_JS_VALUE + "](a)});\n",
-              "bar(\"${SAFEHTML_ESC["
+              "bar(\"${$.encode["
                   + ESC_MODE_ESCAPE_JS_STRING + "](b)}\");\n",
-              "baz(\'${SAFEHTML_ESC["
+              "baz(\'${$.encode["
                   + ESC_MODE_ESCAPE_JS_STRING + "](c)}\');\n",
-              "boo(/${SAFEHTML_ESC["
+              "boo(/${$.encode["
                   + ESC_MODE_ESCAPE_JS_REGEX
-                  + "](d)}/.test(s) ? 1 / ${SAFEHTML_ESC["
+                  + "](d)}/.test(s) ? 1 / ${$.encode["
                   + ESC_MODE_ESCAPE_JS_VALUE + "](e)}",
-              " : /${SAFEHTML_ESC["
+              " : /${$.encode["
                   + ESC_MODE_ESCAPE_JS_REGEX + "](f)}/);\n",
             "</script>")
       },
@@ -279,9 +279,9 @@ function testEachLoop() {
         "bar": join(
             "<style>",
               "{{each (i, className) classes}}",
-                ".foo${SAFEHTML_ESC[" + ESC_MODE_FILTER_CSS_VALUE
+                ".foo${$.encode[" + ESC_MODE_FILTER_CSS_VALUE
                     + "](className)}:before {",
-                  "content: '${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_CSS_STRING
+                  "content: '${$.encode[" + ESC_MODE_ESCAPE_CSS_STRING
                       + "](i)}'",
                 "}",
               "{{/each}}",
@@ -322,7 +322,7 @@ function testSimpleEachLoop() {
         "baz": join(
             "<ol>",
               "{{each values}}",
-                "<li>${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](value)}</li>",
+                "<li>${$.encode[" + ESC_MODE_ESCAPE_HTML + "](value)}</li>",
               "{{/each}}",
             "</ol>")
       },
@@ -340,7 +340,7 @@ function testCall() {
   assertContextualRewriting(
       {
         "foo": "{{tmpl \"#bar\"}}",
-        "bar": "Hello, ${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](world)}!"
+        "bar": "Hello, ${$.encode[" + ESC_MODE_ESCAPE_HTML + "](world)}!"
       },
       {
         "foo": "{{tmpl \"#bar\"}}",
@@ -352,7 +352,7 @@ function testCallWithParams() {
   assertContextualRewriting(
       {
         "foo": "{{tmpl ({ x: y }) \"#bar\"}}",
-        "bar": "Hello, ${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](world)}!"
+        "bar": "Hello, ${$.encode[" + ESC_MODE_ESCAPE_HTML + "](world)}!"
       },
       {
         "foo": "{{tmpl ({ x: y }) \"#bar\"}}",
@@ -368,8 +368,8 @@ function testSameTemplateCalledInDifferentContexts() {
             "<script>",
             "alert('{{tmpl \"#bar__C20\"}}');",
             "</script>"),
-        "bar": "Hello, ${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](world)}!",
-        "bar__C20": "Hello, ${SAFEHTML_ESC["
+        "bar": "Hello, ${$.encode[" + ESC_MODE_ESCAPE_HTML + "](world)}!",
+        "bar__C20": "Hello, ${$.encode["
             + ESC_MODE_ESCAPE_JS_STRING + "](world)}!"
       },
       {
@@ -391,12 +391,12 @@ function testRecursiveTemplateGuessWorks() {
             "</script>"),
         "countDown": join(
             "{{if x > 0}}",
-              "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](--x)},",
+              "${$.encode[" + ESC_MODE_ESCAPE_HTML + "](--x)},",
               "{{tmpl \"#countDown\"}}",
             "{{/if}}"),
         "countDown__C8208": join(
             "{{if x > 0}}",
-              "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_JS_VALUE + "](--x)},",
+              "${$.encode[" + ESC_MODE_ESCAPE_JS_VALUE + "](--x)},",
               "{{tmpl \"#countDown__C8208\"}}",
             "{{/if}}")
       },
@@ -517,25 +517,25 @@ function testUris() {
       {
         "bar": join(
             // We use filterNormalizeUri at the beginning,
-            "<a href='${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE
-                + "](SAFEHTML_ESC[" + ESC_MODE_FILTER_NORMALIZE_URI
+            "<a href='${$.encode[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE
+                + "]($.encode[" + ESC_MODE_FILTER_NORMALIZE_URI
                 + "](url))}'",
-            " style='background:url(${SAFEHTML_ESC["
-                + ESC_MODE_ESCAPE_HTML_ATTRIBUTE + "](SAFEHTML_ESC["
+            " style='background:url(${$.encode["
+                + ESC_MODE_ESCAPE_HTML_ATTRIBUTE + "]($.encode["
                 + ESC_MODE_FILTER_NORMALIZE_URI + "](bgimage))})'>",
             "Hi</a>",
-            "<a href='#${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE
+            "<a href='#${$.encode[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE
                 + "](anchor)}'",
             // escapeUri for substitutions into queries.
-            " style='background:url(&apos;/pic?q=${SAFEHTML_ESC["
+            " style='background:url(&apos;/pic?q=${$.encode["
                 + ESC_MODE_ESCAPE_URI + "](file)}&apos;)'>",
               "Hi",
             "</a>",
             "<style>",
-              "body { background-image: url(\"${SAFEHTML_ESC["
+              "body { background-image: url(\"${$.encode["
                   + ESC_MODE_FILTER_NORMALIZE_URI + "](bg)}\"); }",
               // and normalizeUri without the filter in the path.
-              "table { border-image: url(\"borders/${SAFEHTML_ESC["
+              "table { border-image: url(\"borders/${$.encode["
                   + ESC_MODE_NORMALIZE_URI + "](brdr)}\"); }",
             "</style>")
       },
@@ -556,7 +556,7 @@ function testAlreadyEscaped() {
       {
         "foo": join(
             "<script>",
-            "a = \"${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_URI + "](FOO)}\";",
+            "a = \"${$.encode[" + ESC_MODE_ESCAPE_URI + "](FOO)}\";",
             "</script>")
       });
 }
@@ -583,7 +583,7 @@ function testNoInterferenceWithNonContextualTemplates() {
   // But if it doesn't, it's none of our business.
   assertContextualRewriting(
       {
-        "foo": "Hello ${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](world)}",
+        "foo": "Hello ${$.encode[" + ESC_MODE_ESCAPE_HTML + "](world)}",
         "bar": join(
             "{{if x}}",
               "<!--",
@@ -591,7 +591,7 @@ function testNoInterferenceWithNonContextualTemplates() {
           // No call to foo in this version.
       },
       {
-        "foo": "Hello ${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](world)}",
+        "foo": "Hello ${$.encode[" + ESC_MODE_ESCAPE_HTML + "](world)}",
         "bar": join(
             "{{noAutoescape}}",
             "{{if x}}",
@@ -607,7 +607,7 @@ function testExternTemplates() {
         "foo": join(
             "<script>",
               "var x = {{tmpl \"#bar\"}},",
-              "y = ${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_JS_VALUE + "](y)};",
+              "y = ${$.encode[" + ESC_MODE_ESCAPE_JS_VALUE + "](y)};",
             "</script>")
       },
       {
@@ -623,7 +623,7 @@ function testExternTemplates() {
 function testNonContextualCallers() {
   assertContextualRewriting(
       {
-        "foo": "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](x)}",
+        "foo": "${$.encode[" + ESC_MODE_ESCAPE_HTML + "](x)}",
         "bar": "<b>{{tmpl \"#foo\"}}</b> ${y}"
       },
       {
@@ -633,7 +633,7 @@ function testNonContextualCallers() {
 
   assertContextualRewriting(
       {
-        "ns.foo": "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML + "](x)}",
+        "ns.foo": "${$.encode[" + ESC_MODE_ESCAPE_HTML + "](x)}",
         "ns.bar": "<b>{{tmpl \"#ns.foo\"}}</b> ${y}"
       },
       {
@@ -647,8 +647,8 @@ function testUnquotedAttributes() {
       {
         "foo": join(
             "<button onclick=alert(",
-            "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE
-                + "](SAFEHTML_ESC[" + ESC_MODE_ESCAPE_JS_VALUE + "](msg))})>",
+            "${$.encode[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE
+                + "]($.encode[" + ESC_MODE_ESCAPE_JS_VALUE + "](msg))})>",
             "Launch</button>")
       },
       {
@@ -659,7 +659,7 @@ function testUnquotedAttributes() {
 function testConditionalAttributes() {
   assertContextualRewriting(
       {
-        "foo": "<div{{if className}} class=\"${SAFEHTML_ESC["
+        "foo": "<div{{if className}} class=\"${$.encode["
             + ESC_MODE_ESCAPE_HTML_ATTRIBUTE + "](className)}\"{{/if}}>"
       },
       {
@@ -670,7 +670,7 @@ function testConditionalAttributes() {
 function testExtraSpacesInTag() {
   assertContextualRewriting(
       {
-        "foo": "<div {{if $className}} class=\"${SAFEHTML_ESC["
+        "foo": "<div {{if $className}} class=\"${$.encode["
             + ESC_MODE_ESCAPE_HTML_ATTRIBUTE + "](className)}\"{{/if}} id=x>"
       },
       {
@@ -682,29 +682,29 @@ function testOptionalAttributes() {
   assertContextualRewriting(
       {
         "iconTemplate": join(
-            "<img class=\"${SAFEHTML_ESC["
+            "<img class=\"${$.encode["
                 + ESC_MODE_ESCAPE_HTML_ATTRIBUTE + "](iconClass)}\"",
             "{{if iconId}}",
-              " id=\"${SAFEHTML_ESC["
+              " id=\"${$.encode["
                   + ESC_MODE_ESCAPE_HTML_ATTRIBUTE + "](iconId)}\"",
             "{{/if}}",
             " src=",
             "{{if iconPath}}",
-              "\"${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE
-                  + "](SAFEHTML_ESC[" + ESC_MODE_FILTER_NORMALIZE_URI
+              "\"${$.encode[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE
+                  + "]($.encode[" + ESC_MODE_FILTER_NORMALIZE_URI
                   + "](iconPath))}\"",
             "{{else}}",
               "\"images/cleardot.gif\"",
             "{{/if}}",
             "{{if title}}",
-              " title=\"${SAFEHTML_ESC["
+              " title=\"${$.encode["
                   + ESC_MODE_ESCAPE_HTML_ATTRIBUTE + "](title)}\"",
             "{{/if}}",
             " alt=\"",
               "{{if alt || alt == ''}}",
-                "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE + "](alt)}",
+                "${$.encode[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE + "](alt)}",
               "{{else title}}",
-                "${SAFEHTML_ESC[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE
+                "${$.encode[" + ESC_MODE_ESCAPE_HTML_ATTRIBUTE
                     + "](title)}",
               "{{/if}}\"",
             ">")
@@ -738,7 +738,7 @@ function testOptionalAttributes() {
 function testDynamicAttrName() {
   assertContextualRewriting(
       {
-        "foo": "<img src=\"bar\" ${SAFEHTML_ESC["
+        "foo": "<img src=\"bar\" ${$.encode["
             + ESC_MODE_FILTER_HTML_ATTRIBUTE + "](baz)}=\"boo\">"
       },
       {
@@ -750,9 +750,9 @@ function testDynamicElementName() {
   assertContextualRewriting(
       {
         "foo": join(
-            "<h${SAFEHTML_ESC[" + ESC_MODE_FILTER_HTML_ELEMENT_NAME
+            "<h${$.encode[" + ESC_MODE_FILTER_HTML_ELEMENT_NAME
                 + "](headerLevel)}>Header",
-            "</h${SAFEHTML_ESC[" + ESC_MODE_FILTER_HTML_ELEMENT_NAME
+            "</h${$.encode[" + ESC_MODE_FILTER_HTML_ELEMENT_NAME
                 + "](headerLevel)}>")
       },
       {

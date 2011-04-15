@@ -412,7 +412,7 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
             }
           }
           // Do not add escaping directives if there is an existing one.
-          if (!/^\s*(?:SAFEHTML_ESC\[\d+\]|noAutoescape)\s*\(/
+          if (!/^\s*(?:\$\.encode\[\d+\]|noAutoescape)\s*\(/
               .test(parseTree[1])) {
             if (typeof escapingModes.firstEscMode === 'number') {
               var modes = [];
@@ -503,7 +503,7 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
           if (escapingModes) {
             var expr = parseTreeNode[1];
             for (var i = 0; i < escapingModes.length; ++i) {
-              expr = 'SAFEHTML_ESC[' + escapingModes[i] + '](' + expr + ')';
+              expr = '$.encode[' + escapingModes[i] + '](' + expr + ')';
             }
             parseTreeNode[1] = expr;
           }
@@ -539,19 +539,4 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
   return parsedTemplates;
 }
 
-window['SAFEHTML_ESC'] = (function () {
-  function f() {}
-  f.prototype = SANITIZER_FOR_ESC_MODE;
-  var escapers = new f;
-  escapers[ESC_MODE_ESCAPE_HTML] = function (value) {
-    var v = escapeHtml(value);
-    if (v && v.contentKind === CONTENT_KIND_HTML) {
-      var span = document.createElement('SPAN');
-      span.innerHTML = '' + v;
-      // TODO: get rid of this unnecessary span.
-      v = $(span);
-    }
-    return v;
-  };
-  return escapers;
-})();
+window['$']['extend'](window['$']['encode'], SANITIZER_FOR_ESC_MODE);

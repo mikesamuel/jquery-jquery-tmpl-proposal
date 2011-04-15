@@ -1,7 +1,7 @@
 // Takes the HTML textarea, finds templates in script tags, and type checks them
 // displaying the resulting template source in the output, and registering named
 // templates with jQuery.
-function sanitize() {
+function sanitize(opt_runFirst) {
   var inputContainer = $('#htmlContent')[0];
   var outputContainer = $('#sanitizer-output');
   var templateSelect = $('#template-select');
@@ -53,9 +53,8 @@ function sanitize() {
       sanitizedTemplateText = renderJQueryTemplate(
           sanitizedTemplates[templateName])
           .replace(/(\{\{(else|tmpl)(?:\}?[^}])*\}\})\{\{\/\2\}\}/g, '$1');
-      var isNew = !Object.hasOwnProperty($.template, templateName);
-      var sanitizedTemplate = jQuery.template(
-          templateName, sanitizedTemplateText);
+      var isNew = !Object.hasOwnProperty.call($.template, templateName);
+      var sanitizedTemplate = $.template(templateName, sanitizedTemplateText);
       $('<h3/>').text(templateName).appendTo(outputHtml);
       $('<pre/>').html(markupSanitizedTemplates(sanitizedTemplateText))
           .appendTo(outputHtml);
@@ -95,6 +94,12 @@ function sanitize() {
           'sanitizedTemplate ' + templateName + '=' + sanitizedTemplateText);
     }
     return showError(e, outputContainer);
+  }
+
+  if (opt_runFirst && templateOrder.length) {
+    templateSelect[0].value = templateOrder[0];
+    templateSelect[0].onchange && templateSelect[0].onchange();
+    runTemplate();
   }
 }
 
@@ -142,10 +147,13 @@ function runTemplate() {
     data = JSON.parse(
       fixupJson(dataInput.value),
       function (key, value) {
+        // Make sure that any sanitized content specified as
+        //    { content: '<b>foo</b>', contentKind: 0 }
+        // has a toString() method that returns the content string.
         if (typeof value === 'object'
             && 'content' in value
-            && value.contentKind === (value.contentKind | 0)) {
-          value.toString = function () { return this.content; };
+            && value['contentKind'] === (value['contentKind'] | 0)) {
+          value.toString = SanitizedContent.prototype.toString;
         }
         return value;
       });
@@ -265,13 +273,15 @@ var CANNED_EXAMPLES = [
   {
     desc: 'Dual use template',
     html: [
-      '<script type="text/x-jquery-tmpl" id="main">',
-      '  <button onclick="alert(\'Viewing {{tmpl "#page"}}\')">?</button>',
+      '<script type="text/x-jquery-tmpl" id="aliceInTemplateLand">',
+      '  <button onclick="alert(\'Viewing {{tmpl "#chapter"}}\')">',
+      '    Say Chapter',
+      '  </button>',
       '  <p>...</p>',
-      '  <center><small>{{tmpl "#page"}}</small></center>',
+      '  <center><small>{{tmpl "#chapter"}}</small></center>',
       '</script>',
       '',
-      '<script type="text/x-jquery-tmpl" id="page">',
+      '<script type="text/x-jquery-tmpl" id="chapter">',
       '${index} of ${count} : ${title}',
       '</script>'
     ],
@@ -282,6 +292,7 @@ var CANNED_EXAMPLES = [
   {
     desc: 'Pre-sanitized HTML',
     html: [
+      '<!-- The same template is called in two different contexts -->',
       '<script type="text/x-jquery-tmpl" id="main">',
       '  <ul>',
       '    {{each names}}',

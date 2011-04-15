@@ -235,7 +235,7 @@
 			"=": {
 				// Encoded expression evaluation. Abbreviated form is ${}.
 				_default: { $1: "$data" },
-				open: "if($notnull_1){_.push($.encode($1a));}"
+				open: "if($notnull_1){_.push($1a);}"
 			},
 			"!": {
 				// Comment tag. Skipped by parser
@@ -311,10 +311,8 @@
 
 	// Generate a reusable function that will serve to render a template against data
 	function buildTmplFn( markup ) {
-                var functionBody;
-                try {
-		var f = new Function("jQuery","$item",
-			functionBody = ("var $=jQuery,call,_=[],$data=$item.data;" +
+		return new Function("jQuery","$item",
+			("var $=jQuery,t___,call,_=[],$data=$item.data;" +
 
 			// Introduce the data as local variables using with(){}
 			"with($data){_.push('" +
@@ -341,7 +339,7 @@
 						// Support for target being things like a.toLowerCase();
 						// In that case don't call with template item as 'this' pointer. Just evaluate...
 						expr = parens ? (target.indexOf(".") > -1 ? target + parens : ("(" + target + ").call($item" + args)) : target;
-						exprAutoFnDetect = parens ? expr : "(typeof(" + target + ")==='function'?(" + target + ").call($item):(" + target + "))";
+						exprAutoFnDetect = parens ? expr : "(typeof(t___=" + target + ")==='function'?t___.call($item):t___)";
 					} else {
 						exprAutoFnDetect = expr = def.$1 || "null";
 					}
@@ -362,13 +360,6 @@
 				}) +
 			"');}return _;"
 		));
-                }catch (ex) {
-                  if (typeof console !== 'undefined') {
-                    console.log(functionBody);
-                  }
-                  throw ex;
-                }
-          return f;
 	}
 	function updateWrapped( options, wrapped ) {
 		// Build the wrapped content. 
