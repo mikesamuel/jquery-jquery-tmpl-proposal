@@ -102,7 +102,7 @@ Hello,
 </textarea>
     <td align=center>
       <button onclick="sanitize()" title="Sanitize Templates" class="arrowbtn"
-       id="sanitize-button">&#x21f0;</button></td>
+       id="sanitize-button">&#x21f0;<br><small>rewrite</small></button></td>
     <td id=sanitizer-output></tr>
 
   <tr>
@@ -116,7 +116,7 @@ Hello,
       <textarea rows=15 id=data onblur="this.value = fixupJson(this.value)">
 { value: 42, color: red, name: 'John Doe', "bars": ['foo1', 'foo2'], world: 'Cincinatti' }
 </textarea>
-    <td id="runbuttons"></td>
+    <td id="runbuttons" align="center"></td>
     <td id="template-output"></tr>
 </table>
 
@@ -124,5 +124,5 @@ Hello,
 
 <br>
 <center><small>
-<!-- hhmts start -->Last modified: Fri Apr 15 13:50:10 PDT 2011 <!-- hhmts end --></small></center>
+<!-- hhmts start -->Last modified: Fri Apr 15 14:04:26 PDT 2011 <!-- hhmts end --></small></center>
 </body></html>

@@ -43,7 +43,9 @@ function sanitize() {
       function (a, b) {
         var baseOrder = templateOrder.indexOf(a.replace(/__C\d+$/, ''))
             - templateOrder.indexOf(b.replace(/__C\d+$/, ''));
-        return baseOrder || (a.length - b.length);
+        return baseOrder
+            || (a.length - b.length)
+            || ((a < b) ? -1 : (a > b) ? 1 : 0);
       });
 
     runButtons.empty();
@@ -60,14 +62,19 @@ function sanitize() {
       $('<h3/>').text(templateName).appendTo(outputHtml);
       $('<pre/>').html(markupSanitizedTemplates(sanitizedTemplateText))
           .appendTo(outputHtml);
-      var runButton = $('<button/>', {
-            value: templateName,
-            onclick: (function (templateName) {
-                        return function () { runTemplate(templateName); };
-                      })(templateName)
-          }).text(templateName);
-      runButton.appendTo(runButtons);
-      if (!firstRunButton) { firstRunButton = runButton; }
+      if (templateOrder.indexOf(templateName) >= 0) {
+        var runButton = $('<button/>', {
+              value: templateName,
+              "class": 'arrowbtn',
+              onclick: (function (templateName) {
+                          return function () { runTemplate(templateName); };
+                        })(templateName)
+            }).text('\u21f0');
+        $('<br/>').appendTo(runButton);
+        $('<small/>').text(templateName).appendTo(runButton);
+        runButton.appendTo(runButtons);
+        if (!firstRunButton) { firstRunButton = runButton; }
+      }
 
       // Create an element with the given name and set its tmpl property so
       // that {{tmpl}} calls work.
@@ -295,7 +302,7 @@ var CANNED_EXAMPLES = [
       '  - The first time it is called where a JavaScript value is expected,',
       '  - and the second time where HTML tags and text are expected.',
       ' -->',
-      '<script type="text/x-jquery-tmpl" id="aliceInTemplateLand">',
+      '<script type="text/x-jquery-tmpl" id="aliceInJQuery">',
       '  <button onclick="alert(\'Viewing {{tmpl "#chapter"}}\')">',
       '    Say Chapter',
       '  </button>',
@@ -308,7 +315,7 @@ var CANNED_EXAMPLES = [
       '</script>'
     ],
     data: {
-      index: 7, count: 20, title: '"VII. A mad tea-party"'
+      index: 9, count: 12, title: '"IX. The Mock >Turtle\'s< Party"'
     }
   },
   {
