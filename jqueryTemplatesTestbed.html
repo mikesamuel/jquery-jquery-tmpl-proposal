@@ -12,17 +12,16 @@
 <style>
 body { padding: .5em }
 small { font-size: 50% }
-body, td, th { font-size: 150%; vertical-align: top }
-textarea { font-size: 100% }
+body, td, th { vertical-align: top }
+textarea { font-size: 100%; margin: 0 }
 #htmlContent, #data {
   width:100%; padding: .25em; border: 4px solid #9cf;
   font-family: monospace
 }
 table { empty-cells: show }
 .error { color: red }
-pre, textarea { white-space: pre-wrap }
-.leftrow { border-right: 2px solid #9cf }
-.rightrow { border-left: 2px solid #9cf }
+pre, textarea { white-space: pre-wrap; min-width: 40em }
+textarea#htmlContent { white-space: pre }
 #permalink {
   border: 2px solid #fc0;
   padding: .125em;
@@ -31,19 +30,45 @@ pre, textarea { white-space: pre-wrap }
   width: 100%
 }
 .sanitizer { text-decoration: underline }
-h1 { margin-bottom: 0 }
+h1,h2,h3 { margin-bottom: 0 }
+hr { height: 3px; background-color: #9cf; width: 90% }
+#sanitizer-output, #template-output {
+  background-color: #eee;
+  border: 4px solid #aaa;
+  padding: .25em
+}
+.arrowbtn { font-size: 150%; -moz-border-radius: .25em;
+            border-radius: .25em; }
 </style>
 </head>
 
 <body>
 <h1>
   Sanitized JQuery Templates Test
-  <small>[<a onclick="showLink()" href="produces: a link you can email"
-    >permalink</a>]</small>
 </h1>
 
-<p id="exampleList"></p>
+<p>
+<a href="http://api.jquery.com/category/plugins/templates/">JQuery templates</a>
+make sure that the results of expressions in
+<code>${&hellip;}</code> are encoded via <code>$.encode(&hellip;)</code>,
+but this is not always ideal.  Below, you can experiment with a
+JQuery template rewriter that adds encoding functions to
+<code>${&hellip;}</code> based on the context in which they appear.
+You can use the buttons below to choose examples and play around with
+the templates and data.  For more details, you can read about the
+<a href="safetemplate.html">design</a> or peruse the
+<a href="http://code.google.com/p/js-quasis-libraries-and-repl/source/browse/trunk/js/jquery-templates.js">source</a>
+and <a href="http://code.google.com/p/js-quasis-libraries-and-repl/source/browse/trunk/js/jquery-templatesTest.js">tests</a>.
+</p>
+
+<p>Examples: <span id="exampleList"></span></p>
 <script>populateExampleDropdown()</script>
+
+<hr>
+
+<div style="text-align: right"><small>[
+  <a onclick="showLink()" href="produces: a link you can email">permalink</a>
+]</small></div>
 
 <!--
   - Initially invisible but displayed when filled with a permalink.
@@ -55,18 +80,19 @@ h1 { margin-bottom: 0 }
  ></textarea>
 
 <div style="left: 0; right: -1em; position: relative">
-<table width=100% cols=2 cellpadding=10 cellspacing=0>
+<table cols=2 cellpadding=0 cellspacing=4 border=0>
   <tr>
-    <td width=50% class=leftrow>
-      Enter your jQuery templates below or select from the dropdown at
-      top-right to prefill with an example.
-    <td width=50% class=rightrow>
-      <p>
-      Enter JSON data to pass to the template below.
-      </p>
-  </tr>
+    <th><h3>Template Source</h3></th>
+    <td></td>
+    <th><h3>Template Source w/ sanitizers</h3></tr>
+
+  <tr align=center>
+    <td colspan=3>
+      Enter your jQuery templates below or select one of the examples above
+      to prefill with an example.</tr>
+  
   <tr>
-    <td class=leftrow>
+    <td>
       <textarea rows="15" id="htmlContent">
 <!-- A jQuery template named "helloWorld" -->
 <script type="text/x-jquery-tmpl" id="helloWorld">
@@ -74,35 +100,29 @@ Hello,
 <b onclick="alert(${world})"> ${world} </b>!
 </script>
 </textarea>
-    <td class=rightrow>
+    <td align=center>
+      <button onclick="sanitize()" title="Sanitize Templates" class="arrowbtn"
+       id="sanitize-button">&#x21f0;</button></td>
+    <td id=sanitizer-output></tr>
+
+  <tr>
+    <th><h3>Data for Template</h3></th>
+    <td></td>
+    <th><h3>Rendered Template</h3></tr>
+  <tr align=center>
+    <td colspan=3>Enter JSON data to pass to the template below.</tr>
+  <tr>
+    <td>
       <textarea rows=15 id=data onblur="this.value = fixupJson(this.value)">
 { value: 42, color: red, name: 'John Doe', "bars": ['foo1', 'foo2'], world: 'Cincinatti' }
 </textarea>
-  </tr>
-  <tr align=center>
-    <td class=leftrow>
-      <button onclick="sanitize()">Sanitize templates</button>
-      <button onclick="sanitize(true)" title="Sanitize then run first template"
-       >I'm feeling lucky</button>
-    </td>
-    <td class=rightrow>
-      <button id=runbutton disabled onclick="runTemplate()"
-       >Run template</button>
-      <select id=template-select onchange="
-       document.getElementById('runbutton').disabled = !(this.selectedIndex > 0)
-       ">
-        <option>Choose a template&hellip;</option>
-      </select></td>
-  </tr>
-  <tr>
-    <td class=leftrow id=sanitizer-output></td>
-    <td class=rightrow id=template-output></td>
-  </tr>
+    <td id="runbuttons"></td>
+    <td id="template-output"></tr>
 </table>
 
 <script>populateInputsFromLink()</script>
 
 <br>
 <center><small>
-<!-- hhmts start -->Last modified: Fri Apr 15 12:10:57 PDT 2011 <!-- hhmts end --></small></center>
+<!-- hhmts start -->Last modified: Fri Apr 15 13:50:10 PDT 2011 <!-- hhmts end --></small></center>
 </body></html>

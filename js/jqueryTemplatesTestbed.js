@@ -1,10 +1,10 @@
 // Takes the HTML textarea, finds templates in script tags, and type checks them
 // displaying the resulting template source in the output, and registering named
 // templates with jQuery.
-function sanitize(opt_runFirst) {
+function sanitize() {
   var inputContainer = $('#htmlContent')[0];
   var outputContainer = $('#sanitizer-output');
-  var templateSelect = $('#template-select');
+  var runButtons = $('#runbuttons');
   var jqueryTemplateText = inputContainer.value;
 
   var templateName = null, sanitizedTemplateText = null;
@@ -46,22 +46,29 @@ function sanitize(opt_runFirst) {
         return baseOrder || (a.length - b.length);
       });
 
+    runButtons.empty();
+
     var outputHtml = $('<div/>');
     var outputTemplateText = {};
+    var firstRunButton;
     for (var i = 0, n = outputTemplateNames.length; i < n; ++i) {
       templateName = outputTemplateNames[i];
       sanitizedTemplateText = renderJQueryTemplate(
           sanitizedTemplates[templateName])
           .replace(/(\{\{(else|tmpl)(?:\}?[^}])*\}\})\{\{\/\2\}\}/g, '$1');
-      var isNew = !Object.hasOwnProperty.call($.template, templateName);
       var sanitizedTemplate = $.template(templateName, sanitizedTemplateText);
       $('<h3/>').text(templateName).appendTo(outputHtml);
       $('<pre/>').html(markupSanitizedTemplates(sanitizedTemplateText))
           .appendTo(outputHtml);
-      if (isNew) {
-        $('<option/>', { value: templateName, title: sanitizedTemplateText })
-            .text(templateName).appendTo(templateSelect);
-      }
+      var runButton = $('<button/>', {
+            value: templateName,
+            onclick: (function (templateName) {
+                        return function () { runTemplate(templateName); };
+                      })(templateName)
+          }).text(templateName);
+      runButton.appendTo(runButtons);
+      if (!firstRunButton) { firstRunButton = runButton; }
+
       // Create an element with the given name and set its tmpl property so
       // that {{tmpl}} calls work.
       // {{tmpl}} calls seem to search the DOM for any elements that have
@@ -84,9 +91,12 @@ function sanitize(opt_runFirst) {
     outputContainer.empty();
     outputHtml.appendTo(outputContainer);
 
+    if (firstRunButton) { firstRunButton.focus(); }
+
     // scroll the output into view.
     $('html, body').animate({
-      scrollTop: outputContainer.offset().top
+      scrollTop: outputContainer.offset().top,
+      scrollLeft: outputContainer.offset().left
     }, 1000);
   } catch (e) {
     if (typeof console !== 'undefined') {
@@ -94,12 +104,6 @@ function sanitize(opt_runFirst) {
           'sanitizedTemplate ' + templateName + '=' + sanitizedTemplateText);
     }
     return showError(e, outputContainer);
-  }
-
-  if (opt_runFirst && templateOrder.length) {
-    templateSelect[0].value = templateOrder[0];
-    templateSelect[0].onchange && templateSelect[0].onchange();
-    runTemplate();
   }
 }
 
@@ -138,8 +142,7 @@ function markupSanitizedTemplates(templateText) {
 
 // Runs the template specified in the select dropdown with the JSON in the
 // data box.
-function runTemplate() {
-  var templateName = $('#template-select')[0].value;
+function runTemplate(templateName) {
   var outputContainer = $('#template-output');
   var data;
   try {
@@ -179,7 +182,8 @@ function runTemplate() {
   $('<pre/>').text(resultHtml).appendTo(outputContainer);
 
   $('html, body').animate({
-    scrollTop: outputContainer.offset().top
+    scrollTop: outputContainer.offset().top,
+    scrollLeft: outputContainer.offset().left
   }, 1000);
 }
 
@@ -344,5 +348,6 @@ function prefillExample(example) {
   return function () {
     $('#htmlContent').text(example.html.join('\n'));
     $('#data').text(fixupJson(JSON.stringify(example.data)));
+    $('#sanitize-button')[0].focus();
   };
 }
