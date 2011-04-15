@@ -63,6 +63,24 @@ function sanitize() {
         $('<option/>', { value: templateName, title: sanitizedTemplateText })
             .text(templateName).appendTo(templateSelect);
       }
+      // Create an element with the given name and set its tmpl property so
+      // that {{tmpl}} calls work.
+      // {{tmpl}} calls seem to search the DOM for any elements that have
+      // a template name like #foo as in all the examples on the doc page
+      // and do not fallback (as documented) to properties of $.template.
+      var inDom = $('#' + templateName);
+      if (inDom.length && 'SCRIPT' !== inDom[0].tagName) {
+        inDom.tmpl = (function() {
+                        return function () {
+                          return sanitizedTemplate.apply($.template, arguments);
+                        };
+                      })();
+      } else {
+        inDom.detach();
+        inDom = $('<script>', { id: templateName, type: 'text/x-jquery-tmpl' })
+            .text(sanitizedTemplateText);
+        inDom.appendTo(document.body);
+      }
     }
     outputContainer.empty();
     outputHtml.appendTo(outputContainer);
