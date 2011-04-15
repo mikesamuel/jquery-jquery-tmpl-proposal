@@ -140,9 +140,9 @@ function markupSanitizedTemplates(templateText) {
   templateText = templateText.replace(
       /[{(]((?:escape|normalize|filter)\w+)(?=\()/g,
       function (_, sanitizer) {
-        return '<abbr class="sanitizer"'
+        return '<ins class="sanitizer"'
             + ' title="' + escapeHtml(ESC_MODE_HELP[sanitizer] || '') + '">'
-            + _ + '</abbr>';
+            + _ + '</ins>';
       });
   return templateText;
 }

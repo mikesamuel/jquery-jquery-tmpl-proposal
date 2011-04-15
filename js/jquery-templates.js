@@ -540,10 +540,9 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
   return parsedTemplates;
 }
 
-$.each(SANITIZER_FOR_ESC_MODE,
+window['$']['each'](SANITIZER_FOR_ESC_MODE,
     function (i, value) {
       if (value && !value['name']) {
-console.log('value=' + value);
         value['name'] = ('' + value).match(/^function\s+(\w+)/)[0];
       }
     });
