@@ -58,7 +58,7 @@ function assertParsedJqueryTemplate(goldenTree, jqueryTemplateText) {
  * @return a mapping of the same form as the input.
  */
 function rewrittenSource(input) {
-  var templates = contextuallyEscapeTemplates(input);
+  var templates = sanitizeTemplates(input);
   var actual = {};
   for (var k in templates) {
     if (Object.hasOwnProperty.call(templates, k)) {

@@ -97,7 +97,7 @@ function renderJqueryTemplate(templateParseTree) {
   return tokens.join('');
 }
 
-function contextuallyEscapeTemplates(jqueryTemplatesByName) {
+function sanitizeTemplates(jqueryTemplatesByName) {
   if (DEBUG && typeof jqueryTemplatesByName !== 'object') { throw new Error; }
 
   var hop = Object.hasOwnProperty;
@@ -552,7 +552,7 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
 if (COMPILED) {
   window['parseJqueryTemplate'] = parseJqueryTemplate;
   window['renderJqueryTemplate'] = renderJqueryTemplate;
-  window['contextuallyEscapeTemplates'] = contextuallyEscapeTemplates;
+  window['sanitizeTemplates'] = sanitizeTemplates;
   window['$']['extend'](window['$']['encode'], SANITIZER_FOR_ESC_MODE);
 } else {
   window['$']['each'](SANITIZER_FOR_ESC_MODE,

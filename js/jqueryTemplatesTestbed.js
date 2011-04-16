@@ -29,7 +29,7 @@ function sanitize() {
       templateOrder.push(name);
     }
 
-    var sanitizedTemplates = contextuallyEscapeTemplates(templates);
+    var sanitizedTemplates = sanitizeTemplates(templates);
 
     // Present the output templates, including clones, in the order that
     // the base templates wer declared.
