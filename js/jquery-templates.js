@@ -1,11 +1,12 @@
-// Utilities to parse JQuery templates.
+// Utilities to parse Jquery templates.
 
 function parseJqueryTemplate(templateText, opt_name) {
   // Figure out the set of block directives by looking at end markers.
   var blockDirectives = {};
-  templateText.replace(/\{\{\/([a-z][a-z0-9]*)\}\}/ig, function (_, name) {
-    blockDirectives[name] = TRUTHY;
-  });
+  templateText.replace(/\{\{\/([a-z]\w*)\}/gi,
+      function (_, name) {
+        blockDirectives[name] = TRUTHY;
+      });
 
   // Produce a parse tree that is a type tag, directive data,
   // followed by any number of strings or other trees.
@@ -63,10 +64,10 @@ function parseJqueryTemplate(templateText, opt_name) {
 }
 
 /**
- * Given a JQuery parse tree, such as that produced by
- * {@link #parseJQueryTemplate}, produces a parseable form.
+ * Given a Jquery parse tree, such as that produced by
+ * {@link #parseJqueryTemplate}, produces a parseable form.
  */
-function renderJQueryTemplate(templateParseTree) {
+function renderJqueryTemplate(templateParseTree) {
   var tokens = [];
   function walkChildren(node) {
     for (var i = 2, n = node.length; i < n; ++i) {
@@ -127,7 +128,9 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
 
   var cloneJson;
   if (typeof JSON !== undefined) {
-    cloneJson = function (ptree) { return JSON.parse(JSON.stringify(ptree)); };
+    cloneJson = function (ptree) {
+      return JSON['parse'](JSON['stringify'](ptree));
+    };
   } else {
     cloneJson = function (ptree) {
       var clone = ptree.slice();
@@ -263,7 +266,7 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
           if (m) { lineNum += m.length; }
         } else {
           if (node === parseTree) {
-            var sourceAbbreviated = renderJQueryTemplate(parseTree)
+            var sourceAbbreviated = renderJqueryTemplate(parseTree)
                 .replace(/\s+/g, ' ');
             var len = sourceAbbreviated.length;
             if (len > 35) {
@@ -411,9 +414,12 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
               throw new Error();
             }
           }
+          var EXISTING_ESCAPING_DIRECTIVE_RE
+              = COMPILED
+                ? /^\s*(?:\$\.encode|noAutoescape)\b/
+                : /^\s*(?:escape|filter|normalize|noAutoescape)\w*\s*\(/;
           // Do not add escaping directives if there is an existing one.
-          if (!/^\s*(?:escape|filter|normalize|noAutoescape)\w*\s*\(/
-              .test(parseTree[1])) {
+          if (!EXISTING_ESCAPING_DIRECTIVE_RE.test(parseTree[1])) {
             if (typeof escapingModes.firstEscMode === 'number') {
               var modes = [];
               modes[0] = escapingModes.firstEscMode;
@@ -503,7 +509,10 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
           if (escapingModes) {
             var expr = parseTreeNode[1];
             for (var i = 0; i < escapingModes.length; ++i) {
-              expr = SANITIZER_FOR_ESC_MODE[escapingModes[i]].name
+              expr = (
+                  COMPILED
+                  ? '$.encode[' + escapingModes[i] + ']'
+                  : SANITIZER_FOR_ESC_MODE[escapingModes[i]].name)
                   + '(' + expr + ')';
             }
             parseTreeNode[1] = expr;
@@ -540,9 +549,16 @@ function contextuallyEscapeTemplates(jqueryTemplatesByName) {
   return parsedTemplates;
 }
 
-window['$']['each'](SANITIZER_FOR_ESC_MODE,
-    function (i, value) {
-      if (value && !value['name']) {
-        value['name'] = ('' + value).match(/^function\s+(\w+)/)[0];
-      }
-    });
+if (COMPILED) {
+  window['parseJqueryTemplate'] = parseJqueryTemplate;
+  window['renderJqueryTemplate'] = renderJqueryTemplate;
+  window['contextuallyEscapeTemplates'] = contextuallyEscapeTemplates;
+  window['$']['extend'](window['$']['encode'], SANITIZER_FOR_ESC_MODE);
+} else {
+  window['$']['each'](SANITIZER_FOR_ESC_MODE,
+      function (i, value) {
+        if (value && !value['name']) {
+          value['name'] = ('' + value).match(/^function\s+(\w+)/)[0];
+        }
+      });
+}

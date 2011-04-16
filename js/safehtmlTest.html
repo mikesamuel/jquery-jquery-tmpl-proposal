@@ -6,11 +6,14 @@
 // If the location contains ?compiled, then use the minified version.
 if (/[?&]compiled/.test(location.search)) {
   document.write('<script src="safehtml-compiled.js"><\/script>');
+  COMPILED = true;
+  DEBUG = false;
 } else {
   document.write(
-     '<script src="contextUpdate.js"><\/script>' +
-     '<script src="escapers.js"><\/script>' +
-     '<script src="safehtml.js"><\/script>');
+      '<script src="contextDefs.js"><\/script>' +
+      '<script src="contextUpdate.js"><\/script>' +
+      '<script src="escapers.js"><\/script>' +
+      '<script src="safehtml.js"><\/script>');
 }
 </script>
 

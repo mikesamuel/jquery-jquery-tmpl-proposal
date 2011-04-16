@@ -5,8 +5,10 @@ function testFixupJson() {
   assertEquals(
       [
        '{',
-       '  "value": 42, "color": "red",',
-       '  "name": "John Doe", "bars": [',
+       '  "value": 42,',
+       '  "color": "red",',
+       '  "name": "John Doe",',
+       '  "bars": [',
        '    "foo1", "foo2"',
        '  ],',
        '  "foo": "bar"',

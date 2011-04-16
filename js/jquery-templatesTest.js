@@ -1,40 +1,107 @@
+// The compiled version squirrels escaping directives away in $.encode[...]
+// instead of using easily debuggable names like escapeHtml.
+// When the COMPILED variable is true we unpack them so that we can use a
+// single set of tests.
+var UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE = [];
+UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[0]
+    = "escapeHtml";
+UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[ESC_MODE_ESCAPE_HTML_RCDATA]
+    = "escapeHtmlRcdata";
+UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[ESC_MODE_ESCAPE_HTML_ATTRIBUTE]
+    = "escapeHtmlAttribute";
+UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE]
+    = "escapeHtmlAttributeNospace";
+UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[ESC_MODE_FILTER_HTML_ELEMENT_NAME]
+    = "filterHtmlElementName";
+UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[ESC_MODE_FILTER_HTML_ATTRIBUTE]
+    = "filterHtmlAttribute";
+UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[ESC_MODE_ESCAPE_JS_STRING]
+    = "escapeJsString";
+UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[ESC_MODE_ESCAPE_JS_VALUE]
+    = "escapeJsValue";
+UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[ESC_MODE_ESCAPE_JS_REGEX]
+    = "escapeJsRegex";
+UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[ESC_MODE_ESCAPE_CSS_STRING]
+    = "escapeCssString";
+UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[ESC_MODE_FILTER_CSS_VALUE]
+    = "filterCssValue";
+UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[ESC_MODE_ESCAPE_URI]
+    = "escapeUri";
+UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[ESC_MODE_NORMALIZE_URI]
+    = "normalizeUri";
+UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[ESC_MODE_FILTER_NORMALIZE_URI]
+    = "filterNormalizeUri";
+UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[ESC_MODE_NO_AUTOESCAPE]
+    = "noAutoescape";
+
 function join(var_args) {
   return Array.prototype.slice.call(arguments, 0).join('');
 }
 
-function assertParsedJQueryTemplate(goldenTree, jqueryTemplateText) {
+/**
+ * Requires that the given template text parses to the given tree.
+ */
+function assertParsedJqueryTemplate(goldenTree, jqueryTemplateText) {
   var parseTree = parseJqueryTemplate(jqueryTemplateText);
   assertEquals(jqueryTemplateText, JSON.stringify(goldenTree),
                JSON.stringify(parseTree));
-  var rendered = renderJQueryTemplate(parseTree);
+  var rendered = renderJqueryTemplate(parseTree);
   assertEquals(
       'reparse: ' + jqueryTemplateText + ' -> ' + rendered,
       JSON.stringify(goldenTree),
       JSON.stringify(parseJqueryTemplate(rendered)));
 }
 
+/**
+ * Parses and rewrites the input templates.
+ * @param input a mapping from template names to template source code.
+ * @return a mapping of the same form as the input.
+ */
 function rewrittenSource(input) {
   var templates = contextuallyEscapeTemplates(input);
   var actual = {};
   for (var k in templates) {
     if (Object.hasOwnProperty.call(templates, k)) {
-      actual[k] = renderJQueryTemplate(templates[k]).replace(
-          /(\{\{(else|tmpl)(?:\}?[^}])*\}\})\{\{\/\2\}\}/g, '$1');
+      actual[k] = normalize(renderJqueryTemplate(templates[k]));
     }
+  }
+  function normalize(templateText) {
+    templateText = templateText.replace(
+        /(\{\{(else|tmpl)(?:\}?[^}])*\}\})\{\{\/\2\}\}/g, '$1');
+    if (COMPILED) {  // Unpack COMPILED form escaping directives.  See above.
+      templateText = templateText.replace(
+          /\$\.encode\[(\d+)\](?=\()/g,
+          function (_, escMode) {
+            if (escMode in UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE) {
+              return UNCOMPILED_SANITIZER_NAMES_BY_ESC_MODE[escMode];
+            }
+            return _;
+          });
+    }
+    return templateText;
   }
   return actual;
 }
 
+/**
+ * Requires that the input mapping from template names to template sources
+ * rewrites to the given expected output mapping.
+ */
 function assertContextualRewriting(expectedOutput, input) {
   var actualOutput = rewrittenSource(input);
   assertEquals(JSON.stringify(expectedOutput), JSON.stringify(actualOutput));
 }
 
+/**
+ * Requires that the input mapping from template rewrites without changes.
+ */
 function assertContextualRewritingNoop(expectedOutput) {
   assertContextualRewriting(expectedOutput, expectedOutput);
 }
 
 /**
+ * Requires that rewriting the given mapping from template names to template
+ * sources fails.
  * @param opt_msg Message that should be reported to the template author.
  *     Null means don't care.
  */
@@ -43,7 +110,9 @@ function assertRewriteFails(input, opt_msg) {
   try {
     output = rewrittenSource(input);
   } catch (ex) {
-    if (opt_msg !== void 0 && opt_msg !== (ex.description || ex.message)) {
+    // Disable error message checking when not in debug mode.
+    if (DEBUG && opt_msg !== void 0
+        && opt_msg !== (ex.description || ex.message)) {
       throw ex;
     }
     return;
@@ -52,33 +121,33 @@ function assertRewriteFails(input, opt_msg) {
 }
 
 function testParseSimpleText() {
-  assertParsedJQueryTemplate(['T', ''], '');
-  assertParsedJQueryTemplate(['T', '', 'foo'], 'foo');
-  assertParsedJQueryTemplate(['T', '', '<b>foo</b>'], '<b>foo</b>');
+  assertParsedJqueryTemplate(['T', ''], '');
+  assertParsedJqueryTemplate(['T', '', 'foo'], 'foo');
+  assertParsedJqueryTemplate(['T', '', '<b>foo</b>'], '<b>foo</b>');
 }
 
 function testSubstitutions() {
-  assertParsedJQueryTemplate(['T', '', ['$', 'foo']], '${foo}');
-  assertParsedJQueryTemplate(['T', '', ['$', 'foo + 1']], '${foo + 1}');
-  assertParsedJQueryTemplate(['T', '', 'foo', ['$', 'bar'], 'baz'],
+  assertParsedJqueryTemplate(['T', '', ['$', 'foo']], '${foo}');
+  assertParsedJqueryTemplate(['T', '', ['$', 'foo + 1']], '${foo + 1}');
+  assertParsedJqueryTemplate(['T', '', 'foo', ['$', 'bar'], 'baz'],
                              'foo${bar}baz');
   // Unclosed ${...}
-  assertParsedJQueryTemplate(['T', '', 'foo${bar'], 'foo${bar');
-  assertParsedJQueryTemplate(['T', '', '(', ['$', 'x'], ', ', ['$', 'y'], ')'],
+  assertParsedJqueryTemplate(['T', '', 'foo${bar'], 'foo${bar');
+  assertParsedJqueryTemplate(['T', '', '(', ['$', 'x'], ', ', ['$', 'y'], ')'],
                              '(${x}, ${y})');
 }
 
 function testInlineDirectives() {
-  assertParsedJQueryTemplate(
+  assertParsedJqueryTemplate(
       ['T', '', 'Hello, ', ['panic', ''], ' World!'],
       'Hello, {{panic}} World!');
-  assertParsedJQueryTemplate(
+  assertParsedJqueryTemplate(
       ['T', '', 'Hello, ', ['panic', ' true'], ' World!'],
       'Hello, {{panic true}} World!');
 }
 
 function testIf() {
-  assertParsedJQueryTemplate(
+  assertParsedJqueryTemplate(
       ['T', '',
        '<',
        ['if', ' cond1',
@@ -94,7 +163,7 @@ function testIf() {
 }
 
 function testCustomTags() {
-  assertParsedJQueryTemplate(
+  assertParsedJqueryTemplate(
       ['T', '',
        ['custom1', ' foo',
         'bar',
@@ -108,17 +177,17 @@ function testCustomTags() {
 }
 
 function testMisplacedEndMarker() {
-  assertParsedJQueryTemplate(
+  assertParsedJqueryTemplate(
       ['T', '', 'foo'], 'foo{{/if}}');
 }
 
 function testPartialMarker() {
-  assertParsedJQueryTemplate(
+  assertParsedJqueryTemplate(
       ['T', '', '{{html xyz}'], '{{html xyz}');
 }
 
 function testJavaScriptCurlies() {
-  assertParsedJQueryTemplate(
+  assertParsedJqueryTemplate(
       ['T', '', 'if (foo) {{ foo() }}'], 'if (foo) {{ foo() }}');
 }
 
@@ -529,9 +598,14 @@ function testUris() {
 }
 
 function testAlreadyEscaped() {
-  assertContextualRewritingNoop(
+  assertContextualRewriting(
       {
         "foo": "<script>a = \"${escapeUri(FOO)}\";</script>"
+      },
+      {
+        "foo": "<script>a = \"${" +
+            (COMPILED ? "$.encode[" + ESC_MODE_ESCAPE_URI + "]" : "escapeUri")
+            + "(FOO)}\";</script>"
       });
 }
 
@@ -565,7 +639,11 @@ function testNoInterferenceWithNonContextualTemplates() {
           // No call to foo in this version.
       },
       {
-        "foo": "Hello ${escapeHtml(world)}",
+        "foo": join(
+            "Hello ${",
+            (COMPILED
+             ? "$.encode[" + ESC_MODE_ESCAPE_HTML + "]" : "escapeHtml"),
+            "(world)}"),
         "bar": join(
             "{{noAutoescape}}",
             "{{if x}}",
