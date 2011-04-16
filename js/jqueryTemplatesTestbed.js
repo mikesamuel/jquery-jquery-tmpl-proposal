@@ -55,7 +55,7 @@ function sanitize() {
     var firstRunButton;
     for (var i = 0, n = outputTemplateNames.length; i < n; ++i) {
       templateName = outputTemplateNames[i];
-      sanitizedTemplateText = renderJQueryTemplate(
+      sanitizedTemplateText = renderJqueryTemplate(
           sanitizedTemplates[templateName])
           .replace(/(\{\{(else|tmpl)(?:\}?[^}])*\}\})\{\{\/\2\}\}/g, '$1');
       var sanitizedTemplate = $.template(templateName, sanitizedTemplateText);
