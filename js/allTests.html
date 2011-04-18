@@ -1,0 +1,51 @@
+<html>
+<head>
+<title>All Tests</title>
+</head>
+<body>
+<script>(function () {
+
+var tests = [
+  "canned-examplesTest.html",
+  "contextUpdateTest.html",
+  "desugarTest.html",
+  "escapersTest.html",
+  "fixupJsonTest.html",
+  "jquery-templatesTest.html",
+  "jquery-templatesTest.html?compiled",
+  "messageQuasiTest.html",
+  "safehtmlTest.html",
+  "safehtmlTest.html?compiled",
+];
+
+var nFailed = 0;
+var nTests = tests.length;
+var nToLoad = nTests;
+for (var i = 0; i < nTests; ++i) {
+  var frame = document.createElement('iframe');
+  frame.onload = (function (frame) {
+    return function () {
+      if (!/#OK$/.test(String(frame.contentWindow.location))) {
+        ++nFailed;
+        frame.style.border = '2px solid red';
+      } else {
+        frame.style.border = '2px solid green';
+      }
+      if (!--nToLoad) {
+        if (!nFailed) {
+          document.body.style.backgroundColor = '#efe';
+        } else {
+          document.body.style.backgroundColor = '#fee';
+        }
+      }
+    };
+  })(frame);
+  var testUrl = tests[i];
+  testUrl += (/\?/.test(testUrl) ? '&' : '?r=' + Math.random());
+  frame.src = testUrl;
+  document.body.appendChild(frame);
+}
+})();
+</script>
+</body>
+</html>

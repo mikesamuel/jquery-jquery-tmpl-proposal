@@ -25,7 +25,8 @@ function testEscapeJsString() {
 
   // Check correctness of other Latins.
   var escapedAscii = (
-      "\\x00\u0001\u0002\u0003\u0004\u0005\u0006\u0007\\b\\t\\n\\x0b\\f\\r\u000e\u000f" +
+      "\\x00\u0001\u0002\u0003\u0004\u0005\u0006\u0007" + 
+      "\\b\\t\\n\\x0b\\f\\r\u000e\u000f" +
       "\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017" +
       "\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f" +
       " !\\x22#$%\\x26\\x27()*+,-.\\/" +
@@ -44,7 +45,8 @@ function testEscapeJsRegExpString() {
   assertEquals(
       "\\x00 \\x22 \\x27 \\\\ \\/ \\r \\n \\u2028 \\u2029" +
       // RegExp operators.
-      " \\x24\\x5e\\x2a\\x28\\x29\\x2d\\x2b\\x7b\\x7d\\x5b\\x5d\\x7c\\x3f",
+      " \\x24\\x5e\\x2a\\x28\\x29\\x2d\\x2b\\x7b" +
+      "\\x7d\\x5b\\x5d\\x7c\\x3f",
       escapeJsRegex(
           "\u0000 \" \' \\ / \r \n \u2028 \u2029" +
           " $^*()-+{}[]|?"));
@@ -59,7 +61,8 @@ function testEscapeJsRegExpString() {
       "\\b\\t\\n\\x0b\\f\\r\u000e\u000f" +
       "\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017" +
       "\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f" +
-      " !\\x22#\\x24%\\x26\\x27\\x28\\x29\\x2a\\x2b\\x2c\\x2d\\x2e\\/" +
+      " !\\x22#\\x24%\\x26\\x27\\x28\\x29" +
+      "\\x2a\\x2b\\x2c\\x2d\\x2e\\/" +
       "0123456789\\x3a;\\x3c\\x3d\\x3e\\x3f" +
       "@ABCDEFGHIJKLMNO" +
       "PQRSTUVWXYZ\\x5b\\\\\\x5d\\x5e_" +
@@ -164,8 +167,8 @@ function testEscapeUri() {
   // Do not remove anything from this set without talking to your friendly local
   // security-team@.
   assertEquals(
-      "%00%0A%0C%0D%22%23%26%27%2F%3A%3D%3F%40",
-      escapeUri("\u0000\n\f\r\"#&'/:=?@"));
+      "%00%0A%0C%0D%22%23%26%27%2F%3A%3D%3F%40%28%29%3B%5B%5D%7B%7D",
+      escapeUri("\u0000\n\f\r\"#&'/:=?@();[]{}"));
 
   for (var i = 0, n = EMBEDDING_HAZARDS.length; i < n; ++i) {
     var hazard = EMBEDDING_HAZARDS[i];
@@ -190,6 +193,16 @@ function testEscapeUri() {
 }
 
 function testNormalizeUriAndFilterNormalizeUri() {
+  // The minimal escapes.
+  // Do not remove anything from this set without talking to your friendly local
+  // security-team@.
+  var minimal = "\u0000\n\f\r\"'(){}";
+  for (var i = 0, n = minimal.length; i < n; ++i) {
+    var ch = minimal.charAt(i);
+    assertTrue(ch + ' -> ' + normalizeUri(ch),
+               /^%[0-9a-f]{2}$/i.test(normalizeUri(ch)));
+  }
+
   for (var i = 0, n = EMBEDDING_HAZARDS.length; i < n; ++i) {
     var hazard = EMBEDDING_HAZARDS[i];
     assertFalse(hazard, normalizeUri(hazard).indexOf(hazard) >= 0);
@@ -199,12 +212,12 @@ function testNormalizeUriAndFilterNormalizeUri() {
   var escapedAscii = (
       "%00%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F" +
       "%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F" +
-      "%20!%22#$%&%27%28%29*+,-./" +
+      "%20!%22#$%25&%27%28%29*+,-./" +
       "0123456789:;%3C=%3E?" +
       "@ABCDEFGHIJKLMNO" +
-      "PQRSTUVWXYZ[%5C]^_" +
-      "`abcdefghijklmno" +
-      "pqrstuvwxyz%7B|%7D~%7F");
+      "PQRSTUVWXYZ[%5C]%5E_" +
+      "%60abcdefghijklmno" +
+      "pqrstuvwxyz%7B%7C%7D~%7F");
   assertEquals(escapedAscii, normalizeUri(ASCII_CHARS));
   assertEquals("#" + escapedAscii, filterNormalizeUri("#" + ASCII_CHARS));
 
@@ -214,6 +227,9 @@ function testNormalizeUriAndFilterNormalizeUri() {
   var fullWidth = "\uff03\uff1a";
   assertEquals(escapedFullWidth, normalizeUri(fullWidth));
   assertEquals(escapedFullWidth, filterNormalizeUri(fullWidth));
+  // Test malformed escape sequences
+  assertEquals("%20%2A%2a%252G%25", normalizeUri("%20%2A%2a%2G%"));
+  assertEquals("%20%2A%2a%252G%25", filterNormalizeUri("%20%2A%2a%2G%"));
 
   // Test filtering of URI starts.
   assertEquals("#zSafehtmlz", filterNormalizeUri("javascript:"));
@@ -349,7 +365,8 @@ function testNormalizeHtmlNospace() {
       normalizeHtmlNospaceHelper("\u0009\n\u000B\u000C\r \"'\u0060<>"));
 
   var escapedAscii = (
-      "&#0;\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b&#9;&#10;&#11;&#12;&#13;\u000e\u000f" +
+      "&#0;\u0001\u0002\u0003\u0004\u0005\u0006\u0007" +
+      "\b&#9;&#10;&#11;&#12;&#13;\u000e\u000f" +
       "\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017" +
       "\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f" +
       "&#32;!&quot;#$%&&#39;()*+,&#45;.&#47;" +

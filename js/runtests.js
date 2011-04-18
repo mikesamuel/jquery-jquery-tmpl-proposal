@@ -1,11 +1,11 @@
 (function () {
-
   var filter = /^test/;
-  
+
   var m = document.location.search.match(/[&?]testFilter=([^&#]*)/);
   if (m) { filter = new RegExp(decodeURIComponent(m[1])); }
 
   var nTests = 0;
+  var passed = true;
   for (var k in window) {
     if (!(/^test/.test(k) && filter.test(k))) { continue; }
     ++nTests;
@@ -17,6 +17,7 @@
       window[k]();
       header.className = 'pass';
     } catch (e) {
+      passed = false;
       header.className = 'fail';
       var pre = document.createElement('PRE');
       pre.appendChild(document.createTextNode(e.toString() + '\n' + e.stack));
@@ -26,4 +27,9 @@
   }
 
   assertTrue(nTests > 0);
+
+  document.body.style.backgroundColor = passed ? '#efe' : '#fee';
+  if (passed) {
+    location.href = '#OK';
+  }
 })();
