@@ -41,7 +41,7 @@ for (var i = 0; i < nTests; ++i) {
     };
   })(frame);
   var testUrl = tests[i];
-  testUrl += (/\?/.test(testUrl) ? '&' : '?r=' + Math.random());
+  testUrl += (/\?/.test(testUrl) ? '&' : '?') + 'nocache=' + Math.random();
   frame.src = testUrl;
   document.body.appendChild(frame);
 }
