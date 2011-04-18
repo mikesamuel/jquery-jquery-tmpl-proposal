@@ -10,6 +10,7 @@ if (/[?&]compiled/.test(location.search)) {
   document.write('<script src="jquery-templates-compiled.js"><\/script>');
   COMPILED = true;
   DEBUG = false;
+  title += ' compiled';
 } else {
   document.write(
       '<script src="contextUpdate.js"><\/script>' +
@@ -21,10 +22,7 @@ if (/[?&]compiled/.test(location.search)) {
 <script src="asserts.js"></script>
 <script src="jquery-templatesTest.js"></script>
 
-<style>
-h2.pass { color: green; font-size: 100% }
-h2.fail { color: red }
-</style>
+<link rel="stylesheet" type="text/css" href="test.css" />
 </head>
 
 <body>
