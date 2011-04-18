@@ -10,7 +10,7 @@ if (/[?&]compiled/.test(location.search)) {
   document.write('<script src="jquery-templates-compiled.js"><\/script>');
   COMPILED = true;
   DEBUG = false;
-  title += ' compiled';
+  document.title += ' compiled';
 } else {
   document.write(
       '<script src="contextUpdate.js"><\/script>' +

@@ -8,7 +8,7 @@ if (/[?&]compiled/.test(location.search)) {
   document.write('<script src="safehtml-compiled.js"><\/script>');
   COMPILED = true;
   DEBUG = false;
-  title += ' compiled';
+  document.title += ' compiled';
 } else {
   document.write(
       '<script src="contextDefs.js"><\/script>' +
