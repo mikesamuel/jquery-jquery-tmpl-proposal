@@ -1,4 +1,8 @@
 (function () {
+  var header = document.createElement('H1');
+  header.appendChild(document.createTextNode(document.title));
+  document.body.appendChild(header);
+
   var filter = /^test/;
 
   var m = document.location.search.match(/[&?]testFilter=([^&#]*)/);
