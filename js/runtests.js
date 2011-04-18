@@ -35,5 +35,7 @@
   document.body.style.backgroundColor = passed ? '#efe' : '#fee';
   if (passed) {
     location.href = '#OK';
+  } else {
+    location.href = '#FAIL';
   }
 })();

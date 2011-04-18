@@ -194,26 +194,20 @@ function escapeHtmlAttributeNospace(value) {
  */
 function filterHtmlAttribute(value) {
   var str = filterHtmlAttributeHelper(value);
-  var eq = str.indexOf('=');
-  if (eq >= 0) {
-    switch (str.charAt(str.length - 1)) {
-      case '"': case '\'':
-        break;
-      default:
-        // Quote any attribute values so that a contextually autoescaped whole
-        // attribute does not end up having a following value associated with
-        // it.
-        // The contextual autoescaper, since it propagates context left to
-        // right, is unable to distinguish
-        //    <div {$x}>
-        // from
-        //    <div {$x}={$y}>.
-        // If {$x} is "dir=ltr", and y is "foo" make sure the parser does not
-        // see the attribute "dir=ltr=foo".
-        return str.substring(0, eq + 1) + '"' + str.substring(eq + 1) + '"';
-    }
-  }
-  return str;
+  var ch, eq = str.indexOf('=');
+  return eq >= 0 && (ch = str.charAt(str.length - 1)) != '"' && ch != "'"
+      // Quote any attribute values so that a contextually autoescaped whole
+      // attribute does not end up having a following value associated with
+      // it.
+      // The contextual autoescaper, since it propagates context left to
+      // right, is unable to distinguish
+      //    <div {$x}>
+      // from
+      //    <div {$x}={$y}>.
+      // If {$x} is "dir=ltr", and y is "foo" make sure the parser does not
+      // see the attribute "dir=ltr=foo".
+      ? str.substring(0, eq + 1) + '"' + str.substring(eq + 1) + '"'
+      : str;
 }
 
 
@@ -269,17 +263,14 @@ function escapeJsValue(value) {
   // We surround values with spaces so that they can't be interpolated into
   // identifiers by accident.
   // We could use parentheses but those might be interpreted as a function call.
-  if (value == null) {  // Intentionally matches undefined.
-    // We always output null for compatibility with Java/python server side
-    // frameworks which do not have a distinct undefined value.
-    return ' null ';
-  }
-  switch (typeof value) {
-    case 'boolean': case 'number':
-      return ' ' + value + ' ';
-    default:
-      return "'" + escapeJsString(value) + "'";
-  }
+  var type;
+  return value == null  // Intentionally matches undefined.
+      // We always output null for compatibility with Java/python server side
+      // frameworks which do not have a distinct undefined value.
+      ? ' null '
+      : (type = typeof value) == "boolean" || type == "number"
+        ? ' ' + value + ' '
+        : "'" + escapeJsString(value) + "'";
 }
 
 
