@@ -334,10 +334,7 @@ function escapeUri(value) {
   // production in Appendix D.2 of RFC 3986, so can be encoded without changing
   // semantics.
   var encoded = encodeURIComponent(/** @type {string} */ (value));
-  if (problematicUriMarks_.test(encoded)) {
-    return encoded.replace(problematicUriMarks_, pctEncode_);
-  }
-  return encoded;
+  return encoded.replace(problematicUriMarks_, pctEncode_);
 }
 
 
@@ -350,7 +347,7 @@ function escapeUri(value) {
  */
 function normalizeUri(value) {
   value = String(value);
-  if (/[\0- "'()<>\\{}\x7f\x85\xa0\u2028\u2029\uff00-\uffff]|%(?![a-f0-9]{2})/i
+  if (/[\0- "<>\\{}\x7f\x85\xa0\u2028\u2029\uff00-\uffff]|%(?![a-f0-9]{2})/i
       .test(value)) {
     var parts = value.split(/(%[a-f0-9]{2}|[#$&+,/:;=?@\[\]])/i);
     for (var i = parts.length - 1; i >= 0; i -= 2) {
@@ -358,10 +355,7 @@ function normalizeUri(value) {
     }
     value = parts.join('');
   }
-  if (problematicUriMarks_.test(value)) {
-    return value.replace(problematicUriMarks_, pctEncode_);
-  }
-  return value;
+  return value.replace(problematicUriMarks_, pctEncode_);
 }
 
 

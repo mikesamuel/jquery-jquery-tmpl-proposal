@@ -22,6 +22,7 @@ var nFailed = 0;
 var nTests = tests.length;
 var nToLoad = nTests;
 for (var i = 0; i < nTests; ++i) {
+  if (!tests[i]) { continue; }  // Handle elision in tests array.
   var frame = document.createElement('iframe');
   frame.onload = (function (frame) {
     return function () {
@@ -33,9 +34,9 @@ for (var i = 0; i < nTests; ++i) {
       }
       if (!--nToLoad) {
         if (!nFailed) {
-          document.body.style.backgroundColor = '#efe';
+          document.body.style.backgroundColor = '#dfd';
         } else {
-          document.body.style.backgroundColor = '#fee';
+          document.body.style.backgroundColor = '#fdd';
         }
       }
     };
