@@ -60,7 +60,7 @@ function sanitize() {
           .replace(/(\{\{(else|tmpl)(?:\}?[^}])*\}\})\{\{\/\2\}\}/g, '$1');
       var sanitizedTemplate = $.template(templateName, sanitizedTemplateText);
       $('<h3/>').text(templateName).appendTo(outputHtml);
-      $('<pre/>').html(markupSanitizedTemplates(sanitizedTemplateText))
+      $('<pre/>').html(templateTextToDisplayableHtml(sanitizedTemplateText))
           .appendTo(outputHtml);
       if (templateOrder.indexOf(templateName) >= 0) {
         var runButton = $('<button/>', {
@@ -134,8 +134,8 @@ ESC_MODE_HELP[filterNormalizeUri.name]
     = 'normalizes URI and rejects javascript:';
 ESC_MODE_HELP[noAutoescape.name] = 'does nothing';
 
-// Adds help text to 
-function markupSanitizedTemplates(templateText) {
+// Converts template text to displayable HTML.
+function templateTextToDisplayableHtml(templateText) {
   templateText = escapeHtml(templateText);
   templateText = templateText.replace(
       /[{(]((?:escape|normalize|filter)\w+)(?=\()/g,
