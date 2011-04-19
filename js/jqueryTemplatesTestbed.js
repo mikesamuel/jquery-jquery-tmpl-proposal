@@ -65,11 +65,11 @@ function sanitize() {
       if (templateOrder.indexOf(templateName) >= 0) {
         var runButton = $('<button/>', {
               value: templateName,
-              "class": 'arrowbtn',
-              onclick: (function (templateName) {
-                          return function () { runTemplate(templateName); };
-                        })(templateName)
-            }).text('\u21f0');
+              "class": 'arrowbtn'
+            }).click((function (templateName) {
+                        return function () { runTemplate(templateName); };
+                      })(templateName))
+            .text('\u21f0');
         $('<br/>').appendTo(runButton);
         $('<small/>').text(templateName).appendTo(runButton);
         runButton.appendTo(runButtons);
@@ -347,7 +347,7 @@ function populateExampleDropdown() {
   var exampleDropdown = $('#exampleList');
   $.each(CANNED_EXAMPLES,
          function (_, example) {
-           $('<button>', { onclick: prefillExample(example) })
+           $('<button>').click(prefillExample(example))
                .text(example.desc).appendTo(exampleDropdown);
          });
 }
