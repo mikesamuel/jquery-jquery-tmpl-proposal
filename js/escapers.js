@@ -201,9 +201,9 @@ function filterHtmlAttribute(value) {
       // it.
       // The contextual autoescaper, since it propagates context left to
       // right, is unable to distinguish
-      //    <div {$x}>
+      //     <div {$x}>
       // from
-      //    <div {$x}={$y}>.
+      //     <div {$x}={$y}>.
       // If {$x} is "dir=ltr", and y is "foo" make sure the parser does not
       // see the attribute "dir=ltr=foo".
       ? str.substring(0, eq + 1) + '"' + str.substring(eq + 1) + '"'

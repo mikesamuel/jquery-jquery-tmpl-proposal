@@ -21,36 +21,36 @@ function parseJqueryTemplate(templateText, opt_name) {
     var m;
     for (var i = 0, n = tokens.length; i < n; ++i) {
       var token = tokens[i];
-      switch (token.substring(0, 2)) {
-        case '${':
-          m = token.match(/^\$\{([\s\S]+)\}$/);
-          if (!m) { break; }
-          top.push(['$', m[1]]);
-          continue;
-        case '{{':
-          m = token.match(/^\{\{(\/?)([a-z][a-z0-9]*)((?:\}?[^}])*)\}\}$/i);
-          if (!m) { break; }
-          var name = m[2], content = m[3];
-          if (m[1]) {  // close
-            if (stack.length > 1 && top[0] === name) {
-              top = stack[--stack.length - 1];
-            } else if (DEBUG && window['console']) {
-              window['console']['warn']('Missplaced end marker ' + token);
-            }
-          } else {
-            var node = [name, content];
-            top.push(node);
-            if (TRUTHY === blockDirectives[name]) {
-              stack.push(top = node);
-            }
+      var firstTwo = token.substring(0, 2);
+      if (firstTwo == '${') {
+        m = token.match(/^\$\{([\s\S]+)\}$/);
+        if (!m) { break; }
+        top.push(['$', m[1]]);
+      } else if (firstTwo == '{{') {  // A tag.
+        m = token.match(/^\{\{(\/?)([a-z][a-z0-9]*)((?:\}?[^}])*)\}\}$/i);
+        if (!m) { break; }
+        var name = m[2], content = m[3];
+        if (m[1]) {  // close
+          if (stack.length > 1 && top[0] === name) {
+            top = stack[--stack.length - 1];
+          } else if (DEBUG && window['console']) {
+            window['console']['warn']('Missplaced end marker ' + token);
           }
-          continue;
-      }
-      var toplen = top.length;
-      if (toplen > 2 && 'string' === typeof top[toplen - 1]) {
-        top[toplen - 1] += token;
-      } else {
-        top[toplen] = token;
+        } else {
+          var node = [name, content];
+          top.push(node);
+          if (TRUTHY === blockDirectives[name]) {
+            stack.push(top = node);
+          }
+        }
+      } else {  // A snippet of raw HTML.
+        var last = top.length - 1;
+        // Coallesce where possible.
+        if (last > 1 && 'string' === typeof top[last]) {
+          top[last] += token;
+        } else {
+          top[last + 1] = token;
+        }
       }
     }
   }
