@@ -132,7 +132,6 @@ ESC_MODE_HELP[escapeUri.name] = '1<2 \u2912 1%C32';
 ESC_MODE_HELP[normalizeUri.name] = 'normalizes quotes in URIs';
 ESC_MODE_HELP[filterNormalizeUri.name]
     = 'normalizes URI and rejects javascript:';
-ESC_MODE_HELP[noAutoescape.name] = 'does nothing';
 
 // Converts template text to displayable HTML.
 function templateTextToDisplayableHtml(templateText) {
@@ -360,3 +359,5 @@ function prefillExample(example) {
     $('#sanitize-button')[0].focus();
   };
 }
+
+function noAutoescape(x) { return x; }
