@@ -505,20 +505,21 @@ function testTemplateUnknownJsSlashMatters() {
   assertRewriteFails(
       {
         "foo": join(
-            "<script>",
-              "{{if declare}}var {{/if}}",
+            "<script>\n",
+              "{{if declare}}var {{/if}}\n",
               "x = {{tmpl \"#bar\"}}\n",
               // At this point we don't know whether or not a slash would start
               // a RegExp or not, so this constitutes an error.
-              "/ 2",
-            "</script>\n"),
+              "/ 2\n",
+            "</script>"),
         "bar": join(
             // A slash following 42 would be a division operator.
             "42",
             // But a slash following a comma would be a RegExp.
             "{{if declare}} , {{/if}}")
       },
-      "Ambiguous / could be a RegExp or division.  " +
+      "foo:1:`<script> {{if de...}} / 2 </script>`:" +
+      " Ambiguous / could be a RegExp or division.  " +
       "Please add parentheses before `/`");
 }
 
@@ -810,6 +811,112 @@ function testOptionalValuelessAttributes() {
         "foo": join(
             "<input {{if c}}checked{{/if}}>",
             "<input {{if c}}id=${noAutoescape(id)}{{/if}}>")
+      });
+}
+
+function testWrapAndHtml() {
+  assertContextualRewriting(
+      {
+        "myTmpl": join(
+            "The following wraps some HTML content:\n",
+            "{{wrap \"#tableWrapper\"}}",
+              "<div>",
+                "First <b>content</b>",
+              "</div>",
+              "<div>",
+                "And <em>more</em> <b>content</b>...",
+              "</div>",
+            "{{/wrap}}"),
+        "tableWrapper": join(
+            "<table><tbody>",
+              "<tr>",
+                "{{each $item.html(\"div\")}}",
+                  "<td>",
+                    "${escapeHtml(new SanitizedHtml( $value))}",
+                  "</td>",
+                "{{/each}}",
+              "</tr>",
+            "</tbody></table>")
+      },
+      {
+        "myTmpl": join(
+            "The following wraps some HTML content:\n",
+            "{{wrap \"#tableWrapper\"}}",
+              "<div>",
+                "First <b>content</b>",
+              "</div>",
+              "<div>",
+                "And <em>more</em> <b>content</b>...",
+              "</div>",
+            "{{/wrap}}"),
+        "tableWrapper": join(
+            "<table><tbody>",
+              "<tr>",
+                "{{each $item.html(\"div\")}}",
+                  "<td>",
+                    "{{html $value}}",
+                  "</td>",
+                "{{/each}}",
+              "</tr>",
+            "</tbody></table>")
+      });
+}
+
+function testWrapOutsidePcdata() {
+  assertContextualRewriting(
+      {
+        "myTmpl": join(
+            "<script>",
+            "{{wrap \"#listWrapper__C8208\"}}",
+              // The body is in an HTML context even if the {{wrap}} is not.
+              "<li>${escapeHtml(a)}</li>",
+              "<li title=${escapeHtmlAttributeNospace(t)}>${escapeHtml(b)}</li>",
+            "{{/wrap}}"),
+        "listWrapper": join(
+            "{{each $item.html(\"div\")}}",
+              "listItems.push(${escapeHtml(value)});",
+            "{{/each}}",
+            "</script>",
+            "<ul>",
+              "{{each $item.html(\"div\")}}",
+                "${escapeHtml(new SanitizedHtml( $value))}",
+              "{{/each}}",
+            "</ul>"),
+        "listWrapper__C8208": join(
+            "{{each $item.html(\"div\")}}",
+              "listItems.push(${escapeJsValue(value)});",
+            "{{/each}}",
+            "</script>",
+            "<ul>",
+              "{{each $item.html(\"div\")}}",
+                "${escapeHtml(new SanitizedHtml( $value))}",
+              "{{/each}}",
+            "</ul>")
+      },
+      {
+        "myTmpl": join(
+            "<script>",  // Start a script here
+            "{{wrap \"#listWrapper\"}}",  // Call {{wrap}} in a JS context.
+              "<li>${a}</li>",
+              "<li title=${t}>${b}</li>",
+            "{{/wrap}}"),
+        "listWrapper": join(
+            "{{each $item.html(\"div\")}}",
+              "listItems.push(${value});",
+            "{{/each}}",
+            "</script>",  // Close the <script> inside the wrapper.
+            "<ul>",
+              "{{each $item.html(\"div\")}}",
+                "{{html $value}}",
+              "{{/each}}",
+            "</ul>")
+      });
+}
+
+function testPartialWrapFails() {
+  assertRewriteFails(  
+      {  // Wrap body ends inside a tag context.
+        "foo": "foo {{wrap}}<a href=\"${url}\"{{/wrap}} bar"
       });
 }
 

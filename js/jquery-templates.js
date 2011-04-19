@@ -165,11 +165,7 @@ function sanitizeTemplates(jqueryTemplatesByName) {
     // For {{tmpl}}&{{wrap}} calls, the context in which the template is called.
     calleeName: {},
     // Maps template names to output contexts.
-    outputContext: {},
-    // Context before ${value} used for {{wrap ...}}
-    contextBeforeWrapped: {},
-    // Context after ${value} used for {{wrap ...}}
-    contextAfterWrapped: {}
+    outputContext: {}
   };
 
   function makeChildInferences(parent) {
@@ -285,9 +281,19 @@ function sanitizeTemplates(jqueryTemplatesByName) {
       return walk(templateBody);
     }
 
-    function process(parseTree, context) {
+    function process(parseTree, context, opt_parent) {
       if (typeof parseTree === 'string') {
-        return processRawText(parseTree, context);
+        if (DEBUG) {
+          try {
+            return processRawText(parseTree, context);
+          } catch (ex) {
+            ex.message = ex.description = errorLocation(opt_parent) + ': ' +
+                (ex.message || ex.description || '');
+            throw ex;
+          }
+        } else {
+          return processRawText(parseTree, context);
+        }
       }
       var i = 2, n = parseTree.length;
       var startContext = context;
@@ -298,7 +304,7 @@ function sanitizeTemplates(jqueryTemplatesByName) {
           parseTree[1] = 'new SanitizedHtml(' + parseTree[1] + ')';
           parseTree.length = 2;
           // Re-process as a substitution.
-          return process(parseTree, context);
+          return process(parseTree, context, opt_parent);
         case 'if':
           // The output context is the union of the context across each branch.
           var outputContext = context;
@@ -337,7 +343,7 @@ function sanitizeTemplates(jqueryTemplatesByName) {
               }
               context = startContext;
             } else {
-              context = process(child, context);
+              context = process(child, context, parseTree);
             }
           }
           context = outputContext;
@@ -350,7 +356,7 @@ function sanitizeTemplates(jqueryTemplatesByName) {
             try {
               // Union with context in case the loop body is never
               // entered.
-              contextAfter = process(parseTree, context);
+              contextAfter = process(parseTree, context, opt_parent);
               context = contextUnion(contextBefore, contextAfter);
             } finally {
               parseTree[0] = 'each';
@@ -369,6 +375,7 @@ function sanitizeTemplates(jqueryTemplatesByName) {
           }
           break;
         case 'tmpl':
+        case 'wrap':
           // Expect content of the form '#' + templateName in double quotes.
           var calleeBaseName = getCalleeName(parseTree);
           if (calleeBaseName) {
@@ -387,9 +394,21 @@ function sanitizeTemplates(jqueryTemplatesByName) {
               throw new Error();
             }
           }
-          break;
-        case 'wrap':
-          // TODO {{wrap}} -> propagates context through call
+          if ('wrap' === parseTree[0]) {
+            var childContext = STATE_HTML_PCDATA;
+            for (; i < n; ++i) {
+              childContext = process(parseTree[i], childContext, parseTree);
+            }
+            if (childContext != STATE_HTML_PCDATA) {
+              if (DEBUG) {
+                throw new Error(
+                    errorLocation(parseTree)
+                    + ': {{wrap}} does not end in HTML PCDATA context');
+              } else {
+                throw new Error();
+              }
+            }
+          }
           break;
         case '$':
           // ${xyz}} -> ${escapingDirective(xyz)}
@@ -433,7 +452,7 @@ function sanitizeTemplates(jqueryTemplatesByName) {
           break;
         default:
           for (; i < n; ++i) {
-            context = process(parseTree[i], context);
+            context = process(parseTree[i], context, parseTree);
           }
           break;
       }
@@ -519,7 +538,7 @@ function sanitizeTemplates(jqueryTemplatesByName) {
           }
         }
         break;
-      case 'tmpl':  // Rewrite calls in context.
+      case 'tmpl': case 'wrap':  // Rewrite calls in context.
         var calleeName = inferences.calleeName[id];
         if (calleeName) {
           // The form of a {{tmpl}}'s content is
