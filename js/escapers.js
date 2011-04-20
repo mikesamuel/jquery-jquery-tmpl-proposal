@@ -446,7 +446,7 @@ function REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE
  * @private
  */
 var ESCAPE_MAP_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_ = {
-  '\x08': '\\b',
+  // We do not escape '\x08' to '\\b' since that means word-break in RegExps.
   '\x09': '\\t',
   '\x0a': '\\n',
   '\x0c': '\\f',

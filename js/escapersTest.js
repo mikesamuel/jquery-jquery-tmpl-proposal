@@ -26,7 +26,7 @@ function testEscapeJsString() {
   // Check correctness of other Latins.
   var escapedAscii = (
       "\\x00\u0001\u0002\u0003\u0004\u0005\u0006\u0007" +
-      "\\b\\t\\n\\x0b\\f\\r\u000e\u000f" +
+      "\\x08\\t\\n\\x0b\\f\\r\u000e\u000f" +
       "\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017" +
       "\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f" +
       " !\\x22#$%\\x26\\x27()*+,-.\\/" +
@@ -58,7 +58,7 @@ function testEscapeJsRegExpString() {
 
   var escapedAscii = (
       "\\x00\u0001\u0002\u0003\u0004\u0005\u0006\u0007" +
-      "\\b\\t\\n\\x0b\\f\\r\u000e\u000f" +
+      "\\x08\\t\\n\\x0b\\f\\r\u000e\u000f" +  // \b means word-break in JS.
       "\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017" +
       "\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f" +
       " !\\x22#\\x24%\\x26\\x27\\x28\\x29" +
