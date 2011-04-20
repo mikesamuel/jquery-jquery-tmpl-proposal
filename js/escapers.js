@@ -5,12 +5,28 @@
 
 /**
  * @fileoverview
- * Definitions of sanitization functions used by safehtml.
+ * Definitions of sanitization functions and sanitized content wrappers.
  * See http://js-quasis-libraries-and-repl.googlecode.com/svn/trunk/safetemplate.html#sanitization_functions
  * for definitions of sanitization functions and sanitized content wrappers.
  */
 
 
+/**
+ * The name of the property that contains sanitized content in a sanitized
+ * content wrapper.
+ * This is a string stored in a constant so that it can be used in JSON
+ * revivers.
+ * @const
+ */
+var CONTENT_PROPNAME = 'content';
+
+/**
+ * The name of the property that contains a CONTENT_KIND_* enum value.
+ * This is a string stored in a constant so that it can be used in JSON
+ * revivers.
+ * @const
+ */
+var CONTENT_KIND_PROPNAME = 'contentKind';
 
 /**
  * A string-like object that carries a content-type.
@@ -19,23 +35,21 @@
  */
 function SanitizedContent() {}
 
-/** The textual content.  @type {string} */
-SanitizedContent.prototype.content;
-
-/** @type {number} in CONTENT_KIND_*. */
-SanitizedContent.prototype.contentKind;
-
 /**
  * @return {string}
  * @override
  */
 SanitizedContent.prototype.toString = function() {
-  return this.content;
+  return this[CONTENT_PROPNAME];
 };
 
+/**
+ * @param {number!} contentKind
+ */
 function defineSanitizedContentSubclass(contentKind) {
+  /** @param {string!} content */
   function SanitizedContentCtor(content) {
-    this.content = content;
+    this[CONTENT_PROPNAME] = content;
   }
 
   /** @type {SanitizedContent} */
@@ -43,7 +57,7 @@ function defineSanitizedContentSubclass(contentKind) {
   proto.constructor = SanitizedContentCtor;
 
   /** @override */
-  proto.contentKind = CONTENT_KIND_HTML;
+  proto[CONTENT_KIND_PROPNAME] = CONTENT_KIND_HTML;
 
   return SanitizedContentCtor;
 }
@@ -102,7 +116,7 @@ window['SanitizedUri'] = SanitizedUri;
  * @return {string|SanitizedHtml} An escaped version of value.
  */
 function escapeHtml(value) {
-  if (value && value.contentKind === CONTENT_KIND_HTML) {
+  if (value && value[CONTENT_KIND_PROPNAME] === CONTENT_KIND_HTML) {
     return /** @type {SanitizedHtml} */ (value);
   } else if (value instanceof Array) {
     return value.map(escapeHtml).join('');
@@ -131,8 +145,8 @@ function escapeHtml(value) {
  * @return {string} An escaped version of value.
  */
 function escapeHtmlRcdata(value) {
-  if (value && value.contentKind === CONTENT_KIND_HTML) {
-    return normalizeHtmlHelper(value.content);
+  if (value && value[CONTENT_KIND_PROPNAME] === CONTENT_KIND_HTML) {
+    return normalizeHtmlHelper(value[CONTENT_PROPNAME]);
   }
   return escapeHtmlHelper(value);
 }
@@ -160,8 +174,8 @@ function stripHtmlTags(value) {
  * @return {string} An escaped version of value.
  */
 function escapeHtmlAttribute(value) {
-  if (value && value.contentKind === CONTENT_KIND_HTML) {
-    return normalizeHtmlHelper(stripHtmlTags(value.content));
+  if (value && value[CONTENT_KIND_PROPNAME] === CONTENT_KIND_HTML) {
+    return normalizeHtmlHelper(stripHtmlTags(value[CONTENT_PROPNAME]));
   }
   return escapeHtmlHelper(value);
 }
@@ -176,9 +190,9 @@ function escapeHtmlAttribute(value) {
  * @return {string} An escaped version of value.
  */
 function escapeHtmlAttributeNospace(value) {
-  if (value && value.contentKind === CONTENT_KIND_HTML) {
+  if (value && value[CONTENT_KIND_PROPNAME] === CONTENT_KIND_HTML) {
     return normalizeHtmlNospaceHelper(
-        stripHtmlTags(value.content));
+        stripHtmlTags(value[CONTENT_PROPNAME]));
   }
   return escapeHtmlNospaceHelper(value);
 }
@@ -233,8 +247,8 @@ function filterHtmlElementName(value) {
  * @return {string} An escaped version of value.
  */
 function escapeJsString(value) {
-  if (value && value.contentKind === CONTENT_KIND_JS_STR_CHARS) {
-    return value.content;
+  if (value && value[CONTENT_KIND_PROPNAME] === CONTENT_KIND_JS_STR_CHARS) {
+    return value[CONTENT_PROPNAME];
   }
   return escapeJsStringHelper(value);
 }
@@ -317,7 +331,7 @@ function pctEncode_(ch) {
  * @return {string} An escaped version of value.
  */
 function escapeUri(value) {
-  if (value && value.contentKind === CONTENT_KIND_URI) {
+  if (value && value[CONTENT_KIND_PROPNAME] === CONTENT_KIND_URI) {
     return normalizeUri(value);
   }
   // Apostophes and parentheses are not matched by encodeURIComponent.

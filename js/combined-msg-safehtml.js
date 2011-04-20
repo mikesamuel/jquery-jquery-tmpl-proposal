@@ -35,7 +35,7 @@ function html_msg(parts) {
     for (var i = 0; i < n; ++i) {
       var value = parts[(i << 1) | 1];
       originals[i] = value;
-      if (value && typeof value.contentKind === 'number') {
+      if (value && typeof value['contentKind'] === 'number') {
         // Exempt sanitized content from formatting.
       } else {
         var inputXform = inputXforms[i];
@@ -52,7 +52,7 @@ function html_msg(parts) {
       outputBuffer[++j] = literalParts[i];
 
       var value = parts[j];
-      if (value && typeof value.contentKind === 'number') {
+      if (value && typeof value['contentKind'] === 'number') {
         // Exempt sanitized content from formatting.
       } else {
         var inputXform = inputXforms[i];

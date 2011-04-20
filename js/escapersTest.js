@@ -334,7 +334,8 @@ function testEscapeHtmlAttributeNospace() {
   assertEquals(escapedAscii, escapeHtmlAttributeNospace(ASCII_CHARS));
 }
 
-function testNormalizeHtml() {
+if (!COMPILED) this.testNormalizeHtml = function () {
+
   // The minimal escapes.
   // Do not remove anything from this set without talking to your friendly local
   // security-team@.
@@ -354,9 +355,9 @@ function testNormalizeHtml() {
       "`abcdefghijklmno" +
       "pqrstuvwxyz{|}~\u007f");
   assertEquals(escapedAscii, normalizeHtmlHelper(ASCII_CHARS));
-}
+};
 
-function testNormalizeHtmlNospace() {
+if (!COMPILED) this.testNormalizeHtmlNospace = function () {
   // The minimal escapes.
   // Do not remove anything from this set without talking to your friendly local
   // security-team@.
@@ -376,7 +377,7 @@ function testNormalizeHtmlNospace() {
       "&#96;abcdefghijklmno" +
       "pqrstuvwxyz{|}~\u007f");
   assertEquals(escapedAscii, normalizeHtmlNospaceHelper(ASCII_CHARS));
-}
+};
 
 function testStripHtmlTags() {
   assertEquals("", stripHtmlTags(""));
