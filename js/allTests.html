@@ -27,13 +27,14 @@ for (var i = 0; i < nTests; ++i) {
   var frame = document.createElement('iframe');
   frame.onload = (function (frame) {
     return function () {
+      // Code in runtests.js sets the fragment.
       if (!/#OK$/.test(String(frame.contentWindow.location))) {
         ++nFailed;
         frame.style.border = '2px solid red';
       } else {
         frame.style.border = '2px solid green';
       }
-      if (!--nToLoad) {
+      if (!--nToLoad) {  // Last test.  Signal whether all passed.
         if (!nFailed) {
           document.body.style.backgroundColor = '#dfd';
         } else {
@@ -48,6 +49,34 @@ for (var i = 0; i < nTests; ++i) {
   document.body.appendChild(frame);
 }
 })();
+</script>
+
+<script>
+document.body.onload = window.onresize = function () {
+  // Resize to better use vertical space.
+  var iframes = document.getElementsByTagName('iframe');
+  var lastFrame = iframes[iframes.length - 1];
+  var lastTop = -1;
+  var stackSize = 0;
+  for (var i = 0, n = iframes.length; i < n; ++i) {
+    var top = iframes[i].offsetTop;
+    if (top !== lastTop) {
+      ++stackSize;
+      lastTop = top;
+    }
+  }
+
+  var margin = iframes[0].offsetTop;
+  var bodyHeight = (window.innerHeight
+      || (document.documentElement && document.documentElement.clientHeight)
+      || document.body.clientHeight) - margin * 2;
+  var iframeHeight = ((bodyHeight / stackSize) | 0) - 6;
+
+  var styleNode = document.createElement('STYLE');
+  styleNode.appendChild(document.createTextNode(
+      'iframe { height: ' + iframeHeight + ' }'));
+  document.body.appendChild(styleNode);
+};
 </script>
 </body>
 </html>
