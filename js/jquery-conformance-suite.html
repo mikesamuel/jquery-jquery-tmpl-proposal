@@ -1,0 +1,619 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>JQuery Templates Conformance Suite</title>
+<style>
+tr.pass > td { border: 2px solid green }
+tr.fail > td { border: 2px dotted red }
+tr.running > td { border: 2px solid yellow }
+xmp { white-space: pre-wrap }
+td, th { vertical-align: top }
+/* data cells */
+table.testtable > * > tr > th:nth-of-type(2),
+table.testtable > * > tr > td:nth-of-type(2) {
+  max-width: 40em
+}
+</style>
+<script src="jquery-1.5.2.js"></script>
+<script src="jquery-templates-impl.js"></script>
+<script src="contextDefs.js"></script>
+<script src="escapers.js"></script>
+<script>
+var hasConsole = typeof console !== 'undefined';
+
+$.template = function (name, templateSource) {
+  if (arguments.length === 1) {
+    return $.templates[name];
+  } else {
+    throw new Error("Not yet implemented");
+  }
+};
+
+function trimmedText(node) {
+  return (node.innerText || node.textContent).replace(/^\s+|\s+$/g, "");
+}
+
+function extractAndParseTemplates(templateSource) {
+  function parseOne(templateSource) {
+    return parseTemplate(
+        templateSource,   
+        $.extend({ "if": TRUTHY, "wrap": TRUTHY },
+                 guessBlockDirectives(templateSource)));
+  }
+
+  var parseTrees = {};
+  var leftover = templateSource.replace(
+      /<script((?:[^"'\x3e]|"[^"]*"|'[^']*')*)>((?:[^<]|<!(?=--)[\s\S]*?-->|<(?!!--|\/script))*?)<\/script\s*>/gi,
+      function (_, attrs, oneTemplate) {
+        var id = attrs.match(/\bid=(?:"([^\x22]+)"|'([^\x27]+)'|(\w+))/);
+        if (!id || !/\btype=[\x22']?text\/x-jquery-tmpl[\x22']?/.test(attrs)) {
+          throw new Error("Bad <script> attrs: " + attrs);
+        }
+        id = id[1] || id[2] || id[3];  // 2 quoted groups, one unquoted.
+        oneTemplate = oneTemplate.replace(/^\s+|\s+$/g, "");
+        hasConsole && console.group("parse " + id);
+        try {
+          parseTrees[id] = parseOne(oneTemplate);
+        } finally {
+          hasConsole && console.groupEnd();
+        }
+        return "";
+      });
+  if (leftover === templateSource) {
+    parseTrees.main = parseOne(templateSource);
+  } else if (/\S/.test(leftover = leftover.replace(/<!--[\s\S]*?-->/g, ''))) {
+    throw new Error("Unparsed content: " + leftover);
+  }
+  return parseTrees;
+}
+
+function runTests() {
+  var rows = document.body.getElementsByTagName('TR');
+  for (var j = 0; rows[j]; ++j) {
+    var row = rows[j];
+    // Only consider rows in testtables.
+    var table = row;
+    while (table.tagName !== 'TABLE') { table = table.parentNode; }
+    if (!/\btesttable\b/.test(table.className)) { continue; }
+    var cells = [];
+    // Get child cells, not cells in nested tables.
+    var header = null;
+    for (var child = row.firstChild; child; child = child.nextSibling) {
+      if (child.nodeType === 1) {
+        if (child.tagName === 'TD') { cells.push(child); }
+        else if (child.tagName === 'TH') { header = child; }
+      }
+    }
+    if (!cells.length) { continue; }  // skip header rows
+    var testName = header ? (header.innerText || header.textContent) : 'unknown';
+    // Run the test.
+    var pass = false;
+    hasConsole && console.group(testName);
+    try {
+      var testCell = cells[0], dataCell = cells[1],
+          expectedCell = cells[2], actualCell = cells[3];
+      var templateSource = trimmedText(testCell);
+      var dataSource = trimmedText(dataCell);
+      row.className = 'running';
+      var data = null;
+      var result = null;
+      var parseTrees = null;
+      var compiled = {};
+      try {
+        parseTrees = extractAndParseTemplates(templateSource);
+        var processedParseTrees = JSON.parse(JSON.stringify(parseTrees));
+        $.each($.templatePlugins, function (i, plugin) {
+          processedParseTrees = plugin(processedParseTrees);
+        });
+        $.each(processedParseTrees, function (k, v) {
+          hasConsole && console.group("compile " + k);
+          try {
+            compiled[k] = { tmpl: compileToFunction(v) };
+            console.log("compile ok");
+          } finally {
+            hasConsole && console.groupEnd("compile " + k);
+          }
+        });
+        data = new Function('return (' + dataSource + ')')();
+        $.templates = compiled;
+        result = compiled.main.tmpl(data, {});
+      } catch (ex) {
+        hasConsole && ex.stack && console.error(ex.stack);
+        result = 'Error:' + (ex.message || ex.description);
+      }
+      var expectedText;
+      var normResult;
+      if (/^Error:/.test(result)) {
+        expectedText = trimmedText(expectedCell);
+        actualCell.appendChild(document.createTextNode(result));
+        normResult = result;
+        pass = /^Error:/.test(expectedText)
+            && !(typeof DEBUG == 'boolean' && DEBUG && expectedText !== result);
+      } else {
+        actualCell.innerHTML = result;
+        normResult = actualCell.innerHTML;
+        expectedText = expectedCell.innerHTML;
+        pass = normResult === expectedText;
+      }
+      if (!pass && hasConsole) {
+        console.error("%s !==\n%s", 
+            JSON.stringify(expectedText), JSON.stringify(normResult));
+        console.log(
+            "parseTrees=%o, postProcessing=%o, data=%o, compiled=%o",
+            parseTrees, processedParseTrees, data, compiled);
+      }
+    } finally {
+      row.className = pass ? "pass" : "fail";
+      hasConsole && console.log(pass ? "pass" : "fail");
+      hasConsole && console.groupEnd(testName);
+    }
+  }
+}
+</script>
+</head>
+
+<body onload="runTests()">
+<h1>JQuery Templates Conformance Suite</h1>
+
+<p>
+Each row in the tables below is a test case.
+The "test" column includes the literal text of a template wrapped in
+an <code>&lt;xmp&gt;</code> element.
+<p>
+The "data" column includes a data value as JavaScript text also
+wrapped in an <code>&lt;xmp&gt;</code>.
+<p>
+The "expected" column shows the expected output of the template when
+compiled and applied to the data.  If the output starts with "Error:"
+then the compilation or application should fail with an exception, and
+in debug mode should produce the following error message.
+<p>
+The "actual" column is auto-generated and contains the actual result
+and is colored to indicate success or failure.
+<p>
+The right-most column, if any, includes explatory text about the test-case.
+<p>
+Any "test" cells whose content consists of named templates specified via
+<code>&lt;script type="text/x-jquery-tmpl" id="template-name"&gt;</code>
+elements will have all templates extracted and compiled as a bundle
+and the template with <code>id="main"</code> will be the one applied.
+</p>
+
+<h2>Neither bells nor whistles</h2>
+<p>
+The tests below test the built-in operators, and plugins that ship by default.
+</p>
+<table class="testtable" summary="Neither bells nor whistles">
+  <tr><th>Test</th><th>Data</th><th>Expected</th><th>Actual</th></tr>
+  <tr>
+    <td><xmp></xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td></td>
+    <td></td>
+    <th>Empty Template</th>
+  </tr>
+  <tr>
+    <td><xmp>Hello, World!</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Hello, World!</td>
+    <td></td>
+    <th>Plain text</th>
+  </tr>
+  <tr>
+    <td><xmp>Hello, &lt;World&gt;!</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Hello, &lt;World&gt;!</td>
+    <td></td>
+    <th>HTML entities preserved</th>
+  </tr>
+  <tr>
+    <td>&#x10000;</td>
+    <td><xmp>{}</xmp></td>
+    <td>&#x10000;</td>
+    <td></td>
+    <th>Supplemental codepoints preserved</th>
+  </tr>
+  <tr>
+    <td>&#xd800;-&#xdc00;</td>
+    <td><xmp>{}</xmp></td>
+    <td>&#xd800;-&#xdc00;</td>
+    <td></td>
+    <th>Oprhaned surrogates preserved</th>
+  </tr>
+  <tr>
+    <td><xmp><span style=color:red>Hello</span>, World!</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td><span style=color:red>Hello</span>, World!</xmp></td>
+    <td></td>
+    <th>HTML tags preserved</th>
+  </tr>
+  <tr>
+    <td><xmp>It costs $5, 5$.  {if} {{/- {{.</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>It costs $5, 5$.  {if} {{/- {{.</td>
+    <td></td>
+    <th>Dollars and curlies in text</th>
+  </tr>
+  <tr>
+    <td><xmp>Cow says m${x}, dog says ${y}k</xmp></td>
+    <td><xmp>{ x: 'foo', y: 'bar' }</xmp></td>
+    <td>Cow says mfoo, dog says bark</td>
+    <td></td>
+    <th>Substitution</th>
+  </tr>
+  <tr>
+    <td><xmp>Hello, ${world}!</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Error:world is not defined</td>
+    <td></td>
+    <th>Substitution w/out data</th>
+  </tr>
+  <tr>
+    <td><xmp>i=${i}, f=${f}, nf=${nf}, nan=${nan}, inf=${inf}, nzero=${nzero}</xmp></td>
+    <td><xmp>{ i: 42, f: 0.5, nf: -0.5, nan: NaN, inf: Infinity, nzero: -0 }</xmp></td>
+    <td>i=42, f=0.5, nf=-0.5, nan=NaN, inf=Infinity, nzero=0</td>
+    <td></td>
+    <th>Substitution numbers</th>
+  </tr>
+  <tr>
+    <td><xmp>s=${s}, n=${n}, supp=${supp}, orphans=${orphans}, nul=${nul}</xmp></td>
+    <td><xmp>{ s: "Hello, World!", n: "42", supp: "\ud800\udc00", orphans: "\ud800-\udc00", nul: "\u0000" }</xmp></td>
+    <td>s=Hello, World!, n=42, supp=&#x10000;, orphans=&#xd800;-&#xdc00;, nul\&#0;</td>
+    <td></td>
+    <th>Substitution strings</th>
+  </tr>
+  <tr>
+    <td><xmp>t=${t}, f=${f}</xmp></td>
+    <td><xmp>{ t: true, f: false }</xmp></td>
+    <td>t=true, f=false</td>
+    <td></td>
+    <th>Substitution booleans</th>
+  </tr>
+  <tr>
+    <td><xmp>s=${s}, o=${o}, thunk=${thunk}, a=${a}</xmp></td>
+    <td><xmp>{ s: new String("foo"), o: { toString: function () { return "[Obj]" } }, thunk: function () { return "Hello, World!"; }, a: [1, 2, 3] }</xmp></td>
+    <td>s=foo, o=[Obj], thunk=Hello, World!, a=123</td>
+    <td></td>
+    <th>Substitution objects</th>
+  </tr>
+  <tr>
+    <td><xmp>i++=${i++}, i++=${i++}, readOnce=${readOnce}, counter=${counter}, counter=${counter}</xmp></td>
+    <td><xmp>{ i: 0, readOnce: (function () { var run = false; return function() { if (run) throw Error(); run = true; return 42; }; })(), counter: (function () { var i = 0; return function () { return ++i; }; })() }</xmp></td>
+    <td>i++=0, i++=1, readOnce=42, counter=1, counter=2</td>
+    <td></td>
+    <th>Substitution evaluation happens once and in order</th>
+  </tr>
+  <tr>
+    <td><xmp><div title="${breaker}">${breaker}</div></xmp></td>
+    <td><xmp>{ breaker: "-->]]></script></style></textarea>\" ' ) >" }</xmp></td>
+
+    <td><div title="--&gt;]]&gt;&lt;/script&gt;&lt;/style&gt;&lt;/textarea&gt;&quot; ' ) &gt;">--&gt;]]&gt;&lt;/script&gt;&lt;/style&gt;&lt;/textarea&gt;&quot; ' ) &gt;</div></td>
+    <!--"-->
+    <td></td>
+    <th>Substitution autoescaped</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{else}}Goodbye{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: true, world: "Cincinatti" }</xmp></td>
+    <td><b>Hello</b>, Cincinatti!</td>
+    <td></td>
+    <th>If branch taken</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{else}}Goodbye{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: false, world: function () { return "Cleveland"; }}</xmp></td>
+    <td><b>Goodbye</b>, Cleveland!</td>
+    <td></td>
+    <th>Else branch taken</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: true, world: "Cincinatti" }</xmp></td>
+    <td><b>Hello</b>, Cincinatti!</td>
+    <td></td>
+    <th>If branch taken no else</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: false, world: function () { return "Cleveland"; }}</xmp></td>
+    <td><b></b>, Cleveland!</td>
+    <td></td>
+    <th>No else branch</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{else sayGoodbye}}Goodbye{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: false, sayGoodbye: true, world: "Cincinatti" }</xmp></td>
+    <td><b>Goodbye</b>, Cincinatti!</td>
+    <td></td>
+    <th>Condition in else taken</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{else sayGoodbye}}Goodbye{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: false, sayGoodbye: false, world: "Cincinatti" }</xmp></td>
+    <td><b></b>, Cincinatti!</td>
+    <td></td>
+    <th>Condition in else not taken</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{else}}Goodbye{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: 1, world: "Cincinatti" }</xmp></td>
+    <td><b>Hello</b>, Cincinatti!</td>
+    <td></td>
+    <th>If branch taken based on truthy value</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{else}}Goodbye{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: 0, world: function () { return "Cleveland"; }}</xmp></td>
+    <td><b>Goodbye</b>, Cleveland!</td>
+    <td></td>
+    <th>Else branch taken based on falsey value</th>
+  </tr>
+  <tr>
+    <td><xmp><ul>{{each arr}}<li value=\"${$$index - -1}\">${$$value}{{/each}}</ul></xmp></td>
+    <td><xmp>{ arr: ["One", "Two"] }</xmp></td>
+    <td><ul><li value=\"1\">One<li value=\"2\">Two</ul></td>
+    <td></td>
+    <th>Loop over array</th>
+  </tr>
+  <tr>
+    <td><xmp><ul>{{each arr}}<li value=\"${$$index - -1}\">${$$value}{{/each}}</ul></xmp></td>
+    <td><xmp>{ arr: [] }</xmp></td>
+    <td><ul></ul></td>
+    <td></td>
+    <th>Loop over empty</th>
+  </tr>
+  <tr>
+    <td><xmp><ul>{{each(i) arr}}<li value=\"${i - -1}\">${$$value}{{/each}}</ul></xmp></td>
+    <td><xmp>{ arr: ["One", "Two"] }</xmp></td>
+    <td><ul><li value=\"1\">One<li value=\"2\">Two</ul></td>
+    <td></td>
+    <th>Loop with custom key variable name</th>
+  </tr>
+ <tr>
+    <td><xmp><ul>{{each(k, v) arr}}<li value=\"${k - -1}\">${v}{{/each}}</ul></xmp></td>
+    <td><xmp>{ arr: ["One", "Two"] }</xmp></td>
+    <td><ul><li value=\"1\">One<li value=\"2\">Two</ul></td>
+    <td></td>
+    <th>Loop with custom variable names</th>
+  </tr>
+  <tr>
+    <td><xmp><table>{{each(k,v) obj}}<tr><td>${k}<td>${v}</tr>{{/each}}</table></xmp></td>
+    <!-- This assumes that object iteration order is stable across JS
+      - implementations.  This is not valid according to the EcmaScript spec,
+      - but is remarkably consistent.
+      -->
+    <td><xmp>{ obj: { "foo": "bar", "baz": "boo" } }</xmp></td>
+    <td><table><tr><td>foo<td>bar<tr><td>baz<td>boo</table></td>
+    <td></td>
+    <th>Loop over associative array.</th>
+  </tr>
+  <tr>
+    <td><xmp>
+      <script type="text/x-jquery-tmpl" id="main">
+        this x=${x}, {{tmpl that}}
+      </script>
+      <script type="text/x-jquery-tmpl" id="that">
+        that x=(${x})
+      </script>
+    </xmp></td>
+    <td><xmp>{ x: "x" }</xmp></td>
+    <td>this x=x, that x=(x)</td>
+    <td></td>
+    <th>Template Calls</th>
+  </tr>
+  <tr>
+    <td><xmp>
+      <script type="text/x-jquery-tmpl" id="main">
+        this x=${x}, {{tmpl({x: "y"}) that}}
+      </script>
+      <script type="text/x-jquery-tmpl" id="that">
+        that x=(${x})
+      </script>
+    </xmp></td>
+    <td><xmp>{ x: "x" }</xmp></td>
+    <td>this x=x, that x=(y)</td>
+    <td></td>
+    <th>Call with different data</th>
+  </tr>
+  <tr>
+    <td><xmp>${1}${1}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>11</td>
+    <td></td>
+    <th>String concatenation of adjacent subs</th>
+  </tr>
+  <tr>
+    <td><xmp>${1 + 1}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>2</td>
+    <td></td>
+    <th>Arithmetic in substitution</th>
+  </tr>
+  <tr>
+    <td><xmp>a[0].b[cStr]=${a[0].b[cStr]}</xmp></td>
+    <td><xmp>{ a: [{ b: { c: 42 } }], cStr: "c" }</xmp></td>
+    <td>a[0].b[cStr]=42</td>
+    <td></td>
+    <th>Member expressions</th>
+  </tr>
+  <tr>
+    <td><xmp>undef=${x.undef}</xmp></td>
+    <td><xmp>{ x: {} }</xmp></td>
+    <td>undef=</td>
+    <td></td>
+    <th>Undefined member</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if n < 0}}-{{tmpl({ n: -n }) main}}{{else n >= 1}}.{{tmpl({n: n - 1}) main}}{{/if}}</xmp></td>
+    <td><xmp>{ n: -3 }</xmp></td>
+    <td>-...</td>
+    <td></td>
+    <th>Recursive template</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if typeof notDefinedInDataMap !== "undefined"}}${notDefinedInDataMap}{{else}}none{{/if}}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>none</td>
+    <td></td>
+    <th>Unreached variable need not be defined</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if cond}}foo{{else}}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Error:Unclosed block directives if in {{if cond}}foo{{else}}</td>
+    <td></td>
+    <th>Missing {{/if}} error message</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if cond}}foo{{else}}bar{{else}}boo{{/if}}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Error:{{else}} without condition must be last:{{if cond}}foo{{else}}{{/else}}bar{{else}}{{/else}}boo{{/if}}</td>
+    <td></td>
+    <th>Missing {{/if}} error message</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if }}foo{{/if}}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Error:{{if}} missing condition:{{if }}foo{{/if}}</td>
+    <td></td>
+    <th>Missing {{/if}} error message</th>
+  </tr>
+  <tr>
+    <td><xmp>All nature is but art {{unknown}} to thee.</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Error:I do not know how to compile {{unknown}}{{/unknown}}</td>
+    <td></td>
+    <th>Unknown directive name</th>
+  </tr>
+  <tr>
+    <td><xmp>${i + (j}</xmp></td>
+    <td><xmp>{ i: 1, j: 2 }</xmp></td>
+    <td>Error:Invalid template substitution: i + (j</td>
+    <td></td>
+    <th>Catch obviously broken expressions early.</th>
+  </tr>
+</table>
+
+<h2>Plugin Tests</h2>
+<p>
+The table below shows the template language extended with a few
+plugins.
+<p>
+<code><b>{{makeid varName}}</b></code> assigns an ID using a
+counter and puts it in the variable named <code>varName</code>.
+</p>
+
+<script id="makeid-source">
+var locallyUniqueCounter = 0;
+
+$.templatePlugins.push(function (parseTrees) {
+  return $.each(parseTrees, function rewriteMakeid(_, parseTree) {
+    if (typeof parseTree !== "string") {
+      if (parseTree[0] === "makeid") {
+        parseTree[0] = "$";
+        parseTree[1] = "($$data." + parseTree[1]
+            + "='autogenid'+ ++locallyUniqueCounter)";
+      } else {
+        $.each(parseTree, rewriteMakeid);
+      }
+    }
+  });
+});
+</script>
+
+<script>
+$("<XMP/>").text($("#makeid-source").text()).appendTo($(document.body));
+</script>
+
+<p>
+The <b>Date format</b> plugin annotates all substitutions to convert any
+<code>Date</code> instances into a prescribed format without
+introducing new syntax.
+</p>
+
+<script id="dateformat-source">
+function formatDate(value) {
+  // Very simple date formatter for test purposes only.
+  return (value instanceof Date)
+     ? [value.getFullYear(), (value.getMonth() + 1), value.getDate()]
+       .join("-00").replace(/-\d+(\d\d)/g, "-$1")
+     : value;
+}
+
+$.templatePlugins.splice(0, 0, function (parseTrees) {
+  return $.each(parseTrees, function rewriteSusbstitutions (_, parseTree) {
+    if (typeof parseTree !== "string") {
+      if (parseTree[0] === "$") {
+        parseTree[1] += "=>formatDate";
+      } else {
+        $.each(parseTree, rewriteSusbstitutions);
+      }
+    }
+  });
+});
+</script>
+
+<script>
+$("<XMP/>").text($("#dateformat-source").text()).appendTo($(document.body));
+</script>
+
+<p>
+The <b>import</b> plugin looks for a call to a template named
+<code>notYetLoaded</code> and if so, adds a template to the parse tree
+bundle that outputs "Loaded just in time!"
+</p>
+
+<script id="import-source">
+$.templatePlugins.splice(0, 0, function (parseTrees) {
+  var needToImport = false;
+  $.each(parseTrees, function rewriteSusbstitutions (_, parseTree) {
+    if (typeof parseTree !== "string") {
+      switch (parseTree[0]) {
+        case "tmpl": case "wrap":
+          var match = parseTree[1].match(TMPL_DIRECTIVE_CONTENT);
+          if (match && match[2] === "notYetLoaded") {
+            needToImport = true;
+          }
+      }
+      $.each(parseTree, rewriteSusbstitutions);
+    }
+  });
+  if (needToImport) {
+    parseTrees.notYetLoaded = ["", "", "Loaded just in time!"];
+  }
+  return parseTrees;
+});
+</script>
+
+<script>
+$("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
+</script>
+
+<table class="testtable" summary="Plugin tests">
+  <tr><th>Test</th><th>Data</th><th>Expected</th><th>Actual</th></tr>
+  <tr>
+    <td><xmp><ul>{{each(i,v) nums}}<li><input value="${v}" id="{{makeid listItemId}}"><button onclick="alert($('#${listItemId}')[0].value)">say</button>{{/each}}</ul></xmp></td>
+    <td><xmp>{ nums: ["One", "Two", "Three"] }</xmp></td>
+    <td><ul><li><input value="One" id="autogenid1"><button onclick="alert($('#autogenid1')[0].value)">say</button><li><input value="Two" id="autogenid2"><button onclick="alert($('#autogenid2')[0].value)">say</button><li><input value="Three" id="autogenid3"><button onclick="alert($('#autogenid3')[0].value)">say</button></ul></td>
+    <td></td>
+    <th>{{makeid}} plugin</th>
+  </tr>
+  <tr>
+    <td><xmp>Date: ${date}, a number: ${notadate}</xmp></td>
+    <td><xmp>{ date: new Date(2007, 0, 15, 12, 0, 0), notadate: 2010 }</xmp></td>
+    <td>Date: 2007-01-15, a number: 2010</td>
+    <td></td>
+    <th>Format date plugin</th>
+  </tr>
+  <tr>
+    <td><xmp>Main calls and {{tmpl notYetLoaded}}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Main calls and Loaded just in time!</td>
+    <td></td>
+    <th>Import plugin</th>
+  </tr>
+</table>
+
+<hr>
+<address></address>
+<!-- hhmts start -->Last modified: Thu Apr 28 21:51:01 EDT 2011 <!-- hhmts end -->
+</body> </html>

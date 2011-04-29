@@ -120,6 +120,8 @@ function escapeHtml(value) {
     return /** @type {SanitizedHtml} */ (value);
   } else if (value instanceof Array) {
     return value.map(escapeHtml).join('');
+  } else if (value === void 0) {
+    return "";
   } else {
     return escapeHtmlHelper(value);
   }
