@@ -37,22 +37,14 @@ var implementationName;
   }
   var match = location.search.match(/[&?]testFilter=([^&]*)/);
   if (match) {
-    testFilter = new RegExp(decodeURIComponent(match[1]), 'i');
+    testFilter = new RegExp(decodeURIComponent(match[1]), "i");
   }
 })();
 //--></script>
 <script src="jquery-templates-builtins.js"></script>
 <script>
-var hasConsole = typeof console !== 'undefined'
+var hasConsole = typeof console !== "undefined"
     && !/[&?]nolog\b/.test(location.search);
-
-$.template = function (name, templateSource) {
-  if (arguments.length === 1) {
-    return $.templates[name];
-  } else {
-    throw new Error("Not yet implemented");
-  }
-};
 
 function trimmedText(node) {
   return (node.innerText || node.textContent).replace(/^\s+|\s+$/g, "");
@@ -86,7 +78,7 @@ function extractAndParseTemplates(templateSource) {
       });
   if (leftover === templateSource) {
     parseTrees.main = parseOne(templateSource);
-  } else if (/\S/.test(leftover = leftover.replace(/<!--[\s\S]*?-->/g, ''))) {
+  } else if (/\S/.test(leftover = leftover.replace(/<!--[\s\S]*?-->/g, ""))) {
     throw new Error("Unparsed content: " + leftover);
   }
   return parseTrees;
@@ -94,21 +86,21 @@ function extractAndParseTemplates(templateSource) {
 
 function runTests() {
   var nTests = 0, nPasses = 0;
-  var rows = document.body.getElementsByTagName('TR');
+  var rows = document.body.getElementsByTagName("TR");
   var t0 = Date.now();
   for (var j = 0; rows[j]; ++j) {
     var row = rows[j];
     // Only consider rows in testtables.
     var table = row;
-    while (table.tagName !== 'TABLE') { table = table.parentNode; }
+    while (table.tagName !== "TABLE") { table = table.parentNode; }
     if (!/\btesttable\b/.test(table.className)) { continue; }
     var cells = [];
     // Get child cells, not cells in nested tables.
     var header = null;
     for (var child = row.firstChild; child; child = child.nextSibling) {
       if (child.nodeType === 1) {
-        if (child.tagName === 'TD') { cells.push(child); }
-        else if (child.tagName === 'TH') { header = child; }
+        if (child.tagName === "TD") { cells.push(child); }
+        else if (child.tagName === "TH") { header = child; }
       }
     }
     if (!cells.length) { continue; }  // skip header rows
@@ -123,7 +115,7 @@ function runTests() {
           expectedCell = cells[2], actualCell = cells[3];
       var templateSource = trimmedText(testCell);
       var dataSource = trimmedText(dataCell);
-      row.className = 'running';
+      row.className = "running";
       var data = null;
       var result = null;
       var parseTrees = null;
@@ -143,12 +135,12 @@ function runTests() {
             hasConsole && console.groupEnd("compile " + k);
           }
         });
-        data = new Function('return (' + dataSource + ')')();
+        data = new Function("return (" + dataSource + ")")();
         $.templates = compiled;
         result = compiled.main.tmpl(data, {});
       } catch (ex) {
         hasConsole && ex.stack && console.error(ex.stack);
-        result = 'Error:' + (ex.message || ex.description);
+        result = "Error:" + (ex.message || ex.description);
       }
       var expectedText;
       var normResult;
@@ -157,7 +149,7 @@ function runTests() {
         actualCell.appendChild(document.createTextNode(result));
         normResult = result;
         pass = /^Error:/.test(expectedText)
-            && !(typeof DEBUG == 'boolean' && DEBUG && expectedText !== result);
+            && !(typeof DEBUG == "boolean" && DEBUG && expectedText !== result);
       } else {
         actualCell.innerHTML = result;
         normResult = actualCell.innerHTML;
@@ -663,5 +655,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Fri Apr 29 11:39:30 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Fri Apr 29 12:19:25 EDT 2011 <!-- hhmts end -->
 </body> </html>

@@ -28,3 +28,72 @@ $.templatePlugins = [
     return parseTrees;
   }
 ];
+
+(function () {
+  function needsCompile(name) {
+    var tmpl = $.templates[name];
+    return tmpl && !("tmpl" in tmpl);
+  }
+
+  function compileBundle(parseTrees, exclusion) {
+    var processedNames = {};
+    $.each(parseTrees, function process(name, parseTree) {
+      if (processedNames[name] !== TRUTHY) {
+        processNames[name] = TRUTHY;
+        $.each(parseTree, function findDeps(i, node) {
+          if (node[0] === "tmpl" || node[0] === "wrap") {
+            var match = node[1].match(TMPL_DIRECTIVE_CONTENT);
+            if (match) {
+              var depName = match[2];
+              if (needsCompile(depName)
+                  && processedNames[depName] !== TRUTHY) {
+                process(
+                    depName, parseTrees[depName] = $.templates[depName]);
+              }
+            }
+          }
+        });
+      }
+    });
+    function makePrepassCaller(pluginIndex) {
+      return function (parseTrees) {
+        for (var i = 0; i < pluginIndex; ++i) {
+          parseTrees = $.templatePlugins[i](parseTrees, makePrepassCaller(i));
+        }
+        return parseTrees;
+      };
+    }
+    var result;
+    $.each(makerPrepassCaller($.templatePlugins.length)(parseTrees),
+           function (templateName, parseTree) {
+             var tmplObj = { "tmpl": compileToFunction(parseTree) };
+             if (templateName == exclusion) {
+               $.templates[templateName] = tmplObj;
+             } else {
+               result = tmplObj;
+             }
+           });
+    return result;
+  }
+
+  $.template = function (name, templateSource) {
+    var parseTrees;
+    if (arguments.length === 1) {
+      name = "" + name;
+      if (needsCompile(name)) {
+        parseTrees = {};
+        parseTrees[name] = $.templates[name];
+        compileBundle(parseTrees);
+      }
+      return $.templates[name];
+    }
+    var parseTree = parseTemplate(
+        templateSource,
+        $.extend({ "if": TRUTHY, "wrap": TRUTHY },
+                 guessBlockDirectives(templateSource)));
+    if (name == null) {
+      return compileBundle(parseTrees = { "_": parseTree }, "_");
+    }
+    $.templates[name] = parseTree;
+  };
+})();
