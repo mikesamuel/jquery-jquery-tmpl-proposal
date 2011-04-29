@@ -2,23 +2,49 @@
 <html> <head>
 <title>JQuery Templates Conformance Suite</title>
 <style>
-tr.pass > td { border: 2px solid green }
-tr.fail > td { border: 2px dotted red }
+body { margin: 0; padding: 0.5em }
+tr.pass > td, body.pass { border: 2px solid green }
+tr.fail > td, body.fail { border: 2px dotted red }
 tr.running > td { border: 2px solid yellow }
 xmp { white-space: pre-wrap }
-td, th { vertical-align: top }
+table.testtable > * > tr > td,
+table.testtable > * > tr > th {
+  vertical-align: top;
+  empty-cells: show
+}
 /* data cells */
 table.testtable > * > tr > th:nth-of-type(2),
 table.testtable > * > tr > td:nth-of-type(2) {
   max-width: 40em
 }
 </style>
-<script src="jquery-1.5.2.js"></script>
-<script src="jquery-templates-impl.js"></script>
 <script src="contextDefs.js"></script>
 <script src="escapers.js"></script>
+<script src="jquery-1.5.2.js"></script>
+<script src="jquery-templates-base.js"></script>
+<script><!--
+if (!Date.now) { Date.now = function () { return +new Date; }; }
+var testFilter = /(?:)/;
+var implementationName;
+(function () {
+  if (/[&?]reference(?=[=&]|$)/.test(location.search)) {
+    document.write('<script src="jquery-templates-ref.js"></script>');
+    DEBUG = false;
+    implementationName = "REFERENCE";
+  } else {
+    document.write('<script src="jquery-templates-impl.js"></script>');
+    implementationName = "STRAPPEND";
+  }
+  var match = location.search.match(/[&?]testFilter=([^&]*)/);
+  if (match) {
+    testFilter = new RegExp(decodeURIComponent(match[1]), 'i');
+  }
+})();
+//--></script>
+<script src="jquery-templates-builtins.js"></script>
 <script>
-var hasConsole = typeof console !== 'undefined';
+var hasConsole = typeof console !== 'undefined'
+    && !/[&?]nolog\b/.test(location.search);
 
 $.template = function (name, templateSource) {
   if (arguments.length === 1) {
@@ -67,7 +93,9 @@ function extractAndParseTemplates(templateSource) {
 }
 
 function runTests() {
+  var nTests = 0, nPasses = 0;
   var rows = document.body.getElementsByTagName('TR');
+  var t0 = Date.now();
   for (var j = 0; rows[j]; ++j) {
     var row = rows[j];
     // Only consider rows in testtables.
@@ -84,7 +112,9 @@ function runTests() {
       }
     }
     if (!cells.length) { continue; }  // skip header rows
-    var testName = header ? (header.innerText || header.textContent) : 'unknown';
+    var testName = header
+        ? (header.innerText || header.textContent) : "unknown";
+    if (!testFilter.test(testName)) { continue; }
     // Run the test.
     var pass = false;
     hasConsole && console.group(testName);
@@ -108,7 +138,7 @@ function runTests() {
           hasConsole && console.group("compile " + k);
           try {
             compiled[k] = { tmpl: compileToFunction(v) };
-            console.log("compile ok");
+            hasConsole && console.log("compile ok");
           } finally {
             hasConsole && console.groupEnd("compile " + k);
           }
@@ -143,10 +173,22 @@ function runTests() {
       }
     } finally {
       row.className = pass ? "pass" : "fail";
+      ++nTests;
+      if (pass) { ++nPasses; }
       hasConsole && console.log(pass ? "pass" : "fail");
       hasConsole && console.groupEnd(testName);
     }
   }
+
+  var t1 = Date.now();
+  var summary = " " + implementationName
+      + " : " + nPasses + " / " + nTests + " in " + (t1 - t0) + " ms";
+  document.title += summary;
+  $.each($("h1"), function (_, node) {
+    node.appendChild(document.createTextNode(summary));
+  });
+  document.body.className += (nTests && nTests === nPasses) ? " pass" : " fail";
+
 }
 </script>
 </head>
@@ -255,9 +297,9 @@ The tests below test the built-in operators, and plugins that ship by default.
     <th>Substitution numbers</th>
   </tr>
   <tr>
-    <td><xmp>s=${s}, n=${n}, supp=${supp}, orphans=${orphans}, nul=${nul}</xmp></td>
+    <td><xmp>s=${s}, n=${n}, nul=${nul}, supp=${supp}, orphans=${orphans}</xmp></td>
     <td><xmp>{ s: "Hello, World!", n: "42", supp: "\ud800\udc00", orphans: "\ud800-\udc00", nul: "\u0000" }</xmp></td>
-    <td>s=Hello, World!, n=42, supp=&#x10000;, orphans=&#xd800;-&#xdc00;, nul\&#0;</td>
+    <td>s=Hello, World!, n=42, nul=&#0;, supp=&#x10000;, orphans=&#xd800;-&#xdc00;</td>
     <td></td>
     <th>Substitution strings</th>
   </tr>
@@ -348,21 +390,21 @@ The tests below test the built-in operators, and plugins that ship by default.
     <th>Else branch taken based on falsey value</th>
   </tr>
   <tr>
-    <td><xmp><ul>{{each arr}}<li value=\"${$$index - -1}\">${$$value}{{/each}}</ul></xmp></td>
+    <td><xmp><ul>{{each arr}}<li value=\"${$index - -1}\">${$value}{{/each}}</ul></xmp></td>
     <td><xmp>{ arr: ["One", "Two"] }</xmp></td>
     <td><ul><li value=\"1\">One<li value=\"2\">Two</ul></td>
     <td></td>
     <th>Loop over array</th>
   </tr>
   <tr>
-    <td><xmp><ul>{{each arr}}<li value=\"${$$index - -1}\">${$$value}{{/each}}</ul></xmp></td>
+    <td><xmp><ul>{{each arr}}<li value=\"${$index - -1}\">${$value}{{/each}}</ul></xmp></td>
     <td><xmp>{ arr: [] }</xmp></td>
     <td><ul></ul></td>
     <td></td>
     <th>Loop over empty</th>
   </tr>
   <tr>
-    <td><xmp><ul>{{each(i) arr}}<li value=\"${i - -1}\">${$$value}{{/each}}</ul></xmp></td>
+    <td><xmp><ul>{{each(i) arr}}<li value=\"${i - -1}\">${$value}{{/each}}</ul></xmp></td>
     <td><xmp>{ arr: ["One", "Two"] }</xmp></td>
     <td><ul><li value=\"1\">One<li value=\"2\">Two</ul></td>
     <td></td>
@@ -510,7 +552,7 @@ $.templatePlugins.push(function (parseTrees) {
     if (typeof parseTree !== "string") {
       if (parseTree[0] === "makeid") {
         parseTree[0] = "$";
-        parseTree[1] = "($$data." + parseTree[1]
+        parseTree[1] = "($data." + parseTree[1]
             + "='autogenid'+ ++locallyUniqueCounter)";
       } else {
         $.each(parseTree, rewriteMakeid);
@@ -615,5 +657,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Thu Apr 28 21:51:01 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Fri Apr 29 10:47:25 EDT 2011 <!-- hhmts end -->
 </body> </html>
