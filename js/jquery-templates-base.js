@@ -36,13 +36,11 @@ var HTML_SNIPPET_RE = (
 /** Regular expression text for a substitution.  ${...} or ${{...}}. @const */
 var SUBSTITUTION_RE = (
     "\\$\\{"
-    + "(?:"
-    + "\\{[\\s\\S]+?\\}"	// ${{...}} can contain curlies.
-    + "|[^{}][^}]*"	// ${...} cannot contain curlies.
-    + ")\\}");
+    + "[^}]*"	// ${...} cannot contain curlies.  Use {{=...}} for that.
+    + "\\}");
 
 /** Regular expression text for a directive name. @const */
-var NAME_RE = "[a-z][a-z0-9]*";
+var NAME_RE = "(?:=|[a-z][a-z0-9]*)";
 
 /** Regular expression text for a directive start|end marker. @const */
 var MARKER_RE = (
@@ -142,7 +140,7 @@ function guessBlockDirectives(templateText) {
  * <ul>
  *   <li>{@code "string"} : a snippet of HTML text.</li>
  *   <li>{@code ["name", "content", ...]} where {@code "name"}
- *      is a directive name like {@code "if"} or the string {@code "$"} for
+ *      is a directive name like {@code "if"} or the string {@code "="} for
  *      substitutions.  The content is the string after the name in the open
  *      marker, so for <code>{{if foo==bar}}Yes{{/if}}</code>, the content is
  *      {@code " foo==bar"}.  The "..." above is filled with child parse trees
@@ -167,7 +165,7 @@ function guessBlockDirectives(templateText) {
  *   "Goodbye"
  *  ],	// End of the {{if ...}}...{{/if}}.
  *  "&lt;/b&gt;, ",	// Another snippet of HTML.
- *  ["$", "world"],	// A substitution.
+ *  ["=", "world"],	// A substitution.
  *  "!"
  * ]
  * </pre>
@@ -203,9 +201,20 @@ function parseTemplate(templateText, blockDirectives) {
             }
           }
         } else if (token.substring(0, 2) === "${") {	// A substitution.
-          var doubleBracketed = token.charAt(2) === "{";
-          top.push(["$", token.substring(
-              2 + doubleBracketed, token.length - 1 - doubleBracketed)]);
+          top.push(["=", token.substring(2, token.length - 1)]);
+          if (DEBUG) {
+            try {
+              // For some reason, on Safari,
+              //     Function("(i + (j)")
+              // fails with a SyntaxError as expected, but
+              //     Function("return (i + (j)")
+              // does not.
+              // Filed as https://bugs.webkit.org/show_bug.cgi?id=59795
+              Function("(" + top[top.length - 1][1] + ")");
+            } catch (e) {
+              throw new Error("Invalid template substitution: " + content);
+            }
+          }
         } else {	// An HTML snippet.
           top.push(token);
         }
@@ -267,15 +276,11 @@ function renderParseTree(parseTree, opt_blockDirectives) {
        buffer.push(parseTree);
      } else {
        var kind = parseTree[0], n = parseTree.length;
-       if (kind === "$") {
-         buffer.push("${{", parseTree[1], "}}");
-       } else {
-         buffer.push("{{", kind, parseTree[1], "}}");
-         for (var i = 2; i < n; ++i) { render(parseTree[i]); }
-         if (n !== 2 || !opt_blockDirectives
-             || opt_blockDirectives[kind] !== TRUTHY) {
-           buffer.push("{{/", kind, "}}");
-         }
+       buffer.push("{{", kind, parseTree[1], "}}");
+       for (var i = 2; i < n; ++i) { render(parseTree[i]); }
+       if (n !== 2 || !opt_blockDirectives
+           || opt_blockDirectives[kind] !== TRUTHY) {
+         buffer.push("{{/", kind, "}}");
        }
      }
    })(parseTree);

@@ -96,7 +96,7 @@ function compileToFunction(parseTree) {
         var calleeName = match[2];
         return $["template"](/\W/.test(calleeName) ? $(calleeName) : calleeName)
             .tmpl(calleeData, calleeOptions);
-      case "$":
+      case "=":
         var contentBefore = "", contentAfter = "";
         content = content.replace(
             /(=>\w+)+$/, function (postDethunk) {

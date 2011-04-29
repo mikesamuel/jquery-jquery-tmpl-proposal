@@ -257,7 +257,7 @@ The tests below test the built-in operators, and plugins that ship by default.
     <td><xmp>{}</xmp></td>
     <td>&#xd800;-&#xdc00;</td>
     <td></td>
-    <th>Oprhaned surrogates preserved</th>
+    <th>Orphaned surrogates preserved</th>
   </tr>
   <tr>
     <td><xmp><span style=color:red>Hello</span>, World!</xmp></td>
@@ -279,6 +279,13 @@ The tests below test the built-in operators, and plugins that ship by default.
     <td>Cow says mfoo, dog says bark</td>
     <td></td>
     <th>Substitution</th>
+  </tr>
+  <tr>
+    <td><xmp>Cow says m{{=x}}, dog says {{=y}}k</xmp></td>
+    <td><xmp>{ x: 'foo', y: 'bar' }</xmp></td>
+    <td>Cow says mfoo, dog says bark</td>
+    <td></td>
+    <th>Substitution unabbreviated syntax</th>
   </tr>
   <tr>
     <td><xmp>Hello, ${world}!</xmp></td>
@@ -549,7 +556,7 @@ $.templatePlugins.push(function (parseTrees) {
   return $.each(parseTrees, function rewriteMakeid(_, parseTree) {
     if (typeof parseTree !== "string") {
       if (parseTree[0] === "makeid") {
-        parseTree[0] = "$";
+        parseTree[0] = "=";
         parseTree[1] = "($data." + parseTree[1]
             + "='autogenid'+ ++locallyUniqueCounter)";
       } else {
@@ -582,7 +589,7 @@ function formatDate(value) {
 $.templatePlugins.splice(0, 0, function (parseTrees) {
   return $.each(parseTrees, function rewriteSusbstitutions (_, parseTree) {
     if (typeof parseTree !== "string") {
-      if (parseTree[0] === "$") {
+      if (parseTree[0] === "=") {
         parseTree[1] += "=>formatDate";
       } else {
         $.each(parseTree, rewriteSusbstitutions);
@@ -655,5 +662,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Fri Apr 29 15:25:20 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Fri Apr 29 18:02:12 EDT 2011 <!-- hhmts end -->
 </body> </html>

@@ -16,10 +16,10 @@ $["templatePlugins"] = [
         parseTrees,
         function autoescapeOne(k, parseTree) {
           if (typeof parseTree !== "string") {
-            if (parseTree[0] === "$") {
+            if (parseTree[0] === "=") {
               parseTree[1] += "=>escapeHtml";
             } else if (parseTree[0] === "html") {
-              parseTree[0] = "$";
+              parseTree[0] = "=";
             } else {
               $.each(parseTree, autoescapeOne);
             }

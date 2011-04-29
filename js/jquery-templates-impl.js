@@ -39,7 +39,7 @@ function compileToFunction(parseTree) {
           var kind = parseTree[0], content = parseTree[1],
               len = parseTree.length;
           var tmpName = TEMP_NAME_PREFIX + nestLevel;
-          if (kind === "$") {	// ${...} substitution.
+          if (kind === "=") {	// ${...} substitution.
             // Make sure that + is string-wise.
             // Specifically, ${1}${2} should not compile to (1 + 2).
             if (!hasValue) { javaScriptSource.push("''+"); }
@@ -61,19 +61,6 @@ function compileToFunction(parseTree) {
                   wrapperStart = postDethunk.reverse().join("(");
                   return "";
                 });
-            if (DEBUG) {
-              try {
-                // For some reason, on Safari,
-                //     Function("(i + (j)")
-                // fails with a SyntaxError as expected, but
-                //     Function("return (i + (j)")
-                // does not.
-                // Filed as https://bugs.webkit.org/show_bug.cgi?id=59795
-                Function("(" + content + ")");
-              } catch (e) {
-                throw new Error("Invalid template substitution: " + content);
-              }
-            }
             // To make it easy for passes to rewrite expressions without
             // preventing thunking we convert syntax like
             // "x=>a=>b" into "a(b(x))"
