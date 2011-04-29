@@ -1,6 +1,7 @@
 /**
- * Builtin compiler passes for JQuery templates.
- * 
+ * Builtin compiler passes for JQuery templates
+ * based on http://wiki.jqueryui.com/w/page/37898666/Template
+ *
  * @author Mike Samuel <mikesamuel@gmail.com>
  */
 

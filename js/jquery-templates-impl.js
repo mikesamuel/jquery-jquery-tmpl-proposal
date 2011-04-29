@@ -1,6 +1,7 @@
 /**
- * An efficient backend for the JQuery template compiler.
- * 
+ * An efficient backend for the JQuery template compiler
+ * based on http://wiki.jqueryui.com/w/page/37898666/Template
+ *
  * @author Mike Samuel <mikesamuel@gmail.com>
  */
 
@@ -168,7 +169,7 @@ function compileToFunction(parseTree) {
               throw new Error('Malformed {{tmpl}} content: ' + content);
             }
             // The data and options come separated by a comma.
-            // Parsing JavaScript expressions to figure out where a comma 
+            // Parsing JavaScript expressions to figure out where a comma
             // separates two things is hard, so we use a trick.
             // We create an array that we can index into.  The comma that
             // separates the data from the options then simply becomes a

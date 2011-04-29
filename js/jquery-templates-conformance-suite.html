@@ -61,7 +61,7 @@ function trimmedText(node) {
 function extractAndParseTemplates(templateSource) {
   function parseOne(templateSource) {
     return parseTemplate(
-        templateSource,   
+        templateSource,
         $.extend({ "if": TRUTHY, "wrap": TRUTHY },
                  guessBlockDirectives(templateSource)));
   }
@@ -165,7 +165,7 @@ function runTests() {
         pass = normResult === expectedText;
       }
       if (!pass && hasConsole) {
-        console.error("%s !==\n%s", 
+        console.error("%s !==\n%s",
             JSON.stringify(expectedText), JSON.stringify(normResult));
         console.log(
             "parseTrees=%o, postProcessing=%o, data=%o, compiled=%o",
@@ -195,6 +195,12 @@ function runTests() {
 
 <body onload="runTests()">
 <h1>JQuery Templates Conformance Suite</h1>
+
+<p>
+This is a conformance suite for the draft jQuery
+<a href="http://wiki.jqueryui.com/w/page/37898666/Template">template</a>
+language.
+</p>
 
 <p>
 Each row in the tables below is a test case.
@@ -657,5 +663,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Fri Apr 29 10:47:25 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Fri Apr 29 11:39:30 EDT 2011 <!-- hhmts end -->
 </body> </html>

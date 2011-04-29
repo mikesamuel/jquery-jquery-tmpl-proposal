@@ -1,6 +1,7 @@
 /**
- * The frontend of the JQuery template compiler.
- * 
+ * The frontend of the JQuery template compiler
+ * based on http://wiki.jqueryui.com/w/page/37898666/Template
+ *
  * @author Mike Samuel <mikesamuel@gmail.com>
  */
 
@@ -223,7 +224,7 @@ function parseTemplate(templateText, blockDirectives) {
  *
  * @param {Array.<string|Array>|string} parseTree as produced by
  *     {@link #parseTemplate}.
- * @param {function (Array.<string|Array>|string, 
+ * @param {function (Array.<string|Array>|string,
  *                   Array.<Array.<string|Array>>), number}
  *     visitor receives each parse tree node, the stack of its ancestors in
  *     the parse tree, and the index of the parse tree node in its parent or
@@ -251,7 +252,7 @@ function visitAll(parseTree, visitor) {
 /**
  * Given a template parse tree, returns source text that would parse to that
  * parse tree.  This can be useful for debugging but not required.
- * 
+ *
  * @param {Array.<string|Array>|string} parseTree as produced by
  *     {@link #parseTemplate}.
  * @param {Object.<Number>} opt_blockDirectives.

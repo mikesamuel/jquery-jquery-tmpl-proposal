@@ -914,7 +914,7 @@ function testWrapOutsidePcdata() {
 }
 
 function testPartialWrapFails() {
-  assertRewriteFails(  
+  assertRewriteFails(
       {  // Wrap body ends inside a tag context.
         "foo": "foo {{wrap}}<a href=\"${url}\"{{/wrap}} bar"
       });

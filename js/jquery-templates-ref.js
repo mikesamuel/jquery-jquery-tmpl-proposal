@@ -1,5 +1,6 @@
 /**
- * A simple inefficient backend for the JQuery template compiler.
+ * A simple inefficient backend for the JQuery template compiler
+ * based on http://wiki.jqueryui.com/w/page/37898666/Template
  *
  * @author Mike Samuel <mikesamuel@gmail.com>
  */
