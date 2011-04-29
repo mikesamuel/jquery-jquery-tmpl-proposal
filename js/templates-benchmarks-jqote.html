@@ -1,0 +1,158 @@
+<!DOCTYPE HTML>
+<!-- From https://github.com/brianjlandau/js-templates-benchmark/blob/master/jqote_benchmark.html -->
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <title>JS Template Benchmarks: jQote</title>
+  <script src="jquery-1.5.2.js"></script>
+  <script src="jquery.benchmark.js"></script>
+  <script>
+var useJqote2 = /[&?]jqote2\b/.test(location.search);
+if (useJqote2) {
+  document.title += 2;
+/*
+ * jQote2 - client-side Javascript templating engine
+ * Copyright (C) 2010, aefxx
+ * http://aefxx.com/
+ *
+ * Dual licensed under the WTFPL v2 or MIT (X11) licenses
+ * WTFPL v2 Copyright (C) 2004, Sam Hocevar
+ *
+ * Date: Thu, Oct 21st, 2010
+ * Version: 0.9.7
+ */
+(function($){var _=false,E1="UndefinedTemplateError",E2="TemplateCompilationError",E3="TemplateExecutionError",A="[object Array]",S="[object String]",F="[object Function]",n=1,c="%",q=/^[^<]*(<[\w\W]+>)[^>]*$/,ts=Object.prototype.toString;function r(e,x){throw ($.extend(e,x),e)}function dns(f) {var a=[];if(ts.call(f)!==A)return _;for(var i=0,l=f.length;i<l;i++)a[i]=f[i].jqote_id;return a.length?a.sort().join('.').replace(/(\b\d+\b)\.(?:\1(\.|$))+/g,"$1$2"):_}function l(s,t){var f,g=[],t=t||c,x=ts.call(s);if(x===F)return s.jqote_id?[s]:_;if(x!==A)return[$.jqotec(s,t)];if(x===A)for(var i=0,l=s.length;i<l;i++)return g.length?g:_}$.fn.extend({jqote:function(x,y){var x=ts.call(x)===A?x:[x],d="";this.each(function(i){var f=$.jqotec(this,y);for(var j=0;j<x.length;j++)d+=f.call(x[j],i,j,x,f)});return d}});$.each({app:"append",pre:"prepend",sub:"html"},function(x,y){$.fn["jqote"+x]=function(e,d,t){var p,r,s=$.jqote(e,d,t),$$=!q.test(s)?function(s){return $(document.createTextNode(s))}:$;if(!!(p=dns(l(e))))r=new RegExp("(^|\\.)"+p.split(".").join("\\.(.*)?")+"(\\.|$)");return this.each(function(){var z=$$(s);$(this)[y](z);(z[0].nodeType===3?$(this):z).trigger("jqote."+x,[z,r])})}});
+$.extend({jqote:function(e,d,t){var s="",t=t||c,f=l(e);if(f===_)r(new Error("Empty or undefined template passed to $.jqote"),{type:E1});d=ts.call(d)!==A?[d]:d;for(var i=0,m=f.length;i<m;i++)for(var j=0;j<d.length;j++)s+=f[i].call(d[j],i,j,d,f[i]);return s},jqotec:function(x,t){var h,e,y,t=t||c,z=ts.call(x);if(z===S&&q.test(x)){e=y=x;if(h=$.jqotecache[x])return h}else{e=z===S||x.nodeType?$(x):x instanceof jQuery?x:null;if(!e[0]||!(y=e[0].innerHTML)&&!(y=e.text()))r(new Error("Empty or undefined template passed to $.jqotec"),{type:E1});if(h=$.jqotecache[$.data(e[0],"jqote_id")])return h}var s="",i,a=y.replace(/\s*<!\[CDATA\[\s*|\s*\]\]>\s*|[\r\n\t]/g,"").split("<"+t).join(t+">\x1b").split(t+">");for(var m=0,k=a.length;m<k;m++)s+=a[m].charAt(0)!=="\x1b"?"out+='"+a[m].replace(/(\\|["'])/g,"\\$1")+"'":(a[m].charAt(1)==="="?";out+=("+a[m].substr(2)+");":(a[m].charAt(1)==="!"?";out+=$.jqotenc(("+a[m].substr(2)+"));":";"+a[m].substr(1)));s="try{"+('var out="";'+s+";return out;").split("out+='';").join("").split('var out="";out+=').join("var out=")+'}catch(e){e.type="'+E3+'";e.args=arguments;e.template=arguments.callee.toString();throw e;}';try{var f=new Function("i, j, data, fn",s)}catch(e){r(e,{type:E2})}i=e instanceof jQuery?$.data(e[0],"jqote_id",n):e;return $.jqotecache[i]=(f.jqote_id=n++,f)},
+jqotefn:function(e){var t=ts.call(e),i=t===S&&q.test(e)?e:$.data($(e)[0],"jqote_id");return $.jqotecache[i]||_},jqotetag:function(s){if(ts.call(s)===S)c=s},jqotenc:function(s){return s.toString().replace(/&(?!\w+;)/g,'&#38;').split('<').join('&#60;').split('>').join('&#62;').split('"').join('&#34;').split("'").join('&#39;')},jqotecache:{}});$.event.special.jqote={add:function(o){var n,h=o.handler,d=!o.data?[]:ts.call(o.data)!==A?[o.data]:o.data;if(!o.namespace)o.namespace="app.pre.sub";if(!d.length||!(n=dns(l(d))))return;o.handler=function(e,m,r){return !r||r.test(n)?h.apply(this,[e,m]):null}}}})(jQuery);
+
+} else {
+/*
+ *       DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+ *                 Version 2, December 2004
+ *
+ * Copyright (C) 2004 Sam Hocevar
+ * 14 rue de Plaisance, 75014 Paris, France
+ * Everyone is permitted to copy and distribute verbatim or modified
+ * copies of this license document, and changing it is allowed as long
+ * as the name is changed.
+ *
+ *          DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+ * TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+ *
+ * 0. You just DO WHAT THE FUCK YOU WANT TO.
+ */
+
+(function($) {
+    var n = 0, cache = {}, tag_chr = '%';
+
+    $.fn.jqote = function(data, tag) {
+        var dom = $([]), tag = tag || tag_chr, reg = new RegExp('<'+tag+'(.+?)'+tag+'>', 'g');
+
+        if ( !$.isArray(data) ) data = [data];
+
+        $(this).each(function(i) {
+            var f = ( fn = cache[$.data(this, 'jqote')] ) ?
+                fn : cache[$.data(this, 'jqote', n++)] = new Function('i, j',
+                    "var t=[]; t.push('" +
+                    $(this).html()
+                        .replace(/\s*<!\[CDATA\[|\]\]>\s*/g, '')
+                        .replace(/[\r\n\t]/g, '\\\n')
+                        .replace(reg, function(m){return m.replace(/'/g, '\x1a');})
+                        .split('<'+tag+'=').join("\x1a,")
+                        .replace(reg, "\x1a); $1 t.push(\x1a")
+                        .split(tag+'>').join(",\x1a")
+                        .split("'").join("\\'")
+                        .split("\x1a").join("'") +
+                    "'); return $(t.join(''));"
+                );
+
+            for ( j=0; j < data.length; j++ )
+                dom.push(f.call(data[j], i, j));
+        });
+
+        return dom;
+    };
+
+    $.jqote_tag = function(c) {
+        tag_chr = c;
+    };
+})(jQuery);
+}
+  </script>
+</head>
+<body>
+  <div id="report">
+    <h1>JS Template Benchmarks: jQote<script>if (useJqote2) { document.write(2); }</script></h1>
+
+    <div id="results">
+      <ul>
+        <li>Simple Test: <span class="stat" id="simple_test"></span></li>
+        <li>Loop Test: <span class="stat" id="loop_test"></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="output"></div>
+
+  <script type="text/x-jqote-template" id="info-tmpl">
+  <![CDATA[
+    <div class="test">
+      <h2>This is a test of <%= this.name %></h2>
+      <p>The homepage is <a href="<%= this.url %>"><%= this.url %></a>.</p>
+      <p>The sources is: <%= this.source %></p>
+    </div>
+  ]]>
+  </script>
+
+  <script type="text/x-jqote-template" id="comment-tmpl">
+    <div class="comments">
+      <h3><%= this.header %></h3>
+      <ul>
+      <% $.each(this.comments, function(i, comment){ %>
+        <li class="comment">
+          <h5><%= comment.name %></h5>
+          <p><%= comment.body %></p>
+        </li>
+      <% }); %>
+      </ul>
+    </div>
+  </script>
+
+  <script type="text/javascript">
+    $.benchmarks.test_simple = function(){
+      var result = $('#info-tmpl').jqote({
+        name: 'jQote',
+        url: 'http://aefxx.com/jquery-plugins/jqote/',
+        source: 'http://aefxx.com/files/jquery.jqote.js'
+      });
+      if (useJqote2) {
+        output.append(result);
+      } else {
+        result.appendTo(output);
+      }
+    };
+
+    $.benchmarks.loop_test = function(){
+      var data = {
+        header: "My Post Comments",
+        comments: [
+          {name: "Joe", body: "Thanks for this post!"},
+          {name: "Sam", body: "Thanks for this post!"},
+          {name: "Heather", body: "Thanks for this post!"},
+          {name: "Kathy", body: "Thanks for this post!"},
+          {name: "George", body: "Thanks for this post!"}
+        ]
+      };
+      var result = $('#comment-tmpl').jqote(data);
+      if (useJqote2) {
+        output.append(result);
+      } else {
+        result.appendTo(output);
+      }
+    };
+
+    $.benchmark(1000, '#simple_test', $.benchmarks.test_simple);
+    $.benchmark(1000, '#loop_test', $.benchmarks.loop_test);
+  </script>
+</body>
+</html>

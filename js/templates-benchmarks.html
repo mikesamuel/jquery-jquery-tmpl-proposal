@@ -1,0 +1,49 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html><head>
+<title>Templates Benchmarks</title>
+<style>iframe { width: 100% }</style>
+</head>
+
+<body>
+<h1>Templates Benchmarks</h1>
+<p>
+Benchmarks based on
+<a href="http://www.viget.com/extend/benchmarking-javascript-templating-libraries/">Brian Landau's template benchmark</a>.
+</p>
+
+<table id=benchmarks width=100%>
+</table>
+
+
+<script>
+var benchmarks = [
+  { name: "jqote", url: "templates-benchmarks-jqote.html" },
+  { name: "jqote2", url: "templates-benchmarks-jqote.html?jqote2" },
+  { name: "jquery fast", url: "templates-benchmarks-jquery.html" },
+  { name: "jquery reference", url: "templates-benchmarks-jquery.html?reference" }
+];
+
+var benchmarksTable = document.getElementById('benchmarks');
+
+var bmIndex = 0;
+function signalDone() {
+  if (bmIndex == benchmarks.length) { return; }
+
+  var bm = benchmarks[bmIndex++];
+  var iframe = document.createElement("IFRAME");
+  iframe.src = bm.url;
+  var tr = document.createElement("TR");
+  var th = document.createElement("TD");
+  th.appendChild(document.createTextNode(bm.name));
+  tr.appendChild(th);
+  var td = document.createElement("TD");
+  td.appendChild(iframe);
+  tr.appendChild(td);
+  benchmarksTable.appendChild(tr);
+}
+
+signalDone();  // Start it running
+</script>
+
+
+</body> </html>

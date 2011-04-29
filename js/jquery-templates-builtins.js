@@ -76,6 +76,8 @@ function compileBundle(parseTrees, exclusion) {
   return result;
 }
 
+$["templates"] = {};
+
 $["template"] = function self(name, templateSource) {
   var parseTrees;
   if (arguments.length === 1) {

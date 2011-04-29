@@ -10,6 +10,9 @@
  * @define {boolean}
  * True if malformed templates should result in informative error messages.
  * May be turned off in production to reduce minified size.
+ * When false, most of the error reporting is turned off during parsing and
+ * compilation, so the production bundle should be used with templates that
+ * have already passed basic sanity checks.
  */
 var DEBUG = true;
 

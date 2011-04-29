@@ -28,11 +28,11 @@ var testFilter = /(?:)/;
 var implementationName;
 (function () {
   if (/[&?]reference(?=[=&]|$)/.test(location.search)) {
-    document.write('<script src="jquery-templates-ref.js"></script>');
+    document.write('<script src="jquery-templates-ref.js"><\/script>');
     DEBUG = false;
     implementationName = "REFERENCE";
   } else {
-    document.write('<script src="jquery-templates-impl.js"></script>');
+    document.write('<script src="jquery-templates-impl.js"><\/script>');
     implementationName = "STRAPPEND";
   }
   var match = location.search.match(/[&?]testFilter=([^&]*)/);
@@ -655,5 +655,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Fri Apr 29 12:19:25 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Fri Apr 29 15:25:20 EDT 2011 <!-- hhmts end -->
 </body> </html>
