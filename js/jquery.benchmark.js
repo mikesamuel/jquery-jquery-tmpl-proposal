@@ -30,7 +30,8 @@ $.runBenchmark = function () {
     var endTime = +new Date;
     if (times !== 1) { output.empty(); }
     var result = (endTime-startTime)/times;
-    $(result_selector).append(result.toFixed(3) + "/run for " + times + ". ");
+    $(result_selector).append(
+        result.toFixed(3) + "/run for " + times + ". &nbsp; ");
 
     setTimeout($.runBenchmark, 100);
   },10);
