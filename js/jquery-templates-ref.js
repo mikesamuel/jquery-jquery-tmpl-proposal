@@ -94,7 +94,7 @@ function compileToFunction(parseTree) {
         var calleeData = dataAndOptions[0];
         var calleeOptions = dataAndOptions[1];
         var calleeName = match[2];
-        return $.template(/\W/.test(calleeName) ? $(calleeName) : calleeName)
+        return $["template"](/\W/.test(calleeName) ? $(calleeName) : calleeName)
             .tmpl(calleeData, calleeOptions);
       case "$":
         var contentBefore = "", contentAfter = "";
