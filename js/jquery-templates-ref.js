@@ -57,7 +57,7 @@ function compileToFunction(parseTree) {
         var extensions = {};
         extensions[key] = -1;
         extensions[value] = null;
-        var childScope = extendTemplateScope(scope, extensions); 
+        var childScope = extendTemplateScope(scope, extensions);
         var htmlBuffer = "";
         $.each(
             // Expression is not evaluated in childScope.
