@@ -176,10 +176,8 @@ function compileToFunction(parseTree) {
                 // If the content specifies neither data nor options, use the
                 // arguments without the overhead of a call to $.extend.
                 : "arguments",
-                ",$.template(",
-                /\W/.test(match[2])	// Fetch when the content is a selector.
-                ? "$(" : "(",
-                escapeJsValue(match[2]),
+                ",$.template((",
+                match[2],
                 ")).tmpl(", tmpName, "[0],", tmpName, "[1]))");
 
           // {html} and {wrap} are handled by translation to ${...} and ${tmpl}

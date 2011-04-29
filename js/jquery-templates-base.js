@@ -29,7 +29,7 @@ var FALSEY = 0;
 var HTML_SNIPPET_RE = (
     "(?:"
     + "[^${]"	// A char that can't start a marker or a substitution,
-    + "|\\{(?!\\{/?[a-z])"	// A curly bracket that doesn't start a marker.
+    + "|\\{(?!\\{/?[=a-z])"	// A curly bracket that doesn't start a marker.
     + "|\\$(?!\\{)"	// A dollar that does not start a marker.
     + ")+");
 
@@ -126,7 +126,7 @@ function guessBlockDirectives(templateText) {
   templateText.replace(
       TOKEN,
       function (tok) {
-        var match = tok.match(/^\{\{\/([a-z][a-z0-9]*)[\s\S]*\}\}$/i);
+        var match = tok.match(/^\{\{\/(=|[a-z][a-z0-9]*)[\s\S]*\}\}$/i);
         if (match) {
           blockDirectives[match[1]] = TRUTHY;
         }
@@ -185,7 +185,7 @@ function parseTemplate(templateText, blockDirectives) {
   $.each(
       templateText.match(TOKEN) || [],
       function (_, token) {
-        var m = token.match(/^\{\{(\/?)([a-z][a-z0-9]*)([\s\S]*)\}\}$/i);
+        var m = token.match(/^\{\{(\/?)(=|[a-z][a-z0-9]*)([\s\S]*)\}\}$/i);
         if (m) {	// A marker.
           // "/" in group 1 if a close.  Name in group 2.  Content in group 3.
           if (m[1]) {	// An end marker
@@ -212,7 +212,9 @@ function parseTemplate(templateText, blockDirectives) {
               // Filed as https://bugs.webkit.org/show_bug.cgi?id=59795
               Function("(" + top[top.length - 1][1] + ")");
             } catch (e) {
-              throw new Error("Invalid template substitution: " + content);
+              throw new Error(
+                  "Invalid template substitution: "
+                  + token.substring(2, token.length - 1));
             }
           }
         } else {	// An HTML snippet.

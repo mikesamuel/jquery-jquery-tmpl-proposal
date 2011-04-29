@@ -218,6 +218,14 @@ elements will have all templates extracted and compiled as a bundle
 and the template with <code>id="main"</code> will be the one applied.
 </p>
 
+<h2>Usage</h2>
+<p>To test the reference implementation, add
+<code>?reference</code> to the URL.</p>
+<p>To run just some tests, add <code>?testFilter=&lt;RegExp&gt;</code>
+where <code>&lt;RegExp&gt;</code> matches the rightmost column, the
+test description.</p>
+<p>To turn off logging to the console, add <code>?nolog</code> to the URL.</p>
+
 <h2>Neither bells nor whistles</h2>
 <p>
 The tests below test the built-in operators, and plugins that ship by default.
@@ -258,6 +266,13 @@ The tests below test the built-in operators, and plugins that ship by default.
     <td>&#xd800;-&#xdc00;</td>
     <td></td>
     <th>Orphaned surrogates preserved</th>
+  </tr>
+  <tr>
+    <td>a&#x2028;b${'\u2029'}c</td>
+    <td><xmp>{}</xmp></td>
+    <td>a&#x2028;b&#x2029;c</td>
+    <td></td>
+    <th>Unusual newlines</th>
   </tr>
   <tr>
     <td><xmp><span style=color:red>Hello</span>, World!</xmp></td>
@@ -436,7 +451,7 @@ The tests below test the built-in operators, and plugins that ship by default.
   <tr>
     <td><xmp>
       <script type="text/x-jquery-tmpl" id="main">
-        this x=${x}, {{tmpl that}}
+        this x=${x}, {{tmpl "that"}}
       </script>
       <script type="text/x-jquery-tmpl" id="that">
         that x=(${x})
@@ -450,7 +465,7 @@ The tests below test the built-in operators, and plugins that ship by default.
   <tr>
     <td><xmp>
       <script type="text/x-jquery-tmpl" id="main">
-        this x=${x}, {{tmpl({x: "y"}) that}}
+        this x=${x}, {{tmpl({x: "y"}) "that"}}
       </script>
       <script type="text/x-jquery-tmpl" id="that">
         that x=(${x})
@@ -490,7 +505,7 @@ The tests below test the built-in operators, and plugins that ship by default.
     <th>Undefined member</th>
   </tr>
   <tr>
-    <td><xmp>{{if n < 0}}-{{tmpl({ n: -n }) main}}{{else n >= 1}}.{{tmpl({n: n - 1}) main}}{{/if}}</xmp></td>
+    <td><xmp>{{if n < 0}}-{{tmpl({ n: -n }) "main"}}{{else n >= 1}}.{{tmpl({n: n - 1}) "main"}}{{/if}}</xmp></td>
     <td><xmp>{ n: -3 }</xmp></td>
     <td>-...</td>
     <td></td>
@@ -617,7 +632,7 @@ $.templatePlugins.splice(0, 0, function (parseTrees) {
       switch (parseTree[0]) {
         case "tmpl": case "wrap":
           var match = parseTree[1].match(TMPL_DIRECTIVE_CONTENT);
-          if (match && match[2] === "notYetLoaded") {
+          if (match && match[2] === '"notYetLoaded"') {
             needToImport = true;
           }
       }
@@ -652,7 +667,7 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
     <th>Format date plugin</th>
   </tr>
   <tr>
-    <td><xmp>Main calls and {{tmpl notYetLoaded}}</xmp></td>
+    <td><xmp>Main calls and {{tmpl "notYetLoaded"}}</xmp></td>
     <td><xmp>{}</xmp></td>
     <td>Main calls and Loaded just in time!</td>
     <td></td>
@@ -662,5 +677,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Fri Apr 29 18:02:12 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Fri Apr 29 19:08:59 EDT 2011 <!-- hhmts end -->
 </body> </html>

@@ -79,19 +79,19 @@ function compileBundle(parseTrees, exclusion) {
 $["templates"] = {};
 
 $["template"] = function self(name, templateSource) {
+  var t = $["templates"];
   var parseTrees;
   if (arguments.length === 1) {
     name = "" + name;
     if (name.indexOf("<") + 1) {
       return self(null, name);
-    } else {
-      if (needsCompile(name)) {
-        parseTrees = {};
-        parseTrees[name] = $["templates"][name];
-        compileBundle(parseTrees);
-      }
-      return $["templates"][name];
     }
+    if (needsCompile(name)) {
+      parseTrees = {};
+      parseTrees[name] = t[name];
+      compileBundle(parseTrees);
+    }
+    return t[name];
   }
   var parseTree = parseTemplate(
       templateSource,
@@ -100,5 +100,5 @@ $["template"] = function self(name, templateSource) {
   if (name == null) {
     return compileBundle(parseTrees = { "_": parseTree }, "_");
   }
-  $["templates"][name] = parseTree;
+  t[name] = parseTree;
 };
