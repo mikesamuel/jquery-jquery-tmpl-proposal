@@ -14,6 +14,8 @@ $.runBenchmark = function () {
     return; 
   }
 
+  $.benchmarkRunning = true;
+
   var task = queue[0];
   queue.splice(0, 1);
 
@@ -41,7 +43,6 @@ $.benchmark = function(times, result_selector, func){
 
   queue.push([times, result_selector, func]);
   if (!$.benchmarkRunning) {
-    $.benchmarkRunning = true;
     $.runBenchmark();
   }
 };
