@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>jQuery Templates Benchmarks</title>
+<script src="contextDefs.js"></script>
+<script src="escapers.js"></script>
+<script src="jquery-1.5.2.js"></script>
+<script src="jquery-templates-base.js"></script>
+<script><!--
+var implementationName;
+(function () {
+  if (/[&?]reference(?=[=&]|$)/.test(location.search)) {
+    document.write('<script src="jquery-templates-ref.js"></script>');
+    DEBUG = false;
+    implementationName = "REFERENCE";
+  } else {
+    document.write('<script src="jquery-templates-impl.js"></script>');
+    implementationName = "STRAPPEND";
+  }
+  var match = location.search.match(/[&?]testFilter=([^&]*)/);
+  if (match) {
+    testFilter = new RegExp(decodeURIComponent(match[1]), "i");
+  }
+})();
+//--></script>
+<script src="jquery-templates-builtins.js"></script>
+</head>
+<body>
+
+<p>Simple: <span id="simple_test"></span></p>
+<p>Loop: <span id="loop_test"></span></p>
+
+<div id="output"></div>
+
+<script>
+var output = $("#output").empty();
+
+$.benchmarks = {};
+$.benchmarks.test_simple = function(){
+  var story_tmp = $.template(
+     '<div class="test"><h2>This is a test of ${name}</h2>'
+     + '<p>The homepage is <a href="${url}">${url}</a>.</p>'
+     + '<p>The sources is: ${source}</p></div>');
+  output.append(story_tmp.tmpl({
+    name: 'jQuery Templates',
+    url: 'http://plugins.jquery.com/project/jquerytemplate',
+    source: 'http://plugins.jquery.com/files/jquery.template.js.txt'
+  }));
+};
+
+$.benchmarks.loop_test = function(){
+    var comment_tmp = $.template(
+        '<li class="comment"><h5>${name}</h5><p>${body}</p></li>');
+    output.append('<div class="comments"><h3>Comments</h3><ul></ul></div>');
+    var ul = $('#output .comments:last ul:last');
+    var comments = [
+      {name: "Joe", body: "Thanks for this post!"},
+      {name: "Sam", body: "Thanks for this post!"},
+      {name: "Heather", body: "Thanks for this post!"},
+      {name: "Kathy", body: "Thanks for this post!"},
+      {name: "George", body: "Thanks for this post!"}
+    ];
+    comments_length = comments.length;
+    for (var i=0; i < comments_length; i++){
+      ul.append(comment_tmp, comments[i]);
+    }
+  };
+
+
+// based on methodology developed by PPK:
+// http://www.quirksmode.org/blog/archives/2009/08/when_to_read_ou.html
+$.benchmark = function(times, result_selector, func){
+  var i = times;
+  var startTime = +new Date;
+  while (--i >= 0) { func(); }
+
+  // Intentionally delay sampling endTime until after DOM has been rendered.
+  setTimeout(function () {
+    var endTime = +new Date;
+    var result = (endTime-startTime)/times;
+    $(result_selector).text(result.toFixed(3));
+    output.empty();
+  },10);
+};
+
+$.benchmark(1000, '#simple_test', $.benchmarks.test_simple);
+$.benchmark(1000, '#loop_test', $.benchmarks.loop_test);
+</script>
+
+<hr>
+<address></address>
+<!-- hhmts start -->Last modified: Fri Apr 29 13:56:03 EDT 2011 <!-- hhmts end -->
+</body> </html>

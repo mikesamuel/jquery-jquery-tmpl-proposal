@@ -64,10 +64,10 @@ function compileBundle(parseTrees, exclusion) {
     };
   }
   var result;
-  $.each(makerPrepassCaller($["templatePlugins"].length)(parseTrees),
+  $.each(makePrepassCaller($["templatePlugins"].length)(parseTrees),
          function (templateName, parseTree) {
            var tmplObj = { "tmpl": compileToFunction(parseTree) };
-           if (templateName == exclusion) {
+           if (templateName !== exclusion) {
              $["templates"][templateName] = tmplObj;
            } else {
              result = tmplObj;
@@ -76,16 +76,20 @@ function compileBundle(parseTrees, exclusion) {
   return result;
 }
 
-$["template"] = function (name, templateSource) {
+$["template"] = function self(name, templateSource) {
   var parseTrees;
   if (arguments.length === 1) {
     name = "" + name;
-    if (needsCompile(name)) {
-      parseTrees = {};
-      parseTrees[name] = $["templates"][name];
-      compileBundle(parseTrees);
+    if (name.indexOf("<") + 1) {
+      return self(null, name);
+    } else {
+      if (needsCompile(name)) {
+        parseTrees = {};
+        parseTrees[name] = $["templates"][name];
+        compileBundle(parseTrees);
+      }
+      return $["templates"][name];
     }
-    return $["templates"][name];
   }
   var parseTree = parseTemplate(
       templateSource,
