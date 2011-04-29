@@ -477,6 +477,23 @@ The tests below test the built-in operators, and plugins that ship by default.
     <th>Call with different data</th>
   </tr>
   <tr>
+    <td><xmp>
+      <script type="text/x-jquery-tmpl" id="main">
+        this x=${++x}, {{tmpl "that" + ++x}}
+      </script>
+      <script type="text/x-jquery-tmpl" id="that2">
+        that x=(${++x})
+      </script>
+      <script type="text/x-jquery-tmpl" id="that1">
+        wrong target
+      </script>
+    </xmp></td>
+    <td><xmp>{ x: 0 }</xmp></td>
+    <td>this x=1, that x=(3)</td>
+    <td></td>
+    <th>Template Order of Evaluation</th>
+  </tr>
+  <tr>
     <td><xmp>${1}${1}</xmp></td>
     <td><xmp>{}</xmp></td>
     <td>11</td>
@@ -677,5 +694,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Fri Apr 29 19:08:59 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Fri Apr 29 19:39:35 EDT 2011 <!-- hhmts end -->
 </body> </html>

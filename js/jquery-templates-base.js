@@ -33,7 +33,7 @@ var HTML_SNIPPET_RE = (
     + "|\\$(?!\\{)"	// A dollar that does not start a marker.
     + ")+");
 
-/** Regular expression text for a substitution.  ${...} or ${{...}}. @const */
+/** Regular expression text for a substitution.  ${...}. @const */
 var SUBSTITUTION_RE = (
     "\\$\\{"
     + "[^}]*"	// ${...} cannot contain curlies.  Use {{=...}} for that.
