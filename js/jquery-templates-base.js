@@ -231,36 +231,6 @@ function parseTemplate(templateText, blockDirectives) {
 }
 
 
-// Utilities for parser plugins and backends.
-
-/**
- * Walks a parse tree (pre-order) applying the given visitor to each node.
- *
- * @param {Array.<string|Array>|string} parseTree as produced by
- *     {@link #parseTemplate}.
- * @param {function (Array.<string|Array>|string,
- *                   Array.<Array.<string|Array>>), number}
- *     visitor receives each parse tree node, the stack of its ancestors in
- *     the parse tree, and the index of the parse tree node in its parent or
- *     2 if there is no parent.
- */
-function visitAll(parseTree, visitor) {
-  // Stack of ancestor nodes so that a visitor may move a node within its
-  // parent.
-  var ancestorStack = [];
-  return (
-    function walk(parseTree, indexInParent) {
-      visitor(parseTree, ancestorStack, indexInParent);
-      if (typeof parseTree !== "string") {
-        var n = parseTree.length;
-        ancestorStack.push(parseTree);
-        for (var i = 2; i < n; ++i) { walk(parseTree[i], i); }
-        --ancestorStack.length;
-      }
-    })(parseTree, 2);
-}
-
-
 // Utilities for debugging parser plugins.
 
 /**
