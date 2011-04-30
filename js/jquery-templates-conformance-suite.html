@@ -584,6 +584,34 @@ bar</td>
     <td></td>
     <th>Catch obviously broken expressions early.</th>
   </tr>
+  <tr>
+    <td><xmp>${arguments[0]}</xmp></td>
+    <td><xmp>{ arguments: [42] }</xmp></td>
+    <td>42</td>
+    <td></td>
+    <th>"arguments" as a data key</th>
+  </tr>
+  <tr>
+    <td><xmp>${arguments[0]}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Error: arguments is not defined</td>
+    <td></td>
+    <th>"arguments" not present as a data key</th>
+  </tr>
+  <tr>
+    <td><xmp>${delete arguments, arguments[0]}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Error: arguments is not defined</td>
+    <td></td>
+    <th>"arguments" really not present as a data key</th>
+  </tr>
+  <tr>
+    <td><xmp>${$data.arguments = 42}, ${arguments}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>42, 42</td>
+    <td></td>
+    <th>"arguments" really not present as a data key</th>
+  </tr>
 </table>
 
 <h2>Plugin Tests</h2>
@@ -708,5 +736,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Fri Apr 29 20:42:33 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Sat Apr 30 15:43:27 EDT 2011 <!-- hhmts end -->
 </body> </html>

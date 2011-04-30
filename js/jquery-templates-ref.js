@@ -30,7 +30,15 @@ function compileToFunction(parseTree) {
         "$data", "$item",
         "$data = $data || {};"
         + "$item = $item || {};"
-        + "with ($data) { return (" + expressionText + ") }")(scope, options);
+        // Make sure that "arguments" can not be defined.
+        // This will prevent unintentional access to arguments, but will
+        // not prevent property deletion.  We should not try to prevent
+        // deletion.
+        + "with (Object.defineProperty(Object.create(null), 'arguments', {"
+        + "'get': function () {"
+        +   "throw new Error('arguments is not defined');"
+        + "}})) {"
+        + "with ($data) { return (" + expressionText + ") } }")(scope, options);
     return result;
   }
 
