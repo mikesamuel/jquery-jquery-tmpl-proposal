@@ -21,18 +21,30 @@ table.testtable > * > tr > td:nth-of-type(2) {
 <script src="contextDefs.js"></script>
 <script src="escapers.js"></script>
 <script src="jquery-1.5.2.js"></script>
-<script src="jquery-templates-base.js"></script>
-<script><!--
+<script>
 if (!Date.now) { Date.now = function () { return +new Date; }; }
 var testFilter = /(?:)/;
 var implementationName;
 (function () {
   if (/[&?]reference(?=[=&]|$)/.test(location.search)) {
-    document.write('<script src="jquery-templates-ref.js"><\/script>');
-    DEBUG = false;
+    document.write(
+        '<script src="jquery-templates-base.js"><\/script>',
+        '<script src="jquery-templates-ref.js"><\/script>',
+        '<script src="jquery-templates-builtins.js"><\/script>',
+        '<script>DEBUG = false;<\/script>'
+        );
     implementationName = "REFERENCE";
+  } else if (/[&?]compressed/.test(location.search)) {
+    document.write(
+        '<script src="jquery-templates-standalone-compiled.js"><\/script>',
+        '<script>DEBUG = false;<\/script>'
+        );
+    implementationName = "MINIFIED";
   } else {
-    document.write('<script src="jquery-templates-impl.js"><\/script>');
+    document.write(
+        '<script src="jquery-templates-base.js"><\/script>',
+        '<script src="jquery-templates-impl.js"><\/script>',
+        '<script src="jquery-templates-builtins.js"><\/script>');
     implementationName = "STRAPPEND";
   }
   var match = location.search.match(/[&?]testFilter=([^&]*)/);
@@ -41,7 +53,6 @@ var implementationName;
   }
 })();
 //--></script>
-<script src="jquery-templates-builtins.js"></script>
 <script>
 var hasConsole = typeof console !== "undefined"
     && !/[&?]nolog\b/.test(location.search);
@@ -51,12 +62,7 @@ function trimmedText(node) {
 }
 
 function extractAndParseTemplates(templateSource) {
-  function parseOne(templateSource) {
-    return parseTemplate(
-        templateSource,
-        $.extend(DEFAULT_BLOCK_DIRECTIVES,
-                 guessBlockDirectives(templateSource)));
-  }
+  $.templates = {};
 
   var parseTrees = {};
   var leftover = templateSource.replace(
@@ -70,18 +76,17 @@ function extractAndParseTemplates(templateSource) {
         oneTemplate = oneTemplate.replace(/^\s+|\s+$/g, "");
         hasConsole && console.group("parse " + id);
         try {
-          parseTrees[id] = parseOne(oneTemplate);
+          $.template(id, oneTemplate);
         } finally {
           hasConsole && console.groupEnd();
         }
         return "";
       });
   if (leftover === templateSource) {
-    parseTrees.main = parseOne(templateSource);
+    $.template("main", templateSource);
   } else if (/\S/.test(leftover = leftover.replace(/<!--[\s\S]*?-->/g, ""))) {
     throw new Error("Unparsed content: " + leftover);
   }
-  return parseTrees;
 }
 
 function runTests() {
@@ -121,23 +126,12 @@ function runTests() {
       var parseTrees = null;
       var compiled = {};
       try {
-        parseTrees = extractAndParseTemplates(templateSource);
-        var processedParseTrees = JSON.parse(JSON.stringify(parseTrees));
-        $.each($.templatePlugins, function (i, plugin) {
-          processedParseTrees = plugin(processedParseTrees);
-        });
-        $.each(processedParseTrees, function (k, v) {
-          hasConsole && console.group("compile " + k);
-          try {
-            compiled[k] = { tmpl: compileToFunction(v) };
-            hasConsole && console.log("compile ok");
-          } finally {
-            hasConsole && console.groupEnd("compile " + k);
-          }
-        });
         data = new Function("return (" + dataSource + ")")();
-        $.templates = compiled;
-        result = compiled.main.tmpl(data, {});
+        extractAndParseTemplates(templateSource);
+        parseTrees = JSON.parse(JSON.stringify($.templates));
+        var parseTrees = $.templates;
+        var compiled = $.template("main");
+        result = compiled.tmpl(data, {});
       } catch (ex) {
         hasConsole && ex.stack && console.error(ex.stack);
         result = "Error:" + (ex.message || ex.description);
@@ -160,8 +154,8 @@ function runTests() {
         console.error("%s !==\n%s",
             JSON.stringify(expectedText), JSON.stringify(normResult));
         console.log(
-            "parseTrees=%o, postProcessing=%o, data=%o, compiled=%o",
-            parseTrees, processedParseTrees, data, compiled);
+            "parseTrees=%o, data=%o, compiled=%o",
+            parseTrees, data, compiled);
       }
     } finally {
       row.className = pass ? "pass" : "fail";
@@ -562,14 +556,14 @@ bar</td>
     <td><xmp>{}</xmp></td>
     <td>Error:{{else}} without condition must be last:{{if cond}}foo{{else}}bar{{else}}boo{{/if}}</td>
     <td></td>
-    <th>Missing {{/if}} error message</th>
+    <th>Misplaced {{else}}</th>
   </tr>
   <tr>
     <td><xmp>{{if }}foo{{/if}}</xmp></td>
     <td><xmp>{}</xmp></td>
     <td>Error:{{if}} missing condition:{{if }}foo{{/if}}</td>
     <td></td>
-    <th>Missing {{/if}} error message</th>
+    <th>Missing {{/if}} condition</th>
   </tr>
   <tr>
     <td><xmp>All nature is but art {{unknown}} to thee.</xmp></td>
@@ -751,5 +745,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Sun May  1 09:37:03 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Sun May  1 11:10:58 EDT 2011 <!-- hhmts end -->
 </body> </html>
