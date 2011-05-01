@@ -198,6 +198,20 @@ function parseTemplate(templateText, blockDirectives) {
             top = stack[--stack.length - 1];
           } else {	// A start marker.
             var node = [m[2], m[3]];
+            if (DEBUG && m[2] === "=") {
+              var content = m[3];
+              try {
+                // For some reason, on Safari,
+                //     Function("(i + (j)")
+                // fails with a SyntaxError as expected, but
+                //     Function("return (i + (j)")
+                // does not.
+                // Filed as https://bugs.webkit.org/show_bug.cgi?id=59795
+                Function("(" + m[3] + ")");
+              } catch (e) {
+                throw new Error("Invalid template substitution: " + m[3]);
+              }
+            }
             top.push(node);
             if (blockDirectives[m[2]] === TRUTHY) {
               stack.push(top = node);
@@ -206,18 +220,12 @@ function parseTemplate(templateText, blockDirectives) {
         } else if (token.substring(0, 2) === "${") {	// A substitution.
           top.push(["=", token.substring(2, token.length - 1)]);
           if (DEBUG) {
+            var content = top[top.length - 1][1];
             try {
-              // For some reason, on Safari,
-              //     Function("(i + (j)")
-              // fails with a SyntaxError as expected, but
-              //     Function("return (i + (j)")
-              // does not.
-              // Filed as https://bugs.webkit.org/show_bug.cgi?id=59795
-              Function("(" + top[top.length - 1][1] + ")");
+              // See notes on {{=...}} sanity check above.
+              Function("(" + content + ")");
             } catch (e) {
-              throw new Error(
-                  "Invalid template substitution: "
-                  + token.substring(2, token.length - 1));
+              throw new Error("Invalid template substitution: " + content);
             }
           }
         } else {	// An HTML snippet.

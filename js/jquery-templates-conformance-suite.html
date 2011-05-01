@@ -586,6 +586,13 @@ bar</td>
     <th>Catch obviously broken expressions early.</th>
   </tr>
   <tr>
+    <td><xmp>{{=String()) } { (String()}}</xmp></td>
+    <td><xmp>{ String: function () { return "String!"; } }</xmp></td>
+    <td>Error:Invalid template substitution: String()) } { (String()</td>
+    <td></td>
+    <th>Unbracketing and rebracketing illegal.</th>
+  </tr>
+  <tr>
     <td><xmp>${arguments[0]}</xmp></td>
     <td><xmp>{ arguments: [42] }</xmp></td>
     <td>42</td>
@@ -744,5 +751,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Sun May  1 08:41:44 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Sun May  1 09:37:03 EDT 2011 <!-- hhmts end -->
 </body> </html>

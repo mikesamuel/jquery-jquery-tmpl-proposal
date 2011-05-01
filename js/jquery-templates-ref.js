@@ -34,17 +34,19 @@ function compileToFunction(parseTree) {
   // in the given scope.
   function evaluateInScope(expressionText, scope, options) {
     if (arguments.length !== 3) { throw new Error(); }
-    // Behavior is undefined when expressionText does not have
-    // properly balanced curly brackets and when the variable
-    // 'arguments' is free inside expressionText.
-    var result = new Function(
+    // Flush out expressionText that does not have properly balanced
+    // curly brackets, such as {{= foo()) } { (bar() }}
+    Function("(" + expressionText + ")");
+    // Now that we know that any curlies are properly balanced, go
+    // ahead and wrap it in the proper scope and actually execute it.
+    // We use Function instead of eval to truncate the lexical environment
+    // at the root environment.
+    var result = Function(
         "$data", "$item",
         "$data = $data || {};"
         + "$item = $item || {};"
         // Make sure that "arguments" can not be defined.
-        // This will prevent unintentional access to arguments, but will
-        // not prevent property deletion.  We should not try to prevent
-        // deletion.
+        // This will prevent unintentional access to arguments.
         + "with (Object.defineProperty(Object.create(null), 'arguments', {"
         + "'get': function () {"
         +   "throw new Error('arguments is not defined');"
@@ -117,6 +119,8 @@ function compileToFunction(parseTree) {
             .tmpl(calleeData, calleeOptions);
       case "=":
         var contentBefore = "", contentAfter = "";
+        // Given content ="x=>f=>g",
+        // we get contentBefore="g(f(", content="x", contentAfter="))"
         content = content.replace(
             /(=>\w+)+$/, function (postDethunk) {
               postDethunk = postDethunk.split("=>");
