@@ -33,14 +33,14 @@ function compileToFunction(parseTree) {
         // If there was a value before this one, append them.
         if (hasValue) { javaScriptSource.push("+"); }
         var match;
-        if (typeof parseTree === "string") {	// HTML snippet
+        if (typeof parseTree === "string") {  // HTML snippet
           // 'foo' -> "\'foo\'"
           javaScriptSource.push(escapeJsValue(parseTree));
         } else {
           var kind = parseTree[0], content = parseTree[1],
               len = parseTree.length;
           var tmpName = TEMP_NAME_PREFIX + nestLevel;
-          if (kind === "=") {	// ${...} substitution.
+          if (kind === "=") {  // ${...} substitution.
             // Make sure that + is string-wise.
             // Specifically, ${1}${2} should not compile to (1 + 2).
             if (!hasValue) { javaScriptSource.push("''+"); }
@@ -71,7 +71,7 @@ function compileToFunction(parseTree) {
                 "'function'!==typeof ",
                 tmpName, "?", tmpName, ":", tmpName, ".call(null,arguments))",
                 wrapperEnd);
-          } else if (kind === "if") {	// {{if condition}}...{{/if}}
+          } else if (kind === "if") {  // {{if condition}}...{{/if}}
             // {{if a}}b{{else}}c{{/if}} -> (a ? "b" : "c")
             hasValue = TRUTHY;
             var pos = 2, elseIndex, i;
@@ -111,7 +111,7 @@ function compileToFunction(parseTree) {
               if (!continues) { break; }
             }
             javaScriptSource.push(hasValue ? "))" : "''))");
-          } else if (kind === "each") {	// {{each (key, value) obj}}...{{/each}}
+          } else if (kind === "each") { // {{each (key, value) obj}}...{{/each}}
             // {{each (k, v) ["one", "two"]}}<li value=${k + 1}>${v}{{/each}}
             // -> (tmp0 = [],
             //     $.each(["one", "two"],

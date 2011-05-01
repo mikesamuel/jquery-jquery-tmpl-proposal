@@ -43,18 +43,18 @@ function guessBlockDirectives(templateText) {
  * is
  * <pre>
  * [
- *  "",	// Name of root is blank.
- *  "", // Content of root is blank.
- *  "&lt;b&gt;",	// Zero-th child is a snippet of HTML.
- *  [	// An embedded directive is an array.
- *   "if",	// Name comes first
- *   " sayHello",	// Content of {{if}}
- *   "Hello",	// A snippet of HTML.
- *   ["else", ""],	// {{else}} is an inline directive inside {{if}}.
+ *  "",               // Name of root is blank.
+ *  "",               // Content of root is blank.
+ *  "&lt;b&gt;",      // Zero-th child is a snippet of HTML.
+ *  [                 // An embedded directive is an array.
+ *   "if",            // Name comes first
+ *   " sayHello",     // Content of {{if}}
+ *   "Hello",         // A snippet of HTML.
+ *   ["else", ""],    // {{else}} is an inline directive inside {{if}}.
  *   "Goodbye"
- *  ],	// End of the {{if ...}}...{{/if}}.
- *  "&lt;/b&gt;, ",	// Another snippet of HTML.
- *  ["=", "world"],	// A substitution.
+ *  ],                // End of the {{if ...}}...{{/if}}.
+ *  "&lt;/b&gt;, ",   // Another snippet of HTML.
+ *  ["=", "world"],   // A substitution.
  *  "!"
  * ]
  * </pre>
@@ -75,14 +75,14 @@ function parseTemplate(templateText, blockDirectives) {
       templateText.match(TOKEN) || [],
       function (_, token) {
         var m = token.match(/^\{\{(\/?)(=|[a-z][a-z0-9]*)([\s\S]*)\}\}$/i);
-        if (m) {	// A marker.
+        if (m) {  // A marker.
           // "/" in group 1 if a close.  Name in group 2.  Content in group 3.
-          if (m[1]) {	// An end marker
+          if (m[1]) {  // An end marker
             if (DEBUG && top[0] !== m[2]) {
               throw new Error("Misplaced " + token + " in " + templateText);
             }
             top = stack[--stack.length - 1];
-          } else {	// A start marker.
+          } else {  // A start marker.
             var node = [m[2], m[3]];
             if (DEBUG && m[2] === "=") {
               try {
@@ -102,7 +102,7 @@ function parseTemplate(templateText, blockDirectives) {
               stack.push(top = node);
             }
           }
-        } else if (token.substring(0, 2) === "${") {	// A substitution.
+        } else if (token.substring(0, 2) === "${") {  // A substitution.
           top.push(["=", token.substring(2, token.length - 1)]);
           if (DEBUG) {
             var content = top[top.length - 1][1];
@@ -113,7 +113,7 @@ function parseTemplate(templateText, blockDirectives) {
               throw new Error("Invalid template substitution: " + content);
             }
           }
-        } else {	// An HTML snippet.
+        } else {  // An HTML snippet.
           top.push(token);
         }
       });
