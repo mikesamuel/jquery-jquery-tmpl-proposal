@@ -7,6 +7,17 @@
 
 function compileToFunction(parseTree) {
   if (!Object.create) { Object.create = function () { return {}; }; }
+  if (!Object.defineProperty) {
+    Object.defineProperty = function (obj, prop, pd) {
+      if ("value" in pd) {
+        obj[prop] = pd;
+      } else if (typeof obj.__defineGetter__ !== "undefined") {
+        if ("get" in pd) { obj.__defineGetter__(prop, pd["get"]); }
+        if ("set" in pd) { obj.__defineSetter__(prop, pd["set"]); }
+      }
+      return obj;
+    };
+  }
 
   function createTemplateScope(data) {
     // Object.create(null) creates an object with no prototype.
