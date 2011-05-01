@@ -114,6 +114,25 @@ var DEFAULT_EACH_KEY_VARIABLE_NAME = "$index";
 var DEFAULT_EACH_VALUE_VARIABLE_NAME = "$value";
 
 
+// API name constants
+// These constants help us write code that is JSLint friendly, and compresses
+// well with closure compiler.
+/**
+ * Extern property name for the member of $ that contains plugins to run.
+ * @const
+ */
+var TEMPLATE_PLUGINS_PROP_NAME = "templatePlugins";
+
+/** Name of the map from template names to compiled/parsed template.  @const */
+var TEMPLATES_PROP_NAME = "templates";
+
+/** Name of the extern method used to define/lookup templates.  @const */
+var TEMPLATE_METHOD_NAME = "template";
+
+/** Method of a template object that renders the template.  @const */
+var TMPL_METHOD_NAME = "tmpl";
+
+
 // Parser pipeline phase.
 
 /**

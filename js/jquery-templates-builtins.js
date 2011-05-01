@@ -1,24 +1,9 @@
 /**
- * Builtin compiler passes for JQuery templates
+ * API methods and builtin compiler passes for JQuery templates
  * based on http://wiki.jqueryui.com/w/page/37898666/Template
  *
  * @author Mike Samuel <mikesamuel@gmail.com>
  */
-
-/**
- * Extern property name for the member of $ that contains plugins to run.
- * @const
- */
-var TEMPLATE_PLUGINS_PROP_NAME = "templatePlugins";
-
-/** Name of the map from template names to compiled/parsed template.  @const */
-var TEMPLATES_PROP_NAME = "templates";
-
-/** Name of the extern method used to define/lookup templates.  @const */
-var TEMPLATE_METHOD_NAME = "template";
-
-/** Method of a template object that renders the template.  @const */
-var TMPL_METHOD_NAME = "tmpl";
 
 /**
  * An array of plugin passed, functions that take a parse tree and return
