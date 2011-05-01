@@ -185,7 +185,8 @@ function compileToFunction(parseTree) {
           } else {
             if (DEBUG) {
               throw new Error(
-                  "I do not know how to compile " + renderParseTree(parseTree));
+                  "I do not know how to compile "
+                  + renderParseTree(parseTree, DEFAULT_BLOCK_DIRECTIVES));
             }
           }
         }

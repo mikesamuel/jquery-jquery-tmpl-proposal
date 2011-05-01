@@ -54,7 +54,7 @@ function extractAndParseTemplates(templateSource) {
   function parseOne(templateSource) {
     return parseTemplate(
         templateSource,
-        $.extend({ "if": TRUTHY, "wrap": TRUTHY },
+        $.extend(DEFAULT_BLOCK_DIRECTIVES,
                  guessBlockDirectives(templateSource)));
   }
 
@@ -176,9 +176,7 @@ function runTests() {
   var summary = " " + implementationName
       + " : " + nPasses + " / " + nTests + " in " + (t1 - t0) + " ms";
   document.title += summary;
-  $.each($("h1"), function (_, node) {
-    node.appendChild(document.createTextNode(summary));
-  });
+  $("h1").append(summary);
   document.body.className += (nTests && nTests === nPasses) ? " pass" : " fail";
 
 }
@@ -196,6 +194,9 @@ language.
 
 <p>
 Each row in the tables below is a test case.
+
+<h2>Legend</h2>
+<p>
 The "test" column includes the literal text of a template wrapped in
 an <code>&lt;xmp&gt;</code> element.
 <p>
@@ -220,11 +221,11 @@ and the template with <code>id="main"</code> will be the one applied.
 
 <h2>Usage</h2>
 <p>To test the reference implementation, add
-<code>?reference</code> to the URL.</p>
+<a href="?reference"><code>?reference</code></a> to the URL.</p>
 <p>To run just some tests, add <code>?testFilter=&lt;RegExp&gt;</code>
-where <code>&lt;RegExp&gt;</code> matches the rightmost column, the
+where <code>&lt;RegExp&gt;</code> matches the right-most column, the
 test description.</p>
-<p>To turn off logging to the console, add <code>?nolog</code> to the URL.</p>
+<p>To turn off logging to the console, add <a href="?nolog"><code>?nolog</code></a> to the URL.</p>
 
 <h2>Neither bells nor whistles</h2>
 <p>
@@ -559,7 +560,7 @@ bar</td>
   <tr>
     <td><xmp>{{if cond}}foo{{else}}bar{{else}}boo{{/if}}</xmp></td>
     <td><xmp>{}</xmp></td>
-    <td>Error:{{else}} without condition must be last:{{if cond}}foo{{else}}{{/else}}bar{{else}}{{/else}}boo{{/if}}</td>
+    <td>Error:{{else}} without condition must be last:{{if cond}}foo{{else}}bar{{else}}boo{{/if}}</td>
     <td></td>
     <th>Missing {{/if}} error message</th>
   </tr>
@@ -573,7 +574,7 @@ bar</td>
   <tr>
     <td><xmp>All nature is but art {{unknown}} to thee.</xmp></td>
     <td><xmp>{}</xmp></td>
-    <td>Error:I do not know how to compile {{unknown}}{{/unknown}}</td>
+    <td>Error:I do not know how to compile {{unknown}}</td>
     <td></td>
     <th>Unknown directive name</th>
   </tr>
@@ -619,7 +620,7 @@ bar</td>
 The table below shows the template language extended with a few
 plugins.
 <p>
-<code><b>{{makeid varName}}</b></code> assigns an ID using a
+<code><b>{{makeID varName}}</b></code> assigns an ID using a
 counter and puts it in the variable named <code>varName</code>.
 </p>
 
@@ -629,7 +630,7 @@ var locallyUniqueCounter = 0;
 $.templatePlugins.push(function (parseTrees) {
   return $.each(parseTrees, function rewriteMakeid(_, parseTree) {
     if (typeof parseTree !== "string") {
-      if (parseTree[0] === "makeid") {
+      if (parseTree[0] === "makeID") {
         parseTree[0] = "=";
         parseTree[1] = "($data." + parseTree[1]
             + "='autogenid'+ ++locallyUniqueCounter)";
@@ -712,11 +713,18 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 <table class="testtable" summary="Plugin tests">
   <tr><th>Test</th><th>Data</th><th>Expected</th><th>Actual</th></tr>
   <tr>
-    <td><xmp><ul>{{each(i,v) nums}}<li><input value="${v}" id="{{makeid listItemId}}"><button onclick="alert($('#${listItemId}')[0].value)">say</button>{{/each}}</ul></xmp></td>
+    <td><xmp><ul>{{each(i,v) nums}}<li><input value="${v}" id="{{makeID listItemId}}"><button onclick="alert($('#${listItemId}')[0].value)">say</button>{{/each}}</ul></xmp></td>
     <td><xmp>{ nums: ["One", "Two", "Three"] }</xmp></td>
     <td><ul><li><input value="One" id="autogenid1"><button onclick="alert($('#autogenid1')[0].value)">say</button><li><input value="Two" id="autogenid2"><button onclick="alert($('#autogenid2')[0].value)">say</button><li><input value="Three" id="autogenid3"><button onclick="alert($('#autogenid3')[0].value)">say</button></ul></td>
     <td></td>
-    <th>{{makeid}} plugin</th>
+    <th>{{makeID}} plugin</th>
+  </tr>
+  <tr>
+    <td><xmp><input value="${v}" id="{{makeid listItemId}}"></xmp></td>
+    <td><xmp>{ v: "value" }</xmp></td>
+    <td>Error:I do not know how to compile {{makeid listItemId}}</td>
+    <td></td>
+    <th>directive names case-sensitive</th>
   </tr>
   <tr>
     <td><xmp>Date: ${date}, a number: ${notadate}</xmp></td>
@@ -736,5 +744,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Sat Apr 30 15:43:27 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Sun May  1 08:41:44 EDT 2011 <!-- hhmts end -->
 </body> </html>

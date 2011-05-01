@@ -134,6 +134,9 @@ function guessBlockDirectives(templateText) {
   return blockDirectives;
 }
 
+/** The default set of block directives. @const */
+var DEFAULT_BLOCK_DIRECTIVES = { "if": TRUTHY, "wrap": TRUTHY };
+
 /**
  * Parse a template to a parse tree.
  * Parse trees come in two forms:
@@ -247,12 +250,12 @@ function renderParseTree(parseTree, opt_blockDirectives) {
      if (typeof parseTree === "string") {
        buffer.push(parseTree);
      } else {
-       var kind = parseTree[0], n = parseTree.length;
-       buffer.push("{{", kind, parseTree[1], "}}");
+       var name = parseTree[0], n = parseTree.length;
+       buffer.push("{{", name, parseTree[1], "}}");
        for (var i = 2; i < n; ++i) { render(parseTree[i]); }
        if (n !== 2 || !opt_blockDirectives
-           || opt_blockDirectives[kind] !== TRUTHY) {
-         buffer.push("{{/", kind, "}}");
+           || opt_blockDirectives[name] === TRUTHY) {
+         buffer.push("{{/", name, "}}");
        }
      }
    })(parseTree);
