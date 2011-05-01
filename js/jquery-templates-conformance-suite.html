@@ -21,6 +21,7 @@ table.testtable > * > tr > td:nth-of-type(2) {
 <script src="contextDefs.js"></script>
 <script src="escapers.js"></script>
 <script src="jquery-1.5.2.js"></script>
+<script src="jquery-templates-defs.js"></script>
 <script>
 if (!Date.now) { Date.now = function () { return +new Date; }; }
 var testFilter = /(?:)/;
@@ -28,7 +29,7 @@ var implementationName;
 (function () {
   if (/[&?]reference(?=[=&]|$)/.test(location.search)) {
     document.write(
-        '<script src="jquery-templates-base.js"><\/script>',
+        '<script src="jquery-templates-parser.js"><\/script>',
         '<script src="jquery-templates-ref.js"><\/script>',
         '<script src="jquery-templates-builtins.js"><\/script>',
         '<script>DEBUG = false;<\/script>'
@@ -42,7 +43,7 @@ var implementationName;
     implementationName = "MINIFIED";
   } else {
     document.write(
-        '<script src="jquery-templates-base.js"><\/script>',
+        '<script src="jquery-templates-parser.js"><\/script>',
         '<script src="jquery-templates-impl.js"><\/script>',
         '<script src="jquery-templates-builtins.js"><\/script>');
     implementationName = "STRAPPEND";
@@ -52,7 +53,7 @@ var implementationName;
     testFilter = new RegExp(decodeURIComponent(match[1]), "i");
   }
 })();
-//--></script>
+</script>
 <script>
 var hasConsole = typeof console !== "undefined"
     && !/[&?]nolog\b/.test(location.search);
@@ -216,6 +217,8 @@ and the template with <code>id="main"</code> will be the one applied.
 <h2>Usage</h2>
 <p>To test the reference implementation, add
 <a href="?reference"><code>?reference</code></a> to the URL.</p>
+<p>To test the reference implementation, add
+<a href="?compressed"><code>?compressed</code></a> to the URL.</p>
 <p>To run just some tests, add <code>?testFilter=&lt;RegExp&gt;</code>
 where <code>&lt;RegExp&gt;</code> matches the right-most column, the
 test description.</p>
@@ -745,5 +748,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Sun May  1 11:10:58 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Sun May  1 11:40:07 EDT 2011 <!-- hhmts end -->
 </body> </html>

@@ -1,3 +1,7 @@
+// Adapted from Brian Landau's template benchmark runner.
+// From http://www.viget.com/extend/benchmarking-javascript-templating-libraries/
+
+
 var queue = [];
 
 $.benchmarkRunning = false;
@@ -7,8 +11,9 @@ $.runBenchmark = function () {
     $.benchmarkRunning = false;
     try {
       // Call out to template-benchmarks.html to run next.
-      window.parent.signalDone();
+      window.parent.runNextBenchmark();
     } catch (ex) {
+      if (typeof console !== "undefined") { console.error(ex); }
       // ok
     }
     return; 

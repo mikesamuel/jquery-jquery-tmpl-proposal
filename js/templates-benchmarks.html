@@ -1,51 +1,65 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html><head>
 <title>Templates Benchmarks</title>
-<style>iframe { width: 100% }</style>
+<style>
+iframe { width: 100% }
+table th { width: 8em; font-size: 200% }
+table td, table th { vertical-align: top; text-align: left }
+</style>
 </head>
 
 <body>
-<h1>Templates Benchmarks</h1>
+<h1>Templates Benchmarks (<span id="status"></span>)</h1>
 <p>
 Benchmarks based on
-<a href="http://www.viget.com/extend/benchmarking-javascript-templating-libraries/">Brian Landau's template benchmark</a>.
+<a href="http://www.viget.com/extend/benchmarking-javascript-templating-libraries/">Brian Landau's template benchmark</a>
+of the draft
+<a href="http://wiki.jqueryui.com/w/page/37898666/Template">JQuery templates</a>
+spec.
 </p>
 
-<table id=benchmarks width=100%>
-</table>
+<table id="benchmarks" width="100%"></table>
 
+<script>(function () {
 
-<script>
 var benchmarks = [
-  { name: "jqote2", url: "templates-benchmarks-jqote.html?jqote2" },
-  { name: "jquery fast", url: "templates-benchmarks-jquery.html" },
-  { name: "jquery reference",
+  { name: "jQote2", url: "templates-benchmarks-jqote.html?jqote2" },
+  { name: "jQuery Fast", url: "templates-benchmarks-jquery.html" },
+  { name: "jQuery Reference",
     url: "templates-benchmarks-jquery.html?reference" },
-  { name: "underscore",
+  { name: "jQuery Compressed",
+    url: "templates-benchmarks-jquery.html?compressed" },
+  { name: "Underscore",
     url: "templates-benchmarks-underscore.html" }
 ];
 
-var benchmarksTable = document.getElementById('benchmarks');
+var benchmarksTable = document.getElementById("benchmarks");
+var statusNode = document.getElementById("status");
 
-var bmIndex = 0;
-function signalDone() {
-  if (bmIndex == benchmarks.length) { return; }
+var bmIndex = 0;  // Index into benchmarks above.
+
+window.runNextBenchmark = function () {
+  if (bmIndex == benchmarks.length) {
+    statusNode.innerHTML = "Done";
+    return;
+  }
 
   var bm = benchmarks[bmIndex++];
+  for (var c; (c = statusNode.firstChild);) { statusNode.removeChild(c); }
+  statusNode.appendChild(document.createTextNode("Running " + bm.name));
   var iframe = document.createElement("IFRAME");
   iframe.src = bm.url;
   var tr = document.createElement("TR");
-  var th = document.createElement("TD");
+  var th = document.createElement("TH");
   th.appendChild(document.createTextNode(bm.name));
   tr.appendChild(th);
   var td = document.createElement("TD");
   td.appendChild(iframe);
   tr.appendChild(td);
   benchmarksTable.appendChild(tr);
-}
+};
 
-signalDone();  // Start it running
-</script>
-
-
-</body> </html>
+runNextBenchmark();  // Start it running
+}())</script>
+</body>
+</html>

@@ -7,26 +7,40 @@
   <script src="escapers.js"></script>
   <script src="jquery-1.5.2.js"></script>
   <script src="jquery.benchmark.js"></script>
-  <script src="jquery-templates-base.js"></script>
-  <script><!--
+  <script>
+  if (!Date.now) { Date.now = function () { return +new Date; }; }
+  var testFilter = /(?:)/;
   var implementationName;
   (function () {
     if (/[&?]reference(?=[=&]|$)/.test(location.search)) {
-      document.write('<script src="jquery-templates-ref.js"><\/script>');
-      DEBUG = false;
+      document.write(
+          '<script src="jquery-templates-defs.js"><\/script>',
+          '<script src="jquery-templates-parser.js"><\/script>',
+          '<script src="jquery-templates-ref.js"><\/script>',
+          '<script src="jquery-templates-builtins.js"><\/script>',
+          '<script>DEBUG = false;<\/script>'
+          );
       implementationName = "REFERENCE";
+    } else if (/[&?]compressed/.test(location.search)) {
+      document.write(
+          '<script src="jquery-templates-standalone-compiled.js"><\/script>'
+          );
+      implementationName = "MINIFIED";
     } else {
-      document.write('<script src="jquery-templates-impl.js"><\/script>');
+      document.write(
+          '<script src="jquery-templates-defs.js"><\/script>',
+          '<script src="jquery-templates-parser.js"><\/script>',
+          '<script src="jquery-templates-impl.js"><\/script>',
+          '<script src="jquery-templates-builtins.js"><\/script>'
+          );
       implementationName = "STRAPPEND";
     }
     var match = location.search.match(/[&?]testFilter=([^&]*)/);
     if (match) {
       testFilter = new RegExp(decodeURIComponent(match[1]), "i");
     }
-    document.title += implementationName;
   })();
-  //--></script>
-  <script src="jquery-templates-builtins.js"></script>
+  </script>
 </head>
 <body>
 
