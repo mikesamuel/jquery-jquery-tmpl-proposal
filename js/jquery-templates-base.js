@@ -1,3 +1,5 @@
+/*jslint evil: true, unparam: true, maxerr: 50, indent: 4 */
+
 /**
  * The frontend of the JQuery template compiler
  * based on http://wiki.jqueryui.com/w/page/37898666/Template
@@ -199,7 +201,6 @@ function parseTemplate(templateText, blockDirectives) {
           } else {	// A start marker.
             var node = [m[2], m[3]];
             if (DEBUG && m[2] === "=") {
-              var content = m[3];
               try {
                 // For some reason, on Safari,
                 //     Function("(i + (j)")
@@ -208,7 +209,7 @@ function parseTemplate(templateText, blockDirectives) {
                 // does not.
                 // Filed as https://bugs.webkit.org/show_bug.cgi?id=59795
                 Function("(" + m[3] + ")");
-              } catch (e) {
+              } catch (e1) {
                 throw new Error("Invalid template substitution: " + m[3]);
               }
             }
@@ -224,7 +225,7 @@ function parseTemplate(templateText, blockDirectives) {
             try {
               // See notes on {{=...}} sanity check above.
               Function("(" + content + ")");
-            } catch (e) {
+            } catch (e2) {
               throw new Error("Invalid template substitution: " + content);
             }
           }
@@ -254,18 +255,18 @@ function parseTemplate(templateText, blockDirectives) {
  */
 function renderParseTree(parseTree, opt_blockDirectives) {
   var buffer = [];
-  (function render(parseTree) {
+  (function render(_, parseTree) {
      if (typeof parseTree === "string") {
        buffer.push(parseTree);
      } else {
        var name = parseTree[0], n = parseTree.length;
        buffer.push("{{", name, parseTree[1], "}}");
-       for (var i = 2; i < n; ++i) { render(parseTree[i]); }
+       $.each(parseTree.slice(2), render);
        if (n !== 2 || !opt_blockDirectives
            || opt_blockDirectives[name] === TRUTHY) {
          buffer.push("{{/", name, "}}");
        }
      }
-   })(parseTree);
+   }(2, parseTree));
   return buffer.join("");
 }

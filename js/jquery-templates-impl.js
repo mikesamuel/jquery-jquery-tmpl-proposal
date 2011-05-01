@@ -32,6 +32,7 @@ function compileToFunction(parseTree) {
       function walk(_, parseTree) {
         // If there was a value before this one, append them.
         if (hasValue) { javaScriptSource.push("+"); }
+        var match;
         if (typeof parseTree === "string") {	// HTML snippet
           // 'foo' -> "\'foo\'"
           javaScriptSource.push(escapeJsValue(parseTree));
@@ -57,7 +58,7 @@ function compileToFunction(parseTree) {
             content = content.replace(
                 /(=>\w+)+$/, function (postDethunk) {
                   postDethunk = postDethunk.split("=>");
-                  wrapperEnd = Array(postDethunk.length).join(")");
+                  wrapperEnd = new Array(postDethunk.length).join(")");
                   wrapperStart = postDethunk.reverse().join("(");
                   return "";
                 });
@@ -73,16 +74,17 @@ function compileToFunction(parseTree) {
           } else if (kind === "if") {	// {{if condition}}...{{/if}}
             // {{if a}}b{{else}}c{{/if}} -> (a ? "b" : "c")
             hasValue = TRUTHY;
-            for (var pos = 2, elseIndex; 1; pos = elseIndex + 1) {
+            var pos = 2, elseIndex, i;
+            for (; true; pos = elseIndex + 1) {
               elseIndex = len;
-              for (var i = pos; i < elseIndex; ++i) {
+              for (i = pos; i < elseIndex; ++i) {
                 if (parseTree[i][0] === "else") { elseIndex = i; }
               }
               var cond = pos < len
                   ? (pos === 2 ? parseTree : parseTree[pos - 1])[1] : "";
               var continues = /\S/.test(cond);
               if (DEBUG && !continues) {
-                if (pos == 2) {
+                if (pos === 2) {
                   throw new Error(
                       "{{if}} missing condition:"
                       + renderParseTree(parseTree, {}));
@@ -123,7 +125,7 @@ function compileToFunction(parseTree) {
             // Then after iteration is complete, the last element of the comma
             // operator joins the array.  That joined array is the result of the
             // compiled each operator.
-            var match = content.match(EACH_DIRECTIVE_CONTENT);
+            match = content.match(EACH_DIRECTIVE_CONTENT);
             if (DEBUG && !match) {
               throw new Error('Malformed {{each}} content: ' + content);
             }
@@ -151,7 +153,7 @@ function compileToFunction(parseTree) {
             //    -> $.template("foo").tmpl({ x: y }, { z: w })
             // The above is correct in spirit if not literally.  See below.
 
-            var match = content.match(TMPL_DIRECTIVE_CONTENT);
+            match = content.match(TMPL_DIRECTIVE_CONTENT);
             if (DEBUG && !match) {
               throw new Error('Malformed {{tmpl}} content: ' + content);
             }

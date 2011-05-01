@@ -6,15 +6,30 @@
  */
 
 /**
+ * Extern property name for the member of $ that contains plugins to run.
+ * @const
+ */
+var TEMPLATE_PLUGINS_PROP_NAME = "templatePlugins";
+
+/** Name of the map from template names to compiled/parsed template.  @const */
+var TEMPLATES_PROP_NAME = "templates";
+
+/** Name of the extern method used to define/lookup templates.  @const */
+var TEMPLATE_METHOD_NAME = "template";
+
+/** Method of a template object that renders the template.  @const */
+var TMPL_METHOD_NAME = "tmpl";
+
+/**
  * An array of plugin passed, functions that take a parse tree and return
  * a parse tree, to run beore compilation.
  */
-$["templatePlugins"] = [
+$[TEMPLATE_PLUGINS_PROP_NAME] = [
   // Naive auto-escape.
   function autoescape(parseTrees) {
     $.each(
         parseTrees,
-        function autoescapeOne(k, parseTree) {
+        function autoescapeOne(_, parseTree) {
           if (typeof parseTree !== "string") {
             if (parseTree[0] === "=") {
               parseTree[1] += "=>escapeHtml";
@@ -30,8 +45,8 @@ $["templatePlugins"] = [
 ];
 
 function needsCompile(name) {
-  var tmpl = $["templates"][name];
-  return tmpl && !("tmpl" in tmpl);
+  var tmpl = $[TEMPLATES_PROP_NAME][name];
+  return tmpl && "function" !== typeof tmpl[TMPL_METHOD_NAME];
 }
 
 function compileBundle(parseTrees, exclusion) {
@@ -39,7 +54,7 @@ function compileBundle(parseTrees, exclusion) {
   $.each(parseTrees, function process(name, parseTree) {
     if (processedNames[name] !== TRUTHY) {
       processedNames[name] = TRUTHY;
-      $.each(parseTree, function findDeps(i, node) {
+      $.each(parseTree, function findDeps(_, node) {
         if (node[0] === "tmpl" || node[0] === "wrap") {
           var match = node[1].match(TMPL_DIRECTIVE_CONTENT);
           if (match) {
@@ -47,7 +62,8 @@ function compileBundle(parseTrees, exclusion) {
             if (needsCompile(depName)
                 && processedNames[depName] !== TRUTHY) {
               process(
-                  depName, parseTrees[depName] = $["templates"][depName]);
+                  depName,
+                  parseTrees[depName] = $[TEMPLATES_PROP_NAME][depName]);
             }
           }
         }
@@ -56,19 +72,20 @@ function compileBundle(parseTrees, exclusion) {
   });
   function makePrepassCaller(pluginIndex) {
     return function (parseTrees) {
-      for (var i = 0; i < pluginIndex; ++i) {
-        parseTrees = $["templatePlugins"][i](
+      var i;
+      for (i = 0; i < pluginIndex; ++i) {
+        parseTrees = $[TEMPLATE_PLUGINS_PROP_NAME][i](
             parseTrees, makePrepassCaller(i));
       }
       return parseTrees;
     };
   }
   var result;
-  $.each(makePrepassCaller($["templatePlugins"].length)(parseTrees),
+  $.each(makePrepassCaller($[TEMPLATE_PLUGINS_PROP_NAME].length)(parseTrees),
          function (templateName, parseTree) {
            var tmplObj = { "tmpl": compileToFunction(parseTree) };
            if (templateName !== exclusion) {
-             $["templates"][templateName] = tmplObj;
+             $[TEMPLATES_PROP_NAME][templateName] = tmplObj;
            } else {
              result = tmplObj;
            }
@@ -76,13 +93,12 @@ function compileBundle(parseTrees, exclusion) {
   return result;
 }
 
-$["templates"] = {};
+$[TEMPLATES_PROP_NAME] = {};
 
-$["template"] = function self(name, templateSource) {
-  var t = $["templates"];
+$[TEMPLATE_METHOD_NAME] = function self(name, templateSource) {
+  var t = $[TEMPLATES_PROP_NAME];
   var parseTrees;
   if (arguments.length === 1) {
-    name = "" + name;
     if (name.indexOf("<") + 1) {
       return self(null, name);
     }
@@ -93,11 +109,13 @@ $["template"] = function self(name, templateSource) {
     }
     return t[name];
   }
+  // We delay compiling until we've got a bunch of definitions together.
+  // This allows plugins to process entire template graphs.
   var parseTree = parseTemplate(
       templateSource,
-      $.extend({ "if": TRUTHY, "wrap": TRUTHY },
-               guessBlockDirectives(templateSource)));
-  if (name == null) {
+      $.extend(guessBlockDirectives(templateSource),
+               DEFAULT_BLOCK_DIRECTIVES));
+  if (name === null) {
     return compileBundle(parseTrees = { "_": parseTree }, "_");
   }
   t[name] = parseTree;
