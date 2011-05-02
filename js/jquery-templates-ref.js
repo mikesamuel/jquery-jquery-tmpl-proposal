@@ -8,7 +8,9 @@
  */
 
 function compileToFunction( parseTree ) {
-	if ( !Object.create ) { Object.create = function () { return {}; }; }
+	if ( !Object.create ) {
+		Object.create = function () { return {}; };
+	}
 	if ( !Object.defineProperty ) {
 		Object.defineProperty = function ( obj, prop, pd ) {
 			var PROP_DESCRIP_GET = "get",
@@ -21,7 +23,7 @@ function compileToFunction( parseTree ) {
 					obj.__defineGetter__( prop, pd[ PROP_DESCRIP_GET ] );
 				}
 				if ( pd[ PROP_DESCRIP_SET ] ) {
-					obj.__defineSetter__( prop, pd[ PROP_DESCRIP_SET ] ); 
+					obj.__defineSetter__( prop, pd[ PROP_DESCRIP_SET ] );
 				}
 			}
 			return obj;
@@ -42,7 +44,9 @@ function compileToFunction( parseTree ) {
 	// Evaluates expression text that appears inside directive content
 	// in the given scope.
 	function evaluateInScope( expressionText, scope, options ) {
-		if ( arguments.length !== 3 ) { throw new Error(); }
+		if ( arguments.length !== 3 ) {
+			throw new Error();
+		}
 		// Flush out expressionText that does not have properly balanced
 		// curly brackets, such as {{= foo()) } { (bar() }}
 		Function( "(" + expressionText + ")" );
@@ -66,7 +70,9 @@ function compileToFunction( parseTree ) {
 	}
 
 	function recurseToBody( body, scope, options ) {
-		if ( arguments.length !== 3 ) { throw new Error(); }
+		if ( arguments.length !== 3 ) {
+			throw new Error();
+		}
 		var htmlBuffer = "", i, n;
 		for ( i = 0, n = body.length; i < n; ++i ) {
 			htmlBuffer += interpret( body[ i ], scope, options );
@@ -75,7 +81,9 @@ function compileToFunction( parseTree ) {
 	}
 
 	function interpret( parseTree, scope, options ) {
-		if ( typeof parseTree === "string" ) { return parseTree; }
+		if ( typeof parseTree === "string" ) {
+			return parseTree;
+		}
 
 		var content = parseTree[ 1 ];
 		var body = parseTree.slice( 2 );
@@ -98,7 +106,7 @@ function compileToFunction( parseTree ) {
 						childScope[ key ] = k;
 						childScope[ value ] = v;
 						htmlBuffer += recurseToBody( body, childScope, options );
-					} );
+					});
 			return htmlBuffer;
 		} else if ( name === "else" ) {
 			return !/\S/.test( content )
@@ -108,7 +116,9 @@ function compileToFunction( parseTree ) {
 			for ( pos = 0, elseIndex; pos < body.length; pos = elseIndex + 1 ) {
 				elseIndex = body.length;
 				for ( var i = pos; i < elseIndex; ++i ) {
-					if ( body[ i ][ 0 ] === "else" ) { elseIndex = i; }
+					if ( body[ i ][ 0 ] === "else" ) {
+						elseIndex = i;
+					}
 				}
 				var conditionResult = pos === 0
 						? evaluateInScope( content, scope, options )
@@ -139,10 +149,12 @@ function compileToFunction( parseTree ) {
 						contentAfter = new Array( postDethunk.length ).join( ")" );
 						contentBefore = postDethunk.reverse().join( "(" );
 						return "";
-					} );
+					});
 			var result = evaluateInScope( content, scope, options );
 			// De-thunkify if necessary.
-			if ( typeof result === "function" ) { result = result.call( scope ); }
+			if ( typeof result === "function" ) {
+				result = result.call( scope );
+			}
 			return new Function(
 					"return(" + contentBefore + "(arguments[0]))" + contentAfter
 					)( result );
@@ -156,13 +168,13 @@ function compileToFunction( parseTree ) {
 				.replace( /[\ud800-\udbff](?![\udc00-\uffff])/g,
 								 function ( orphanedHighSurrogate ) {
 									 return "&#" + orphanedHighSurrogate.charCodeAt( 0 ) + ";";
-								 } )
+								 })
 				// Fix up orphaned low surrogates.  Alternately replace w/ "$1\ufffd".
 				.replace( /(^|[^\ud800-\udbff])([\udc00-\udffff])/g,
 								 function ( _, preceder, orphanedLowSurrogate ) {
 									 return preceder + "&#"
 											 + orphanedLowSurrogate.charCodeAt( 0 ) + ";";
-								 } )
+								 })
 				.replace( /\u0000/g, "&#0;" );
 	}
 

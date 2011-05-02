@@ -33,7 +33,9 @@ function compileToFunction( parseTree ) {
 			parseTree.slice( 2 ),
 			function walk( _, parseTree ) {
 				// If there was a value before this one, append them.
-				if ( hasValue ) { javaScriptSource.push( "+" ); }
+				if ( hasValue ) {
+					javaScriptSource.push( "+" );
+				}
 				var match;
 				if ( typeof parseTree === "string") {  // HTML snippet
 					// 'foo' -> "\'foo\'"
@@ -45,7 +47,9 @@ function compileToFunction( parseTree ) {
 					if ( kind === "=" ) {  // ${...} substitution.
 						// Make sure that + is string-wise.
 						// Specifically, ${1}${2} should not compile to (1 + 2).
-						if ( !hasValue ) { javaScriptSource.push( "''+" ); }
+						if ( !hasValue ) {
+							javaScriptSource.push( "''+" );
+						}
 						// ${x} -> (tmp0 = (x), 'function' !== typeof tmp0 ? tmp0 : tmp0())
 						// The above is often the same as
 						// ${x} -> (x)
@@ -63,7 +67,7 @@ function compileToFunction( parseTree ) {
 									wrapperEnd = new Array( postDethunk.length ).join( ")" );
 									wrapperStart = postDethunk.reverse().join( "(" );
 									return "";
-								} );
+								});
 						// To make it easy for passes to rewrite expressions without
 						// preventing thunking we convert syntax like
 						// "x=>a=>b" into "a(b(x))"
@@ -80,7 +84,9 @@ function compileToFunction( parseTree ) {
 						for ( ; true; pos = elseIndex + 1 ) {
 							elseIndex = len;
 							for ( i = pos; i < elseIndex; ++i ) {
-								if ( parseTree[ i ][ 0 ] === "else" ) { elseIndex = i; }
+								if ( parseTree[ i ][ 0 ] === "else" ) {
+									elseIndex = i;
+								}
 							}
 							var cond = pos < len
 									? ( pos === 2 ? parseTree : parseTree[ pos - 1 ] )[ 1 ] : "";
@@ -110,7 +116,9 @@ function compileToFunction( parseTree ) {
 									cond, continues ? ")?(" : "" );
 							hasValue = FALSEY;
 							$.each( parseTree.slice( pos, elseIndex ), walk );
-							if ( !continues ) { break; }
+							if ( !continues ) {
+								break;
+							}
 						}
 						javaScriptSource.push( hasValue ? "))" : "''))" );
 					// {{each (key, value) obj}}...{{/each}}
@@ -142,7 +150,9 @@ function compileToFunction( parseTree ) {
 								TEMP_NAME_PREFIX, nestLevel, ";", tmpName, ".push(");
 						hasValue = FALSEY;
 						$.each( parseTree.slice( 2 ), walk );
-						if ( !hasValue ) { javaScriptSource.push( "''" ); }
+						if ( !hasValue ) {
+							javaScriptSource.push( "''" );
+						}
 						javaScriptSource.push( ")}),", tmpName, ".join(''))" );
 						--nestLevel;
 					} else if ( kind === "tmpl" ) {
@@ -197,8 +207,10 @@ function compileToFunction( parseTree ) {
 					}
 				}
 				hasValue = TRUTHY;
-			} );
-	if ( !hasValue ) { javaScriptSource.push( "''" ); }
+			});
+	if ( !hasValue ) {
+		javaScriptSource.push( "''" );
+	}
 	javaScriptSource.push( ")}");
 	try {
 		return Function( "$data", "$item", javaScriptSource.join( "" ) );

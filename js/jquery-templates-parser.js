@@ -20,8 +20,10 @@ function guessBlockDirectives( templateText ) {
 			TOKEN,
 			function ( tok ) {
 				var match = tok.match( /^\{\{\/(=|[a-z][a-z0-9]*)[\s\S]*\}\}$/i );
-				if ( match ) { blockDirectives[ match[ 1 ] ] = TRUTHY; }
-			} );
+				if ( match ) {
+					blockDirectives[ match[ 1 ] ] = TRUTHY;
+				}
+			});
 	return blockDirectives;
 }
 
@@ -118,7 +120,7 @@ function parseTemplate( templateText, blockDirectives ) {
 				} else {  // An HTML snippet.
 					top.push( token );
 				}
-			} );
+			});
 	if ( DEBUG && stack.length > 1 ) {
 		throw new Error(
 				"Unclosed block directives "

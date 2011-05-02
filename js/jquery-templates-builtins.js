@@ -26,7 +26,7 @@ $[ TEMPLATE_PLUGINS_PROP_NAME ] = [
 							$.each( parseTree, autoescapeOne );
 						}
 					}
-				} );
+				});
 		return parseTrees;
 	}
 ];
@@ -54,9 +54,9 @@ function compileBundle( parseTrees, exclusion ) {
 						}
 					}
 				}
-			} );
+			});
 		}
-	} );
+	});
 	function makePrepassCaller( pluginIndex ) {
 		return function ( parseTrees ) {
 			var i;
@@ -77,7 +77,7 @@ function compileBundle( parseTrees, exclusion ) {
 						} else {
 							result = tmplObj;
 						}
-					} );
+					});
 	return result;
 }
 
