@@ -1,3 +1,5 @@
+//-*- mode: js2-mode; indent-tabs-mode: t; tab-width: 2; -*-
+
 /**
  * The frontend of the JQuery template compiler
  * based on http://wiki.jqueryui.com/w/page/37898666/Template
@@ -11,16 +13,16 @@
  *
  * @param {string} templateText
  */
-function guessBlockDirectives(templateText) {
-  var blockDirectives = {};
-  // For each token like {{/foo}} put "foo" into the block directives map.
-  templateText.replace(
-      TOKEN,
-      function (tok) {
-        var match = tok.match(/^\{\{\/(=|[a-z][a-z0-9]*)[\s\S]*\}\}$/i);
-        if (match) { blockDirectives[match[1]] = TRUTHY; }
-      });
-  return blockDirectives;
+function guessBlockDirectives( templateText ) {
+	var blockDirectives = {};
+	// For each token like {{/foo}} put "foo" into the block directives map.
+	templateText.replace(
+			TOKEN,
+			function ( tok ) {
+				var match = tok.match( /^\{\{\/(=|[a-z][a-z0-9]*)[\s\S]*\}\}$/i );
+				if ( match ) { blockDirectives[ match[ 1 ] ] = TRUTHY; }
+			} );
+	return blockDirectives;
 }
 
 /**
@@ -64,66 +66,66 @@ function guessBlockDirectives(templateText) {
  *     {@code "if"} to {link #TRUTHY} if they require/allow an end marker.
  * @return {Array.<string|Array>|string} A parse tree node.
  */
-function parseTemplate(templateText, blockDirectives) {
-  // The root of the parse tree.
-  var root = ["", ""],
-      // A stack of nodes which have been entered but not yet exited.
-      stack = [root],
-      // The topmost element of the stack
-      top = root;
-  $.each(
-      templateText.match(TOKEN) || [],
-      function (_, token) {
-        var m = token.match(/^\{\{(\/?)(=|[a-z][a-z0-9]*)([\s\S]*)\}\}$/i);
-        if (m) {  // A marker.
-          // "/" in group 1 if a close.  Name in group 2.  Content in group 3.
-          if (m[1]) {  // An end marker
-            if (DEBUG && top[0] !== m[2]) {
-              throw new Error("Misplaced " + token + " in " + templateText);
-            }
-            top = stack[--stack.length - 1];
-          } else {  // A start marker.
-            var node = [m[2], m[3]];
-            if (DEBUG && m[2] === "=") {
-              try {
-                // For some reason, on Safari,
-                //     Function("(i + (j)")
-                // fails with a SyntaxError as expected, but
-                //     Function("return (i + (j)")
-                // does not.
-                // Filed as https://bugs.webkit.org/show_bug.cgi?id=59795
-                Function("(" + m[3] + ")");
-              } catch (e1) {
-                throw new Error("Invalid template substitution: " + m[3]);
-              }
-            }
-            top.push(node);
-            if (blockDirectives[m[2]] === TRUTHY) {
-              stack.push(top = node);
-            }
-          }
-        } else if (token.substring(0, 2) === "${") {  // A substitution.
-          top.push(["=", token.substring(2, token.length - 1)]);
-          if (DEBUG) {
-            var content = top[top.length - 1][1];
-            try {
-              // See notes on {{=...}} sanity check above.
-              Function("(" + content + ")");
-            } catch (e2) {
-              throw new Error("Invalid template substitution: " + content);
-            }
-          }
-        } else {  // An HTML snippet.
-          top.push(token);
-        }
-      });
-  if (DEBUG && stack.length > 1) {
-    throw new Error(
-        "Unclosed block directives "
-        + stack.slice(1).map(function (x) { return x[0]; }) + " in "
-        + templateText);
-  }
-  return root;
+function parseTemplate( templateText, blockDirectives ) {
+	// The root of the parse tree.
+	var root = [ "", "" ],
+			// A stack of nodes which have been entered but not yet exited.
+			stack = [ root ],
+			// The topmost element of the stack
+			top = root;
+	$.each(
+			templateText.match( TOKEN ) || [],
+			function ( _, token ) {
+				var m = token.match( /^\{\{(\/?)(=|[a-z][a-z0-9]*)([\s\S]*)\}\}$/i );
+				if ( m ) {  // A marker.
+					// "/" in group 1 if a close.  Name in group 2.  Content in group 3.
+					if ( m[ 1 ] ) {  // An end marker
+						if ( DEBUG && top[ 0 ] !== m[ 2 ] ) {
+							throw new Error( "Misplaced " + token + " in " + templateText );
+						}
+						top = stack[ --stack.length - 1 ];
+					} else {  // A start marker.
+						var node = [ m[ 2 ], m[ 3 ] ];
+						if ( DEBUG && m[ 2 ] === "=" ) {
+							try {
+								// For some reason, on Safari,
+								//     Function("(i + (j)")
+								// fails with a SyntaxError as expected, but
+								//     Function("return (i + (j)")
+								// does not.
+								// Filed as https://bugs.webkit.org/show_bug.cgi?id=59795
+								Function( "(" + m[ 3 ] + ")" );
+							} catch ( e1 ) {
+								throw new Error( "Invalid template substitution: " + m[ 3 ] );
+							}
+						}
+						top.push( node );
+						if ( blockDirectives[ m[ 2 ] ] === TRUTHY ) {
+							stack.push( top = node );
+						}
+					}
+				} else if ( token.substring( 0, 2 ) === "${" ) {  // A substitution.
+					top.push( [ "=", token.substring( 2, token.length - 1 ) ] );
+					if ( DEBUG ) {
+						var content = top[ top.length - 1 ][ 1 ];
+						try {
+							// See notes on {{=...}} sanity check above.
+							Function( "(" + content + ")" );
+						} catch ( e2 ) {
+							throw new Error( "Invalid template substitution: " + content );
+						}
+					}
+				} else {  // An HTML snippet.
+					top.push( token );
+				}
+			} );
+	if ( DEBUG && stack.length > 1 ) {
+		throw new Error(
+				"Unclosed block directives "
+				+ stack.slice( 1 ).map( function ( x ) { return x[ 0 ]; } ) + " in "
+				+ templateText );
+	}
+	return root;
 }
 
 
@@ -137,20 +139,20 @@ function parseTemplate(templateText, blockDirectives) {
  *     {@link #parseTemplate}.
  * @param {Object.<Number>} opt_blockDirectives.
  */
-function renderParseTree(parseTree, opt_blockDirectives) {
-  var buffer = [];
-  (function render(_, parseTree) {
-     if (typeof parseTree === "string") {
-       buffer.push(parseTree);
-     } else {
-       var name = parseTree[0], n = parseTree.length;
-       buffer.push("{{", name, parseTree[1], "}}");
-       $.each(parseTree.slice(2), render);
-       if (n !== 2 || !opt_blockDirectives
-           || opt_blockDirectives[name] === TRUTHY) {
-         buffer.push("{{/", name, "}}");
-       }
-     }
-   }(2, parseTree));
-  return buffer.join("");
+function renderParseTree( parseTree, opt_blockDirectives ) {
+	var buffer = [];
+	( function render( _, parseTree ) {
+		 if ( typeof parseTree === "string" ) {
+			 buffer.push( parseTree );
+		 } else {
+			 var name = parseTree[ 0 ], n = parseTree.length;
+			 buffer.push( "{{", name, parseTree[ 1 ], "}}" );
+			 $.each( parseTree.slice( 2 ), render );
+			 if ( n !== 2 || !opt_blockDirectives
+					  || opt_blockDirectives[ name ] === TRUTHY ) {
+				 buffer.push( "{{/", name, "}}" );
+			 }
+		 }
+	 }( 2, parseTree ) );
+	return buffer.join( "" );
 }

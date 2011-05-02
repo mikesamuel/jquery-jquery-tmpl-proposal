@@ -1,3 +1,4 @@
+//-*- mode: js2-mode; indent-tabs-mode: t; tab-width: 2; -*-
 /*jslint evil: true, unparam: true, maxerr: 50, indent: 4 */
 
 /**
@@ -29,36 +30,36 @@ var FALSEY = 0;
 
 /** Regular expression text for a snippet of HTML text. @const */
 var HTML_SNIPPET_RE = (
-    "(?:"
-    + "[^${]"               // A char that can't start a marker or substitution,
-    + "|\\{(?!\\{/?[=a-z])" // A curly bracket that doesn't start a marker.
-    + "|\\$(?!\\{)"         // A dollar that does not start a marker.
-    + ")+");
+		"(?:"
+		+ "[^${]"               // A char that can't start a marker | substitution,
+		+ "|\\{(?!\\{/?[=a-z])" // A curly bracket that doesn't start a marker.
+		+ "|\\$(?!\\{)"         // A dollar that does not start a marker.
+		+ ")+");
 
 /** Regular expression text for a substitution.  ${...}. @const */
 var SUBSTITUTION_RE = (
-    "\\$\\{"
-    + "[^}]*"               // ${...} cannot contain curlies but {{=...}} can.
-    + "\\}");
+		"\\$\\{"
+		+ "[^}]*"               // ${...} cannot contain curlies but {{=...}} can.
+		+ "\\}");
 
 /** Regular expression text for a directive name. @const */
 var NAME_RE = "(?:=|[a-z][a-z0-9]*)";
 
 /** Regular expression text for a directive start|end marker. @const */
 var MARKER_RE = (
-    "\\{\\{"
-    + "(?:"
-    + NAME_RE + "[\\s\\S]*?" // A start marker.
-    + "|/" + NAME_RE         // An end marker.
-    + ")"
-    + "\\}\\}");
+		"\\{\\{"
+		+ "(?:"
+		+ NAME_RE + "[\\s\\S]*?" // A start marker.
+		+ "|/" + NAME_RE         // An end marker.
+		+ ")"
+		+ "\\}\\}");
 
 /** Global regular expression that matches a single template token. */
 var TOKEN = new RegExp(
-    HTML_SNIPPET_RE
-    + "|" + SUBSTITUTION_RE
-    + "|" + MARKER_RE,
-    "gi");
+		HTML_SNIPPET_RE
+		+ "|" + SUBSTITUTION_RE
+		+ "|" + MARKER_RE,
+		"gi");
 
 /** Regular expression text for a variable name.  @const */
 // We may need to exclude keywords if these names used outside a param decl.
@@ -66,41 +67,41 @@ var VAR_NAME_RE = "[a-z_$]\\w*";
 
 /** Matches the content of an <code>{{each}}</code> directive. @const */
 var EACH_DIRECTIVE_CONTENT = new RegExp(
-    "^"  // Start at the beginning,
-    + "\\s*"
-    + "(?:"  // Optional parenthetical group with var names.
-      + "\\(\\s*"
-      + "(" + VAR_NAME_RE + ")"  // Key variable name in group 1.
-      + "\\s*"
-      + "(?:"
-        + ",\\s*"
-        + "(" + VAR_NAME_RE + ")"  // Value variable name in group 2.
-        + "\\s*"
-      + ")?"
-      + "\\)\\s*"
-    + ")?"
-    + "("  // Container expression in group 3.
-      + "\\S"  // A non-space character followed by any run of non-space chars.
-      + "(?:[\\s\\S]*\\S)?"
-    + ")"
-    + "\\s*"
-    + "$",  // Finish at the end.
-    "i");
+		"^"  // Start at the beginning,
+		+ "\\s*"
+		+ "(?:"  // Optional parenthetical group with var names.
+			+ "\\(\\s*"
+			+ "(" + VAR_NAME_RE + ")"  // Key variable name in group 1.
+			+ "\\s*"
+			+ "(?:"
+				+ ",\\s*"
+				+ "(" + VAR_NAME_RE + ")"  // Value variable name in group 2.
+				+ "\\s*"
+			+ ")?"
+			+ "\\)\\s*"
+		+ ")?"
+		+ "("  // Container expression in group 3.
+			+ "\\S"  // A non-space character followed by any run of non-space chars.
+			+ "(?:[\\s\\S]*\\S)?"
+		+ ")"
+		+ "\\s*"
+		+ "$",  // Finish at the end.
+		"i");
 
 /** Matches the content of a <code>{{tmpl}}</code> directive. @const */
 var TMPL_DIRECTIVE_CONTENT = new RegExp(
-    "^"
-    + "\\s*"
-    + "(?:"  // Optional parenthetical group with data and option exprs.
-      + "\\("
-      + "([\\s\\S]*)"  // Data and option maps go in group 1.
-      + "\\)"
-      + "\\s*"
-    + ")?"
-    + "([^\\s()](?:[^()]*[^\\s()])?)"  // Template name/selector in group 2.
-    + "\\s*"
-    + "$"
-    );
+		"^"
+		+ "\\s*"
+		+ "(?:"  // Optional parenthetical group with data and option exprs.
+			+ "\\("
+			+ "([\\s\\S]*)"  // Data and option maps go in group 1.
+			+ "\\)"
+			+ "\\s*"
+		+ ")?"
+		+ "([^\\s()](?:[^()]*[^\\s()])?)"  // Template name/selector in group 2.
+		+ "\\s*"
+		+ "$"
+		);
 /**
  * The default variable name for the key used when none is specified in an
  * <code>{{each}}</code> directive.
