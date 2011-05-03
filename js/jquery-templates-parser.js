@@ -88,17 +88,28 @@ function parseTemplate( templateText, blockDirectives ) {
 						top = stack[ --stack.length - 1 ];
 					} else {  // A start marker.
 						var node = [ m[ 2 ], m[ 3 ] ];
-						if ( DEBUG && m[ 2 ] === "=" ) {
-							try {
-								// For some reason, on Safari,
-								//     Function("(i + (j)")
-								// fails with a SyntaxError as expected, but
-								//     Function("return (i + (j)")
-								// does not.
-								// Filed as https://bugs.webkit.org/show_bug.cgi?id=59795
-								Function( "(" + m[ 3 ] + ")" );
-							} catch ( e1 ) {
-								throw new Error( "Invalid template substitution: " + m[ 3 ] );
+						if ( DEBUG ) {
+							if ( m[ 2 ] === "=" ) {
+								try {
+									// For some reason, on Safari,
+									//     Function("(i + (j)")
+									// fails with a SyntaxError as expected, but
+									//     Function("return (i + (j)")
+									// does not.
+									// Filed as https://bugs.webkit.org/show_bug.cgi?id=59795
+									Function( "(" + m[ 3 ] + ")" );
+								} catch ( e1 ) {
+									throw new Error( "Invalid template substitution: " + m[ 3 ] );
+								}
+							} else if ( m[ 2 ] === "tmpl" ) {
+								var tmplContent = m[ 3 ].match( TMPL_DIRECTIVE_CONTENT );
+								try {
+									Function( "([" + tmplContent[ 1 ] + "])" );
+									Function( "(" + tmplContent[ 2 ] + ")" );
+								} catch ( e2 ) {
+									throw new Error(
+											"Invalid {{" + m[2] + "}} content: " + m[ 3 ] );
+								}
 							}
 						}
 						top.push( node );

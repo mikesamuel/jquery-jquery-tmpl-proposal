@@ -122,17 +122,17 @@ function runTests() {
       var templateSource = trimmedText(testCell);
       var dataSource = trimmedText(dataCell);
       row.className = "running";
-      var data = null;
+      var dataAndItems = null;
       var result = null;
       var parseTrees = null;
       var compiled = {};
       try {
-        data = new Function("return (" + dataSource + ")")();
+        dataAndItems = new Function("return ([" + dataSource + "])")();
         extractAndParseTemplates(templateSource);
         parseTrees = JSON.parse(JSON.stringify($.templates));
         var parseTrees = $.templates;
         var compiled = $.template("main");
-        result = compiled.tmpl(data, {});
+        result = compiled.tmpl(dataAndItems[0], dataAndItems[1]);
       } catch (ex) {
         hasConsole && ex.stack && console.error(ex.stack);
         result = "Error:" + (ex.message || ex.description);
@@ -155,8 +155,8 @@ function runTests() {
         console.error("%s !==\n%s",
             JSON.stringify(expectedText), JSON.stringify(normResult));
         console.log(
-            "parseTrees=%o, data=%o, compiled=%o",
-            parseTrees, data, compiled);
+            "parseTrees=%o, dataAndItems=%o, compiled=%o",
+            parseTrees, dataAndItems, compiled);
       }
     } finally {
       row.className = pass ? "pass" : "fail";
@@ -475,6 +475,20 @@ bar</td>
     <th>Template Calls</th>
   </tr>
   <tr>
+    <td><xmp>{{tmpl({ x, y }) "that"}}</xmp></td>
+    <td><xmp>{ x: "x" }</xmp></td>
+    <td>Error:Invalid {{tmpl}} content: ({ x, y }) "that"</td>
+    <td></td>
+    <th>Invalid Template Param</th>
+  </tr>
+  <tr>
+    <td><xmp>{{tmpl({ x: y }) "that}}</xmp></td>
+    <td><xmp>{ x: "x" }</xmp></td>
+    <td>Error:Invalid {{tmpl}} content: ({ x: y }) "that</td>
+    <td></td>
+    <th>Invalid Template Selector</th>
+  </tr>
+  <tr>
     <td><xmp>
       <script type="text/x-jquery-tmpl" id="main">
         this x=${x}, {{tmpl({x: "y"}) "that"}}
@@ -617,6 +631,35 @@ bar</td>
     <td></td>
     <th>"arguments" really not present as a data key</th>
   </tr>
+  <tr>
+    <td><xmp>${$item.foo}</xmp></td>
+    <td><xmp>{}, { foo: 42 }</xmp></td>
+    <td>42</td>
+    <td></td>
+    <th>Template options available</th>
+  </tr>
+  <tr>
+    <td><xmp><script type="text/x-jquery-tmpl" id="main">
+  ${$item.foo},{{tmpl({ "$item": { foo: "data" } }) "t"}},${$item.foo}
+</script>
+<script type="text/x-jquery-tmpl" id="t">${$item.foo}</script>
+</xmp></td>
+    <td><xmp>{}, { foo: "option" }</xmp></td>
+    <td>option,data,option</td>
+    <td></td>
+    <th>Data masking template options</th>
+  </tr>
+  <tr>
+    <td><xmp><script type="text/x-jquery-tmpl" id="main">
+  ${$item.foo},{{tmpl(,{ "foo": "option2" }) "t"}},${$item.foo}
+</script>
+<script type="text/x-jquery-tmpl" id="t">${$item.foo}</script>
+</xmp></td>
+    <td><xmp>{}, { foo: "option" }</xmp></td>
+    <td>option,option2,option</td>
+    <td></td>
+    <th>Passing options</th>
+  </tr>
 </table>
 
 <h2>Plugin Tests</h2>
@@ -748,5 +791,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Sun May  1 19:16:57 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Tue May  3 13:20:29 EDT 2011 <!-- hhmts end -->
 </body> </html>
