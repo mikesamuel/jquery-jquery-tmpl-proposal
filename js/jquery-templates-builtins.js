@@ -36,7 +36,7 @@ function needsCompile( name ) {
 	return tmpl && "function" !== typeof tmpl[ TMPL_METHOD_NAME ];
 }
 
-function compileBundle( parseTrees, exclusion ) {
+function compileBundle( parseTrees, opt_exclusion ) {
 	var processedNames = {};
 	$.each( parseTrees, function process( name, parseTree ) {
 		if ( processedNames[ name ] !== TRUTHY ) {
@@ -72,7 +72,7 @@ function compileBundle( parseTrees, exclusion ) {
 						$[ TEMPLATE_PLUGINS_PROP_NAME ].length )( parseTrees ),
 					function ( templateName, parseTree ) {
 						var tmplObj = { "tmpl": compileToFunction( parseTree ) };
-						if ( templateName !== exclusion ) {
+						if ( templateName !== opt_exclusion ) {
 							$[ TEMPLATES_PROP_NAME ][ templateName ] = tmplObj;
 						} else {
 							result = tmplObj;
