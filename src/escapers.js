@@ -10,6 +10,32 @@
  * for definitions of sanitization functions and sanitized content wrappers.
  */
 
+/**
+ * A snippet of HTML that does not start or end inside a tag, comment, entity,
+ * or DOCTYPE; and that does not contain any executable code
+ * (JS, {@code <object>}s, etc.) from a different trust domain.
+ * @const
+ */
+var CONTENT_KIND_HTML = 0;
+
+/**
+ * A sequence of code units that can appear between quotes (either kind) in a
+ * JS program without causing a parse error, and without causing any side
+ * effects.
+ * <p>
+ * The content should not contain unescaped quotes, newlines, or anything else
+ * that would cause parsing to fail or to cause a JS parser to finish the
+ * string its parsing inside the content.
+ * <p>
+ * The content must also not end inside an escape sequence ; no partial octal
+ * escape sequences or odd number of '{@code \}'s at the end.
+ * @const
+ */
+var CONTENT_KIND_JS_STR_CHARS = 1;
+
+/** A properly encoded portion of a URI.  @const */
+var CONTENT_KIND_URI = 2;
+
 
 /**
  * The name of the property that contains sanitized content in a sanitized
@@ -27,82 +53,6 @@ var CONTENT_PROPNAME = 'content';
  * @const
  */
 var CONTENT_KIND_PROPNAME = 'contentKind';
-
-/**
- * A string-like object that carries a content-type.
- * @constructor
- * @private
- */
-function SanitizedContent() {}
-
-/**
- * @return {string}
- * @override
- */
-SanitizedContent.prototype.toString = function() {
-  return this[CONTENT_PROPNAME];
-};
-
-/**
- * @param {number!} contentKind
- */
-function defineSanitizedContentSubclass(contentKind) {
-  /** @param {string!} content */
-  function SanitizedContentCtor(content) {
-    this[CONTENT_PROPNAME] = content;
-  }
-
-  /** @type {SanitizedContent} */
-  var proto = (SanitizedContentCtor.prototype = new SanitizedContent());
-  proto.constructor = SanitizedContentCtor;
-
-  /** @override */
-  proto[CONTENT_KIND_PROPNAME] = CONTENT_KIND_HTML;
-
-  return SanitizedContentCtor;
-}
-
-
-/**
- * Content of type {@link CONTENT_KIND_HTML}.
- * @constructor
- * @extends SanitizedContent
- * @param {string!} content A string of HTML that can safely be embedded in
- *     a PCDATA context in your app.  If you would be surprised to find that an
- *     HTML sanitizer produced {@code s} (e.g. it runs code or fetches bad URLs)
- *     and you wouldn't write a template that produces {@code s} on security or
- *     privacy grounds, then don't pass {@code s} here.
- */
-var SanitizedHtml = defineSanitizedContentSubclass(CONTENT_KIND_HTML);
-
-
-/**
- * Content of type {@link CONTENT_KIND_JS_STR_CHARS}.
- * @constructor
- * @extends SanitizedContent
- * @param {string!} content A string of JS that when evaled, produces a
- *     value that does not depend on any sensitive data and has no side effects
- *     <b>OR</b> a string of JS that does not reference any variables or have
- *     any side effects not known statically to the app authors.
- */
-var SanitizedJsStrChars
-    = defineSanitizedContentSubclass(CONTENT_KIND_JS_STR_CHARS);
-
-
-/**
- * Content of type {@link CONTENT_KIND_URI}.
- * @constructor
- * @extends SanitizedContent
- * @param {string!} content A chunk of URI that the caller knows is safe to
- *     emit in a template.
- */
-var SanitizedUri = defineSanitizedContentSubclass(CONTENT_KIND_URI);
-
-
-// exports
-window['SanitizedHtml'] = SanitizedHtml;
-window['SanitizedJsStrChars'] = SanitizedJsStrChars;
-window['SanitizedUri'] = SanitizedUri;
 
 
 /**
@@ -714,21 +664,3 @@ function filterHtmlElementNameHelper(value) {
 var HTML_TAG_REGEX_ = /<(?:!|\/?[a-z])(?:[^>'"]|"[^"]*"|'[^']*')*>/gi;
 
 // END GENERATED CODE
-
-var SANITIZER_FOR_ESC_MODE = [];
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML] = escapeHtml;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML_RCDATA] = escapeHtmlRcdata;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML_ATTRIBUTE] = escapeHtmlAttribute;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE]
-    = escapeHtmlAttributeNospace;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_FILTER_HTML_ELEMENT_NAME]
-    = filterHtmlElementName;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_FILTER_HTML_ATTRIBUTE] = filterHtmlAttribute;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_JS_STRING] = escapeJsString;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_JS_VALUE] = escapeJsValue;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_JS_REGEX] = escapeJsRegex;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_CSS_STRING] = escapeCssString;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_FILTER_CSS_VALUE] = filterCssValue;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_URI] = escapeUri;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_NORMALIZE_URI] = normalizeUri;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_FILTER_NORMALIZE_URI] = filterNormalizeUri;

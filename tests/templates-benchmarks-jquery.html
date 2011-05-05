@@ -3,9 +3,8 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
   <title>JS Templates Benchmarks: </title>
-  <script src="contextDefs.js"></script>
-  <script src="escapers.js"></script>
-  <script src="jquery-1.5.2.js"></script>
+  <script src="../src/escapers.js"></script>
+  <script src="../src/jquery-1.5.2.js"></script>
   <script src="jquery.benchmark.js"></script>
   <script>
   if (!Date.now) { Date.now = function () { return +new Date; }; }
@@ -14,24 +13,25 @@
   (function () {
     if (/[&?]reference(?=[=&]|$)/.test(location.search)) {
       document.write(
-          '<script src="jquery-templates-defs.js"><\/script>',
-          '<script src="jquery-templates-parser.js"><\/script>',
-          '<script src="jquery-templates-ref.js"><\/script>',
-          '<script src="jquery-templates-builtins.js"><\/script>',
+          '<script src="../src/jquery-templates-defs.js"><\/script>',
+          '<script src="../src/jquery-templates-parser.js"><\/script>',
+          '<script src="../src/jquery-templates-ref.js"><\/script>',
+          '<script src="../src/jquery-templates-builtins.js"><\/script>',
           '<script>DEBUG = false;<\/script>'
           );
       implementationName = "REFERENCE";
     } else if (/[&?]compressed/.test(location.search)) {
       document.write(
-          '<script src="jquery-templates-standalone-compiled.js"><\/script>'
+          '<script src="../src/jquery-templates-standalone-compiled.js">'
+          + '<\/script>'
           );
       implementationName = "MINIFIED";
     } else {
       document.write(
-          '<script src="jquery-templates-defs.js"><\/script>',
-          '<script src="jquery-templates-parser.js"><\/script>',
-          '<script src="jquery-templates-impl.js"><\/script>',
-          '<script src="jquery-templates-builtins.js"><\/script>'
+          '<script src="../src/jquery-templates-defs.js"><\/script>',
+          '<script src="../src/jquery-templates-parser.js"><\/script>',
+          '<script src="../src/jquery-templates-impl.js"><\/script>',
+          '<script src="../src/jquery-templates-builtins.js"><\/script>'
           );
       implementationName = "STRAPPEND";
     }

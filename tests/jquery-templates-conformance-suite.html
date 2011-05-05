@@ -1,5 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html> <head>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 <title>JQuery Templates Conformance Suite</title>
 <style>
 body { margin: 0; padding: 0.5em }
@@ -18,10 +19,9 @@ table.testtable > * > tr > td:nth-of-type(2) {
   max-width: 40em
 }
 </style>
-<script src="contextDefs.js"></script>
-<script src="escapers.js"></script>
-<script src="jquery-1.5.2.js"></script>
-<script src="jquery-templates-defs.js"></script>
+<script src="../src/escapers.js"></script>
+<script src="../src/jquery-1.5.2.js"></script>
+<script src="../src/jquery-templates-defs.js"></script>
 <script>
 if (!Date.now) { Date.now = function () { return +new Date; }; }
 var testFilter = /(?:)/;
@@ -29,23 +29,24 @@ var implementationName;
 (function () {
   if (/[&?]reference(?=[=&]|$)/.test(location.search)) {
     document.write(
-        '<script src="jquery-templates-parser.js"><\/script>',
-        '<script src="jquery-templates-ref.js"><\/script>',
-        '<script src="jquery-templates-builtins.js"><\/script>',
+        '<script src="../src/jquery-templates-parser.js"><\/script>',
+        '<script src="../src/jquery-templates-ref.js"><\/script>',
+        '<script src="../src/jquery-templates-builtins.js"><\/script>',
         '<script>DEBUG = false;<\/script>'
         );
     implementationName = "REFERENCE";
   } else if (/[&?]compressed/.test(location.search)) {
     document.write(
-        '<script src="jquery-templates-standalone-compiled.js"><\/script>',
+        '<script src="../src/jquery-templates-standalone-compiled.js">'
+        + '<\/script>',
         '<script>DEBUG = false;<\/script>'
         );
     implementationName = "MINIFIED";
   } else {
     document.write(
-        '<script src="jquery-templates-parser.js"><\/script>',
-        '<script src="jquery-templates-impl.js"><\/script>',
-        '<script src="jquery-templates-builtins.js"><\/script>');
+        '<script src="../src/jquery-templates-parser.js"><\/script>',
+        '<script src="../src/jquery-templates-impl.js"><\/script>',
+        '<script src="../src/jquery-templates-builtins.js"><\/script>');
     implementationName = "STRAPPEND";
   }
   var match = location.search.match(/[&?]testFilter=([^&]*)/);
@@ -791,5 +792,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Tue May  3 13:20:29 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Thu May  5 10:21:09 EDT 2011 <!-- hhmts end -->
 </body> </html>
