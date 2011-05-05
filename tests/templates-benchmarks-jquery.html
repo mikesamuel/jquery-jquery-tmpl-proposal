@@ -1,39 +1,36 @@
 <!DOCTYPE HTML>
+<!-- From https://github.com/brianjlandau/js-templates-benchmark/blob/master -->
 <html lang="en">
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
   <title>JS Templates Benchmarks: </title>
-  <script src="../src/escapers.js"></script>
   <script src="../src/jquery-1.5.2.js"></script>
   <script src="jquery.benchmark.js"></script>
   <script>
-  if (!Date.now) { Date.now = function () { return +new Date; }; }
+  var implementationName = "STRAPPEND";
   var testFilter = /(?:)/;
-  var implementationName;
   (function () {
-    if (/[&?]reference(?=[=&]|$)/.test(location.search)) {
-      document.write(
-          '<script src="../src/jquery-templates-defs.js"><\/script>',
-          '<script src="../src/jquery-templates-parser.js"><\/script>',
-          '<script src="../src/jquery-templates-ref.js"><\/script>',
-          '<script src="../src/jquery-templates-builtins.js"><\/script>',
-          '<script>DEBUG = false;<\/script>'
-          );
+    if (/[&?]reference(?:[=&]|$)/.test(location.search)) {
       implementationName = "REFERENCE";
-    } else if (/[&?]compressed/.test(location.search)) {
+    } else if (/[&?]compressed(?:[=&]|$)/.test(location.search)) {
+      implementationName = "MINIFIED";
+    }
+    if (implementationName === "MINIFIED") {
       document.write(
           '<script src="../src/jquery-templates-standalone-compiled.js">'
           + '<\/script>'
           );
-      implementationName = "MINIFIED";
     } else {
       document.write(
+          '<script src="../src/escapers.js"><\/script>',
           '<script src="../src/jquery-templates-defs.js"><\/script>',
           '<script src="../src/jquery-templates-parser.js"><\/script>',
-          '<script src="../src/jquery-templates-impl.js"><\/script>',
-          '<script src="../src/jquery-templates-builtins.js"><\/script>'
+          (implementationName === "REFERENCE"
+           ? '<script src="../src/jquery-templates-ref.js"><\/script>'
+           : '<script src="../src/jquery-templates-impl.js"><\/script>'),
+          '<script src="../src/jquery-templates-builtins.js"><\/script>',
+          '<script>DEBUG = false;<\/script>'
           );
-      implementationName = "STRAPPEND";
     }
     var match = location.search.match(/[&?]testFilter=([^&]*)/);
     if (match) {

@@ -25,29 +25,28 @@ table.testtable > * > tr > td:nth-of-type(2) {
 <script>
 if (!Date.now) { Date.now = function () { return +new Date; }; }
 var testFilter = /(?:)/;
-var implementationName;
+var implementationName = "STRAPPEND";
 (function () {
-  if (/[&?]reference(?=[=&]|$)/.test(location.search)) {
-    document.write(
-        '<script src="../src/jquery-templates-parser.js"><\/script>',
-        '<script src="../src/jquery-templates-ref.js"><\/script>',
-        '<script src="../src/jquery-templates-builtins.js"><\/script>',
-        '<script>DEBUG = false;<\/script>'
-        );
+  if (/[&?]reference(?:[=&]|$)/.test(location.search)) {
     implementationName = "REFERENCE";
-  } else if (/[&?]compressed/.test(location.search)) {
+  } else if (/[&?]compressed(?:[=&]|$)/.test(location.search)) {
+    implementationName = "MINIFIED";
+  }
+  if (implementationName === "MINIFIED") {
     document.write(
         '<script src="../src/jquery-templates-standalone-compiled.js">'
         + '<\/script>',
         '<script>DEBUG = false;<\/script>'
         );
-    implementationName = "MINIFIED";
   } else {
     document.write(
         '<script src="../src/jquery-templates-parser.js"><\/script>',
-        '<script src="../src/jquery-templates-impl.js"><\/script>',
-        '<script src="../src/jquery-templates-builtins.js"><\/script>');
-    implementationName = "STRAPPEND";
+        (implementationName === "REFERENCE"
+         ? '<script src="../src/jquery-templates-ref.js"><\/script>'
+         : '<script src="../src/jquery-templates-impl.js"><\/script>'),
+        '<script src="../src/jquery-templates-builtins.js"><\/script>',
+        '<script>DEBUG = false;<\/script>'
+        );
   }
   var match = location.search.match(/[&?]testFilter=([^&]*)/);
   if (match) {
@@ -792,5 +791,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Thu May  5 10:21:09 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Thu May  5 10:41:30 EDT 2011 <!-- hhmts end -->
 </body> </html>
