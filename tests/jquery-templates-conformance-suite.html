@@ -34,19 +34,23 @@ var implementationName = "STRAPPEND";
   }
   if (implementationName === "MINIFIED") {
     document.write(
-        '<script src="../src/jquery-templates-standalone-compiled.js">'
-        + '<\/script>',
-        '<script>DEBUG = false;<\/script>'
-        );
+        '<script src="../build/jquery-templates-compiled.js"><\/script>');
+  } else if (/[&?]compiled(?=[=&]|$)/.test(location.search)) {
+    document.write(
+        implementationName === "REFERENCE"
+        ? '<script src="../build/jquery-templates-reference.js"><\/script>'
+        : '<script src="../build/jquery-templates-strappend.js"><\/script>');
   } else {
     document.write(
         '<script src="../src/jquery-templates-parser.js"><\/script>',
         (implementationName === "REFERENCE"
          ? '<script src="../src/jquery-templates-ref.js"><\/script>'
          : '<script src="../src/jquery-templates-impl.js"><\/script>'),
-        '<script src="../src/jquery-templates-builtins.js"><\/script>',
-        '<script>DEBUG = false;<\/script>'
-        );
+        '<script src="../src/jquery-templates-builtins.js"><\/script>');
+  }
+  if (implementationName !== "STRAPPEND") {
+    // The spec does not specify error messages.
+    document.write('<script>DEBUG = false;<\/script>');
   }
   var match = location.search.match(/[&?]testFilter=([^&]*)/);
   if (match) {
@@ -613,14 +617,14 @@ bar</td>
   <tr>
     <td><xmp>${arguments[0]}</xmp></td>
     <td><xmp>{}</xmp></td>
-    <td>Error: arguments is not defined</td>
+    <td>Error:arguments is not defined</td>
     <td></td>
     <th>"arguments" not present as a data key</th>
   </tr>
   <tr>
     <td><xmp>${delete arguments, arguments[0]}</xmp></td>
     <td><xmp>{}</xmp></td>
-    <td>Error: arguments is not defined</td>
+    <td>Error:arguments is not defined</td>
     <td></td>
     <th>"arguments" really not present as a data key</th>
   </tr>
@@ -791,5 +795,5 @@ $("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Thu May  5 10:41:30 EDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Thu May  5 20:20:09 EDT 2011 <!-- hhmts end -->
 </body> </html>
