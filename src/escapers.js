@@ -664,3 +664,5 @@ function filterHtmlElementNameHelper(value) {
 var HTML_TAG_REGEX_ = /<(?:!|\/?[a-z])(?:[^>'"]|"[^"]*"|'[^']*')*>/gi;
 
 // END GENERATED CODE
+
+window["escapeHtml"] = escapeHtml;
