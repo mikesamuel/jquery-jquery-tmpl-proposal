@@ -165,12 +165,12 @@ function compileToFunction( parseTree ) {
 	function fixupOrphanedSurrogatesAndNuls( s ) {
 		return s
 				// Fix up orphaned high surrogates.  Alternately replace w/ "\ufffd".
-				.replace( /[\ud800-\udbff](?![\udc00-\uffff])/g,
+				.replace( /[\ud800-\udbff](?![\udc00-\udfff])/g,
 								 function ( orphanedHighSurrogate ) {
 									 return "&#" + orphanedHighSurrogate.charCodeAt( 0 ) + ";";
 								 })
 				// Fix up orphaned low surrogates.  Alternately replace w/ "$1\ufffd".
-				.replace( /(^|[^\ud800-\udbff])([\udc00-\udffff])/g,
+				.replace( /(^|[^\ud800-\udbff])([\udc00-\udfff])/g,
 								 function ( _, preceder, orphanedLowSurrogate ) {
 									 return preceder + "&#"
 											 + orphanedLowSurrogate.charCodeAt( 0 ) + ";";
