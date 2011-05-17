@@ -50,7 +50,7 @@ var MARKER_RE = (
 		"\\{\\{"
 		+ "(?:"
 		+ NAME_RE + "[\\s\\S]*?" // A start marker.
-		+ "|/" + NAME_RE         // An end marker.
+		+ "|/" + NAME_RE + "\\s*" // An end marker.
 		+ ")"
 		+ "\\}\\}");
 
@@ -134,4 +134,4 @@ var TEMPLATE_METHOD_NAME = "template";
 var TMPL_METHOD_NAME = "tmpl";
 
 /** The default set of block directives. @const */
-var DEFAULT_BLOCK_DIRECTIVES = { "if": TRUTHY, "wrap": TRUTHY };
+var DEFAULT_BLOCK_DIRECTIVES = { "each": TRUTHY, "if": TRUTHY, "wrap": TRUTHY };

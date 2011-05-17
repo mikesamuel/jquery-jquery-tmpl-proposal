@@ -27,6 +27,7 @@ function compileToFunction( parseTree ) {
 			// The below compiles the parse tree to an expression that returns a
 			// string.
 			+ "return("];
+  var inScope = [];  // Used to propagate variables in scope through {{tmpl}}.
 	var hasValue;
 	var nestLevel = 0;
 	$.each(
@@ -149,7 +150,9 @@ function compileToFunction( parseTree ) {
 								"),function(", keyVar, ",", valueVar, "){var ",
 								TEMP_NAME_PREFIX, nestLevel, ";", tmpName, ".push(");
 						hasValue = FALSEY;
+						inScope.push( keyVar + ":" + keyVar, valueVar + ":" + valueVar );
 						$.each( parseTree.slice( 2 ), walk );
+						inScope.length -= 2;
 						if ( !hasValue ) {
 							javaScriptSource.push( "''" );
 						}
@@ -189,8 +192,13 @@ function compileToFunction( parseTree ) {
 								// template selector is resolved as expected from the ordering
 								// of those in the content.
 								? "$.extend([],arguments,[" + dataAndOptions + "])"
-								// If the content specifies neither data nor options, use the
-								// arguments without the overhead of a call to $.extend.
+							  // Propagate any loop variables in scope when all data is
+							  // passed.
+								: inScope.length
+								? "[$.extend({},$data,{" + inScope + "}),$item]"
+								// If the content specifies neither data nor options, and
+								// no loop vars are in scope, use the arguments without the
+								// overhead of a call to $.extend.
 								: "arguments",
 								",$.template((",
 								match[ 2 ],

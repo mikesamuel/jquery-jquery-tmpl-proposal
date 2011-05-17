@@ -74,9 +74,27 @@ function parseTemplate( templateText, blockDirectives ) {
 			// A stack of nodes which have been entered but not yet exited.
 			stack = [ root ],
 			// The topmost element of the stack
-			top = root;
+			top = root,
+      commentDepth = 0;
 	$.each(
-			templateText.match( TOKEN ) || [],
+			templateText
+					// Handle {#...} style non-nesting comments.
+					.replace( /\{#[\s\S]*?#\}/g, "" )
+					// Handle {{! ... }} style comments which can contain arbitrary nested
+	        // {{...}} sections.
+					.replace( /\{\{!?|\}\}|(?:[^{}]|\{(?!\{)|\}(?!}))+/g,
+										function (token) {
+											return token === "{{!"
+													? ( ++commentDepth, "" )
+													: commentDepth
+													? ( token === "}}"
+															? --commentDepth
+															: token === "{{" && ++commentDepth,
+															"" )
+													: token;
+										} )
+					// Match against a global regexp to pull out all tokens.
+					.match( TOKEN ) || [],
 			function ( _, token ) {
 				var m = token.match( /^\{\{(\/?)(=|[a-z][a-z0-9]*)([\s\S]*)\}\}$/i );
 				if ( m ) {  // A marker.
