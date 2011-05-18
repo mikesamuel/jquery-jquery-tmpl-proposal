@@ -5,7 +5,7 @@ STRAPPEND_SOURCES=src/escapers.js src/jquery-templates-defs.js src/jquery-templa
 all: build/jquery-templates-reference.js build/jquery-templates-strappend.js build/jquery-templates-compiled.js
 
 clean:
-	rm -rf build
+	rm -rf build README.html
 
 build/jquery-templates-reference.js: $(REFERENCE_SOURCES)
 	mkdir -p build
@@ -26,3 +26,6 @@ build/jquery-templates-compiled.js: $(STRAPPEND_SOURCES)
 	    | perl -pe 's/\bwindow.//g; s/;\}/}/g' \
 	    > $@ \
 	    || (rm $@; false)
+
+README.html: README.md
+	python $(MARKDOWN_HOME)/markdown.py README.md > README.html
