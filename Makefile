@@ -7,7 +7,7 @@ OUTPUT_JS=build/jquery-templates-reference.js build/jquery-templates-strappend.j
 all: $(OUTPUT_JS) sizereport
 
 clean:
-	@rm $(OUTPUT_JS) README.html
+	@rm -f $(OUTPUT_JS) README.html
 
 build/jquery-templates-reference.js: $(REFERENCE_SOURCES)
 	@(echo "(function () {"; cat $^; echo " })()") > $@

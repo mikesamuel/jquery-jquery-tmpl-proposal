@@ -1002,6 +1002,14 @@ function renderParseTree( parseTree, opt_blockDirectives ) {
  * @author Mike Samuel <mikesamuel@gmail.com>
  */
 
+/** Like <code>$.extend</code> but copies undefined properties. */
+function extendWithUndef( target, source ) {
+	for ( var k in source ) {
+		target[ k ] = source[ k ];
+	}
+	return target;
+}
+
 function compileToFunction( parseTree ) {
 	if ( !Object.create ) {
 		Object.create = function () { return {}; };
@@ -1029,11 +1037,11 @@ function compileToFunction( parseTree ) {
 		// Object.create(null) creates an object with no prototype.
 		// It does not inherit non-enumerables such as toString, etc. so
 		// it has predictable behavior when used with with (...) { ... }
-		return $.extend( Object.create( null ), data );
+		return extendWithUndef( Object.create( null ), data );
 	}
 
 	function extendTemplateScope( parentScope, variables ) {
-		return $.extend( Object.create( parentScope ), variables );
+		return extendWithUndef( Object.create( parentScope ), variables );
 	}
 
 	// Evaluates expression text that appears inside directive content
