@@ -1,0 +1,2053 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<title>JQuery Templates Conformance Suite</title>
+<style>
+body { margin: 0; padding: 0.5em }
+tr.pass > td, body.pass { border: 2px solid green }
+tr.fail > td, body.fail { border: 2px dotted red }
+tr.disabled > td { border: 2px dotted #888; background: #eee; color: #444 }
+tr.running > td { border: 2px solid yellow }
+xmp { white-space: pre-wrap }
+table.testtable > * > tr > td,
+table.testtable > * > tr > th {
+  vertical-align: top;
+  empty-cells: show
+}
+/* data cells */
+table.testtable > * > tr > th:nth-of-type(2),
+table.testtable > * > tr > td:nth-of-type(2) {
+  max-width: 40em
+}
+</style>
+<script src="../src/escapers.js"></script>
+<script src="../src/jquery-1.5.2.js"></script>
+<script src="../src/jquery-templates-defs.js"></script>
+<script>
+if (!Date.now) { Date.now = function () { return +new Date; }; }
+var testFilter = /(?:)/;
+var implementationName = "STRAPPEND";
+(function () {
+  if (/[&?]reference(?:[=&]|$)/.test(location.search)) {
+    implementationName = "REFERENCE";
+  } else if (/[&?]compressed(?:[=&]|$)/.test(location.search)) {
+    implementationName = "MINIFIED";
+  }
+  if (implementationName === "MINIFIED") {
+    document.write(
+        '<script src="../build/jquery-templates-compiled.js"><\/script>');
+  } else if (/[&?]compiled(?=[=&]|$)/.test(location.search)) {
+    document.write(
+        implementationName === "REFERENCE"
+        ? '<script src="../build/jquery-templates-reference.js"><\/script>'
+        : '<script src="../build/jquery-templates-strappend.js"><\/script>');
+  } else {
+    document.write(
+        '<script src="../src/jquery-templates-parser.js"><\/script>',
+        (implementationName === "REFERENCE"
+         ? '<script src="../src/jquery-templates-ref.js"><\/script>'
+         : '<script src="../src/jquery-templates-impl.js"><\/script>'),
+        '<script src="../src/jquery-templates-builtins.js"><\/script>');
+  }
+  if (implementationName === "MINIFIED") {
+    // The spec does not specify error messages.
+    document.write('<script>DEBUG = false;<\/script>');
+  }
+  var match = location.search.match(/[&?]testFilter=([^&]*)/);
+  if (match) {
+    testFilter = new RegExp(decodeURIComponent(match[1]), "i");
+  }
+})();
+</script>
+<script>
+var hasConsole = typeof console !== "undefined"
+    && !/[&?]nolog\b/.test(location.search);
+
+function trim(s) {
+  return s.replace(/^\s+|\s+$/g, "");
+}
+
+function trimmedText(node) {
+  return trim(node.innerText || node.textContent);
+}
+
+function extractAndParseTemplates(templateSource) {
+  $.templates = {};
+
+  var parseTrees = {};
+  var leftover = templateSource.replace(
+      /<script((?:[^"'\x3e]|"[^"]*"|'[^']*')*)>((?:[^<]|<!(?=--)[\s\S]*?-->|<(?!!--|\/script))*?)<\/script\s*>/gi,
+      function (_, attrs, oneTemplate) {
+        var id = attrs.match(/\bid=(?:"([^\x22]+)"|'([^\x27]+)'|(\w+))/);
+        if (!id || !/\btype=[\x22']?text\/x-jquery-tmpl[\x22']?/.test(attrs)) {
+          throw new Error("Bad <script> attrs: " + attrs);
+        }
+        id = id[1] || id[2] || id[3];  // 2 quoted groups, one unquoted.
+        oneTemplate = oneTemplate.replace(/^\s+|\s+$/g, "");
+        hasConsole && console.group("parse " + id);
+        try {
+          $.template(id, oneTemplate);
+        } finally {
+          hasConsole && console.groupEnd();
+        }
+        return "";
+      });
+  if (leftover === templateSource) {
+    $.template("main", templateSource);
+  } else if (/\S/.test(leftover = leftover.replace(/<!--[\s\S]*?-->/g, ""))) {
+    throw new Error("Unparsed content: " + leftover);
+  }
+}
+
+function runTests() {
+  var nTests = 0, nPasses = 0;
+  var rows = document.body.getElementsByTagName("TR");
+  var t0 = Date.now();
+  for (var j = 0; rows[j]; ++j) {
+    var row = rows[j];
+    if (/\bdisabled\b/.test(row.className)) { continue; }
+    // Only consider rows in testtables.
+    var table = row;
+    while (table.tagName !== "TABLE") { table = table.parentNode; }
+    if (!/\btesttable\b/.test(table.className)) { continue; }
+    var cells = [];
+    // Get child cells, not cells in nested tables.
+    var header = null;
+    for (var child = row.firstChild; child; child = child.nextSibling) {
+      if (child.nodeType === 1) {
+        if (child.tagName === "TD") { cells.push(child); }
+        else if (child.tagName === "TH") { header = child; }
+      }
+    }
+    if (!cells.length) { continue; }  // skip header rows
+    var testName = header
+        ? (header.innerText || header.textContent) : "unknown";
+    if (!testFilter.test(testName)) { continue; }
+    // Run the test.
+    var pass = false;
+    hasConsole && console.group(testName);
+    try {
+      var testCell = cells[0], dataCell = cells[1],
+          expectedCell = cells[2], actualCell = cells[3];
+      var templateSource = trimmedText(testCell);
+      var dataSource = trimmedText(dataCell);
+      row.className = "running";
+      var dataAndItems = null;
+      var result = null;
+      var parseTrees = null;
+      var compiled = {};
+      try {
+        dataAndItems = new Function("return ([" + dataSource + "])")();
+        extractAndParseTemplates(templateSource);
+        parseTrees = JSON.parse(JSON.stringify($.templates));
+        var compiled = $.template("main");
+        result = compiled.tmpl(dataAndItems[0], dataAndItems[1]);
+      } catch (ex) {
+        hasConsole && ex.stack && console.error(ex.stack);
+        result = "Error:" + (ex.message || ex.description);
+      }
+      var expectedText;
+      var normResult;
+      if (/^Error:/.test(result)) {
+        expectedText = trimmedText(expectedCell);
+        actualCell.appendChild(document.createTextNode(result));
+        normResult = trim(result);
+        pass = /^Error:/.test(expectedText)
+            && !(implementationName === "STRAPPEND"
+                 && expectedText !== normResult);
+      } else {
+        actualCell.innerHTML = result;
+        normResult = actualCell.innerHTML;
+        expectedText = expectedCell.innerHTML;
+        pass = normResult === expectedText;
+      }
+      if (!pass && hasConsole) {
+        console.error("%s !==\n%s",
+            JSON.stringify(expectedText), JSON.stringify(normResult));
+        console.log(
+            "parseTrees=%o, dataAndItems=%o, compiled=%o",
+            parseTrees, dataAndItems, compiled);
+      }
+    } finally {
+      row.className = pass ? "pass" : "fail";
+      ++nTests;
+      if (pass) { ++nPasses; }
+      hasConsole && console.log(pass ? "pass" : "fail");
+      hasConsole && console.groupEnd(testName);
+    }
+  }
+
+  var t1 = Date.now();
+  var summary = " " + implementationName
+      + " : " + nPasses + " / " + nTests + " in " + (t1 - t0) + " ms";
+  document.title += summary;
+  $("h1").append(summary);
+  document.body.className += (nTests && nTests === nPasses) ? " pass" : " fail";
+
+}
+</script>
+</head>
+
+<body onload="runTests()">
+<h1>JQuery Templates Conformance Suite</h1>
+
+<p>
+This is a conformance suite for the draft jQuery
+<a href="http://wiki.jqueryui.com/w/page/37898666/Template">template</a>
+language.
+</p>
+
+<p>
+Each row in the tables below is a test case.
+
+<h2>Legend</h2>
+<p>
+The "test" column includes the literal text of a template wrapped in
+an <code>&lt;xmp&gt;</code> element.
+<p>
+The "data" column includes a data value as JavaScript text also
+wrapped in an <code>&lt;xmp&gt;</code>.
+<p>
+The "expected" column shows the expected output of the template when
+compiled and applied to the data.  If the output starts with "Error:"
+then the compilation or application should fail with an exception, and
+in debug mode should produce the following error message.
+<p>
+The "actual" column is auto-generated and contains the actual result
+and is colored to indicate success or failure.
+<p>
+The right-most column, if any, includes explatory text about the test-case.
+<p>
+Any "test" cells whose content consists of named templates specified via
+<code>&lt;script type="text/x-jquery-tmpl" id="template-name"&gt;</code>
+elements will have all templates extracted and compiled as a bundle
+and the template with <code>id="main"</code> will be the one applied.
+</p>
+
+<h2>Usage</h2>
+<p>To test the reference implementation, add
+<a href="?reference"><code>?reference</code></a> to the URL.</p>
+<p>To test the reference implementation, add
+<a href="?compressed"><code>?compressed</code></a> to the URL.</p>
+<p>To run just some tests, add <code>?testFilter=&lt;RegExp&gt;</code>
+where <code>&lt;RegExp&gt;</code> matches the right-most column, the
+test description.</p>
+<p>To turn off logging to the console, add <a href="?nolog"><code>?nolog</code></a> to the URL.</p>
+
+<h2>Neither bells nor whistles</h2>
+<p>
+The tests below test the built-in operators, and plugins that ship by default.
+</p>
+<table class="testtable" summary="Neither bells nor whistles">
+  <tr><th>Test</th><th>Data</th><th>Expected</th><th>Actual</th></tr>
+  <tr>
+    <td><xmp></xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td></td>
+    <td></td>
+    <th>Empty Template</th>
+  </tr>
+  <tr>
+    <td><xmp>Hello, World!</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Hello, World!</td>
+    <td></td>
+    <th>Plain text</th>
+  </tr>
+  <tr>
+    <td><xmp>Hello, &lt;World&gt;!</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Hello, &lt;World&gt;!</td>
+    <td></td>
+    <th>HTML entities preserved</th>
+  </tr>
+  <tr>
+    <td>&#x10000;</td>
+    <td><xmp>{}</xmp></td>
+    <td>&#x10000;</td>
+    <td></td>
+    <th>Supplemental codepoints preserved</th>
+  </tr>
+  <tr>
+    <td>&#xd800;-&#xdc00;</td>
+    <td><xmp>{}</xmp></td>
+    <td>&#xd800;-&#xdc00;</td>
+    <td></td>
+    <th>Orphaned surrogates preserved</th>
+  </tr>
+  <tr>
+    <td><xmp>foo&#10;${"\n"}
+bar</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td style="white-space: pre">foo
+
+
+bar</td>
+    <td style="white-space: pre"></td>
+    <!-- There are multiple issues on newlines in the issue tracker
+      - and if templates include JS, folding newlines can tickle
+      - semicolon insertion in hard to debug ways. -->
+    <th>Newlines preserved.</th>
+  </tr>
+  <tr>
+    <td>a&#x2028;b${'\u2029'}c</td>
+    <td><xmp>{}</xmp></td>
+    <td>a&#x2028;b&#x2029;c</td>
+    <td></td>
+    <th>Unusual newlines</th>
+  </tr>
+  <tr>
+    <td><xmp><span style=color:red>Hello</span>, World!</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td><span style=color:red>Hello</span>, World!</xmp></td>
+    <td></td>
+    <th>HTML tags preserved</th>
+  </tr>
+  <tr>
+    <td><xmp>It costs $5, 5$.  {if} {{/- {{.</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>It costs $5, 5$.  {if} {{/- {{.</td>
+    <td></td>
+    <th>Dollars and curlies in text</th>
+  </tr>
+  <tr>
+    <td><xmp>Cow says m${x}, dog says ${y}k</xmp></td>
+    <td><xmp>{ x: 'foo', y: 'bar' }</xmp></td>
+    <td>Cow says mfoo, dog says bark</td>
+    <td></td>
+    <th>Substitution</th>
+  </tr>
+  <tr>
+    <td><xmp>Cow says m{{=x}}, dog says {{=y}}k</xmp></td>
+    <td><xmp>{ x: 'foo', y: 'bar' }</xmp></td>
+    <td>Cow says mfoo, dog says bark</td>
+    <td></td>
+    <th>Substitution unabbreviated syntax</th>
+  </tr>
+  <tr>
+    <td><xmp>Hello, ${world}!</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Error:world is not defined</td>
+    <td></td>
+    <th>Substitution w/out data</th>
+  </tr>
+  <tr>
+    <td><xmp>i=${i}, f=${f}, nf=${nf}, nan=${nan}, inf=${inf}, nzero=${nzero}</xmp></td>
+    <td><xmp>{ i: 42, f: 0.5, nf: -0.5, nan: NaN, inf: Infinity, nzero: -0 }</xmp></td>
+    <td>i=42, f=0.5, nf=-0.5, nan=NaN, inf=Infinity, nzero=0</td>
+    <td></td>
+    <th>Substitution numbers</th>
+  </tr>
+  <tr>
+    <td><xmp>s=${s}, n=${n}, nul=${nul}, supp=${supp}, orphans=${orphans}</xmp></td>
+    <td><xmp>{ s: "Hello, World!", n: "42", supp: "\ud800\udc00", orphans: "\ud800-\udc00", nul: "\u0000" }</xmp></td>
+    <td>s=Hello, World!, n=42, nul=&#0;, supp=&#x10000;, orphans=&#xd800;-&#xdc00;</td>
+    <td></td>
+    <th>Substitution strings</th>
+  </tr>
+  <tr>
+    <td><xmp>t=${t}, f=${f}</xmp></td>
+    <td><xmp>{ t: true, f: false }</xmp></td>
+    <td>t=true, f=false</td>
+    <td></td>
+    <th>Substitution booleans</th>
+  </tr>
+  <tr>
+    <td><xmp>s=${s}, o=${o}, thunk=${thunk}, a=${a}</xmp></td>
+    <td><xmp>{ s: new String("foo"), o: { toString: function () { return "[Obj]" } }, thunk: function () { return "Hello, World!"; }, a: [1, 2, 3] }</xmp></td>
+    <td>s=foo, o=[Obj], thunk=Hello, World!, a=123</td>
+    <td></td>
+    <th>Substitution objects</th>
+  </tr>
+  <tr>
+    <td><xmp>i++=${i++}, i++=${i++}, readOnce=${readOnce}, counter=${counter}, counter=${counter}</xmp></td>
+    <td><xmp>{ i: 0, readOnce: (function () { var run = false; return function() { if (run) throw Error(); run = true; return 42; }; })(), counter: (function () { var i = 0; return function () { return ++i; }; })() }</xmp></td>
+    <td>i++=0, i++=1, readOnce=42, counter=1, counter=2</td>
+    <td></td>
+    <th>Substitution evaluation happens once and in order</th>
+  </tr>
+  <tr>
+    <td><xmp><div title="${breaker}">${breaker}</div></xmp></td>
+    <td><xmp>{ breaker: "-->]]></script></style></textarea>\" ' ) >" }</xmp></td>
+
+    <td><div title="--&gt;]]&gt;&lt;/script&gt;&lt;/style&gt;&lt;/textarea&gt;&quot; ' ) &gt;">--&gt;]]&gt;&lt;/script&gt;&lt;/style&gt;&lt;/textarea&gt;&quot; ' ) &gt;</div></td>
+    <!--"-->
+    <td></td>
+    <th>Substitution autoescaped</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{else}}Goodbye{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: true, world: "Cincinatti" }</xmp></td>
+    <td><b>Hello</b>, Cincinatti!</td>
+    <td></td>
+    <th>If branch taken</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{else}}Goodbye{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: false, world: function () { return "Cleveland"; }}</xmp></td>
+    <td><b>Goodbye</b>, Cleveland!</td>
+    <td></td>
+    <th>Else branch taken</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: true, world: "Cincinatti" }</xmp></td>
+    <td><b>Hello</b>, Cincinatti!</td>
+    <td></td>
+    <th>If branch taken no else</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: false, world: function () { return "Cleveland"; }}</xmp></td>
+    <td><b></b>, Cleveland!</td>
+    <td></td>
+    <th>No else branch</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{else sayGoodbye}}Goodbye{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: false, sayGoodbye: true, world: "Cincinatti" }</xmp></td>
+    <td><b>Goodbye</b>, Cincinatti!</td>
+    <td></td>
+    <th>Condition in else taken</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{else sayGoodbye}}Goodbye{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: false, sayGoodbye: false, world: "Cincinatti" }</xmp></td>
+    <td><b></b>, Cincinatti!</td>
+    <td></td>
+    <th>Condition in else not taken</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{else}}Goodbye{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: 1, world: "Cincinatti" }</xmp></td>
+    <td><b>Hello</b>, Cincinatti!</td>
+    <td></td>
+    <th>If branch taken based on truthy value</th>
+  </tr>
+  <tr>
+    <td><xmp><b>{{if sayHello}}Hello{{else}}Goodbye{{/if}}</b>, ${world}!</xmp></td>
+    <td><xmp>{ sayHello: 0, world: function () { return "Cleveland"; }}</xmp></td>
+    <td><b>Goodbye</b>, Cleveland!</td>
+    <td></td>
+    <th>Else branch taken based on falsey value</th>
+  </tr>
+  <tr>
+    <td><xmp><ul>{{each arr}}<li value=\"${$index - -1}\">${$value}{{/each}}</ul></xmp></td>
+    <td><xmp>{ arr: ["One", "Two"] }</xmp></td>
+    <td><ul><li value=\"1\">One<li value=\"2\">Two</ul></td>
+    <td></td>
+    <th>Loop over array</th>
+  </tr>
+  <tr>
+    <td><xmp><ul>{{each arr}}<li value=\"${$index - -1}\">${$value}{{/each}}</ul></xmp></td>
+    <td><xmp>{ arr: [] }</xmp></td>
+    <td><ul></ul></td>
+    <td></td>
+    <th>Loop over empty</th>
+  </tr>
+  <tr>
+    <td><xmp><ul>{{each(i) arr}}<li value=\"${i - -1}\">${$value}{{/each}}</ul></xmp></td>
+    <td><xmp>{ arr: ["One", "Two"] }</xmp></td>
+    <td><ul><li value=\"1\">One<li value=\"2\">Two</ul></td>
+    <td></td>
+    <th>Loop with custom key variable name</th>
+  </tr>
+ <tr>
+    <td><xmp><ul>{{each(k, v) arr}}<li value=\"${k - -1}\">${v}{{/each}}</ul></xmp></td>
+    <td><xmp>{ arr: ["One", "Two"] }</xmp></td>
+    <td><ul><li value=\"1\">One<li value=\"2\">Two</ul></td>
+    <td></td>
+    <th>Loop with custom variable names</th>
+  </tr>
+  <tr>
+    <td><xmp><table>{{each(k,v) obj}}<tr><td>${k}<td>${v}</tr>{{/each}}</table></xmp></td>
+    <!-- This assumes that object iteration order is stable across JS
+      - implementations.  This is not valid according to the EcmaScript spec,
+      - but is remarkably consistent.
+      -->
+    <td><xmp>{ obj: { "foo": "bar", "baz": "boo" } }</xmp></td>
+    <td><table><tr><td>foo<td>bar<tr><td>baz<td>boo</table></td>
+    <td></td>
+    <th>Loop over associative array.</th>
+  </tr>
+  <tr>
+    <td><xmp>
+      <script type="text/x-jquery-tmpl" id="main">
+        this x=${x}, {{tmpl "that"}}
+      </script>
+      <script type="text/x-jquery-tmpl" id="that">
+        that x=(${x})
+      </script>
+    </xmp></td>
+    <td><xmp>{ x: "x" }</xmp></td>
+    <td>this x=x, that x=(x)</td>
+    <td></td>
+    <th>Template Calls</th>
+  </tr>
+  <tr>
+    <td><xmp>{{tmpl({ x, y }) "that"}}</xmp></td>
+    <td><xmp>{ x: "x" }</xmp></td>
+    <td>Error:Invalid {{tmpl}} content: ({ x, y }) "that"</td>
+    <td></td>
+    <th>Invalid Template Param</th>
+  </tr>
+  <tr>
+    <td><xmp>{{tmpl({ x: y }) "that}}</xmp></td>
+    <td><xmp>{ x: "x" }</xmp></td>
+    <td>Error:Invalid {{tmpl}} content: ({ x: y }) "that</td>
+    <td></td>
+    <th>Invalid Template Selector</th>
+  </tr>
+  <tr>
+    <td><xmp>
+      <script type="text/x-jquery-tmpl" id="main">
+        this x=${x}, {{tmpl({x: "y"}) "that"}}
+      </script>
+      <script type="text/x-jquery-tmpl" id="that">
+        that x=(${x})
+      </script>
+    </xmp></td>
+    <td><xmp>{ x: "x" }</xmp></td>
+    <td>this x=x, that x=(y)</td>
+    <td></td>
+    <th>Call with different data</th>
+  </tr>
+  <tr>
+    <td><xmp>
+      <script type="text/x-jquery-tmpl" id="main">
+        this x=${++x}, {{tmpl "that" + ++x}}
+      </script>
+      <script type="text/x-jquery-tmpl" id="that2">
+        that x=(${++x})
+      </script>
+      <script type="text/x-jquery-tmpl" id="that1">
+        wrong target
+      </script>
+    </xmp></td>
+    <td><xmp>{ x: 0 }</xmp></td>
+    <td>this x=1, that x=(3)</td>
+    <td></td>
+    <th>Template Order of Evaluation</th>
+  </tr>
+  <tr>
+    <td><xmp>${1}${1}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>11</td>
+    <td></td>
+    <th>String concatenation of adjacent subs</th>
+  </tr>
+  <tr>
+    <td><xmp>${1 + 1}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>2</td>
+    <td></td>
+    <th>Arithmetic in substitution</th>
+  </tr>
+  <tr>
+    <td><xmp>a[0].b[cStr]=${a[0].b[cStr]}</xmp></td>
+    <td><xmp>{ a: [{ b: { c: 42 } }], cStr: "c" }</xmp></td>
+    <td>a[0].b[cStr]=42</td>
+    <td></td>
+    <th>Member expressions</th>
+  </tr>
+  <tr>
+    <td><xmp>undef=${x.undef}</xmp></td>
+    <td><xmp>{ x: {} }</xmp></td>
+    <td>undef=</td>
+    <td></td>
+    <th>Undefined member</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if n < 0}}-{{tmpl({ n: -n }) "main"}}{{else n >= 1}}.{{tmpl({n: n - 1}) "main"}}{{/if}}</xmp></td>
+    <td><xmp>{ n: -3 }</xmp></td>
+    <td>-...</td>
+    <td></td>
+    <th>Recursive template</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if typeof notDefinedInDataMap !== "undefined"}}${notDefinedInDataMap}{{else}}none{{/if}}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>none</td>
+    <td></td>
+    <th>Unreached variable need not be defined</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if cond}}foo{{else}}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Error:Unclosed block directives if in {{if cond}}foo{{else}}</td>
+    <td></td>
+    <th>Missing {{/if}} error message</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if cond}}foo{{else}}bar{{else}}boo{{/if}}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Error:{{else}} without condition must be last:{{if cond}}foo{{else}}bar{{else}}boo{{/if}}</td>
+    <td></td>
+    <th>Misplaced {{else}}</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if }}foo{{/if}}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Error:{{if}} missing condition:{{if }}foo{{/if}}</td>
+    <td></td>
+    <th>Missing {{if}} condition</th>
+  </tr>
+  <tr>
+    <td><xmp>All nature is but art {{unknown}} to thee.</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Error:I do not know how to compile {{unknown}}</td>
+    <td></td>
+    <th>Unknown directive name</th>
+  </tr>
+  <tr>
+    <td><xmp>${i + (j}</xmp></td>
+    <td><xmp>{ i: 1, j: 2 }</xmp></td>
+    <td>Error:Invalid template substitution: i + (j</td>
+    <td></td>
+    <th>Catch obviously broken expressions early.</th>
+  </tr>
+  <tr>
+    <td><xmp>{{=String()) } { (String()}}</xmp></td>
+    <td><xmp>{ String: function () { return "String!"; } }</xmp></td>
+    <td>Error:Invalid template substitution: String()) } { (String()</td>
+    <td></td>
+    <th>Unbracketing and rebracketing illegal.</th>
+  </tr>
+  <tr>
+    <td><xmp>${arguments[0]}</xmp></td>
+    <td><xmp>{ arguments: [42] }</xmp></td>
+    <td>42</td>
+    <td></td>
+    <th>"arguments" as a data key</th>
+  </tr>
+  <tr>
+    <td><xmp>${arguments[0]}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Error:arguments is not defined</td>
+    <td></td>
+    <th>"arguments" not present as a data key</th>
+  </tr>
+  <tr>
+    <td><xmp>${delete arguments, arguments[0]}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Error:arguments is not defined</td>
+    <td></td>
+    <th>"arguments" really not present as a data key</th>
+  </tr>
+  <tr>
+    <td><xmp>${$data.arguments = 42}, ${arguments}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>42, 42</td>
+    <td></td>
+    <th>"arguments" really not present as a data key</th>
+  </tr>
+  <tr>
+    <td><xmp>${$item.foo}</xmp></td>
+    <td><xmp>{}, { foo: 42 }</xmp></td>
+    <td>42</td>
+    <td></td>
+    <th>Template options available</th>
+  </tr>
+  <tr>
+    <td><xmp><script type="text/x-jquery-tmpl" id="main">
+  ${$item.foo},{{tmpl({ "$item": { foo: "data" } }) "t"}},${$item.foo}
+</script>
+<script type="text/x-jquery-tmpl" id="t">${$item.foo}</script>
+</xmp></td>
+    <td><xmp>{}, { foo: "option" }</xmp></td>
+    <td>option,data,option</td>
+    <td></td>
+    <th>Data masking template options</th>
+  </tr>
+  <tr>
+    <td><xmp><script type="text/x-jquery-tmpl" id="main">
+  ${$item.foo},{{tmpl(,{ "foo": "option2" }) "t"}},${$item.foo}
+</script>
+<script type="text/x-jquery-tmpl" id="t">${$item.foo}</script>
+</xmp></td>
+    <td><xmp>{}, { foo: "option" }</xmp></td>
+    <td>option,option2,option</td>
+    <td></td>
+    <th>Passing options</th>
+  </tr>
+</table>
+
+<h2>Plugin Tests</h2>
+<p>
+The table below shows the template language extended with a few
+plugins.
+<p>
+<code><b>{{makeID varName}}</b></code> assigns an ID using a
+counter and puts it in the variable named <code>varName</code>.
+</p>
+
+<script id="makeid-source">
+var locallyUniqueCounter = 0;
+
+$.templatePlugins.push(function (parseTrees) {
+  return $.each(parseTrees, function rewriteMakeid(_, parseTree) {
+    if (typeof parseTree !== "string") {
+      if (parseTree[0] === "makeID") {
+        parseTree[0] = "=";
+        parseTree[1] = "($data." + parseTree[1]
+            + "='autogenid'+ ++locallyUniqueCounter)";
+      } else {
+        $.each(parseTree, rewriteMakeid);
+      }
+    }
+  });
+});
+</script>
+
+<script>
+$("<XMP/>").text($("#makeid-source").text()).appendTo($(document.body));
+</script>
+
+<p>
+The <b>Date format</b> plugin annotates all substitutions to convert any
+<code>Date</code> instances into a prescribed format without
+introducing new syntax.
+</p>
+
+<script id="dateformat-source">
+function formatDate(value) {
+  // Very simple date formatter for test purposes only.
+  return (value instanceof Date)
+     ? [value.getFullYear(), (value.getMonth() + 1), value.getDate()]
+       .join("-00").replace(/-\d+(\d\d)/g, "-$1")
+     : value;
+}
+
+$.templatePlugins.splice(0, 0, function (parseTrees) {
+  return $.each(parseTrees, function rewriteSusbstitutions (_, parseTree) {
+    if (typeof parseTree !== "string") {
+      if (parseTree[0] === "=") {
+        parseTree[1] += "=>formatDate";
+      } else {
+        $.each(parseTree, rewriteSusbstitutions);
+      }
+    }
+  });
+});
+</script>
+
+<script>
+$("<XMP/>").text($("#dateformat-source").text()).appendTo($(document.body));
+</script>
+
+<p>
+The <b>import</b> plugin looks for a call to a template named
+<code>notYetLoaded</code> and if so, adds a template to the parse tree
+bundle that outputs "Loaded just in time!"
+</p>
+
+<script id="import-source">
+$.templatePlugins.splice(0, 0, function (parseTrees) {
+  var needToImport = false;
+  $.each(parseTrees, function rewriteSusbstitutions (_, parseTree) {
+    if (typeof parseTree !== "string") {
+      switch (parseTree[0]) {
+        case "tmpl": case "wrap":
+          var match = parseTree[1].match(TMPL_DIRECTIVE_CONTENT);
+          if (match && match[2] === '"notYetLoaded"') {
+            needToImport = true;
+          }
+      }
+      $.each(parseTree, rewriteSusbstitutions);
+    }
+  });
+  if (needToImport) {
+    parseTrees.notYetLoaded = ["", "", "Loaded just in time!"];
+  }
+  return parseTrees;
+});
+</script>
+
+<script>
+$("<XMP/>").text($("#import-source").text()).appendTo($(document.body));
+</script>
+
+<table class="testtable" summary="Plugin tests">
+  <tr><th>Test</th><th>Data</th><th>Expected</th><th>Actual</th></tr>
+  <tr>
+    <td><xmp><ul>{{each(i,v) nums}}<li><input value="${v}" id="{{makeID listItemId}}"><button onclick="alert($('#${listItemId}')[0].value)">say</button>{{/each}}</ul></xmp></td>
+    <td><xmp>{ nums: ["One", "Two", "Three"] }</xmp></td>
+    <td><ul><li><input value="One" id="autogenid1"><button onclick="alert($('#autogenid1')[0].value)">say</button><li><input value="Two" id="autogenid2"><button onclick="alert($('#autogenid2')[0].value)">say</button><li><input value="Three" id="autogenid3"><button onclick="alert($('#autogenid3')[0].value)">say</button></ul></td>
+    <td></td>
+    <th>{{makeID}} plugin</th>
+  </tr>
+  <tr>
+    <td><xmp><input value="${v}" id="{{makeid listItemId}}"></xmp></td>
+    <td><xmp>{ v: "value" }</xmp></td>
+    <td>Error:I do not know how to compile {{makeid listItemId}}</td>
+    <td></td>
+    <th>directive names case-sensitive</th>
+  </tr>
+  <tr>
+    <td><xmp>Date: ${date}, a number: ${notadate}</xmp></td>
+    <td><xmp>{ date: new Date(2007, 0, 15, 12, 0, 0), notadate: 2010 }</xmp></td>
+    <td>Date: 2007-01-15, a number: 2010</td>
+    <td></td>
+    <th>Format date plugin</th>
+  </tr>
+  <tr>
+    <td><xmp>Main calls and {{tmpl "notYetLoaded"}}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>Main calls and Loaded just in time!</td>
+    <td></td>
+    <th>Import plugin</th>
+  </tr>
+</table>
+
+<p>
+Tests migrated from the original implementation.
+
+The global <code>testData</code> is set to
+</p>
+
+<xmp id="testdata-src">
+    {
+      one: "first", two: "second", v: "test",
+      arr: ["AA","BB", "CC"],
+      dict: {
+        "leovinus": "this",
+        "scraliontis": "that",
+        "brobstigon": "other" },
+      fun: function () { return "RETURNED" },
+      html: "<a>"
+    }
+</xmp>
+
+<script>
+var testData = eval("(" + $("#testdata-src").text() + ")");
+</script>
+
+<table class="testtable" summary="Plugin tests">
+  <tr>
+    <td><xmp>lorem ipsum</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>lorem ipsum</td>
+    <td></td>
+    <th>plain text passes through untouched</th>
+  </tr>
+  <tr>
+    <td><xmp>${ one }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>first</td>
+    <td></td>
+    <th>simple variable output</th>
+  </tr>
+  <tr>
+    <td><xmp>${ a b c }}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td><xmp>Error:Invalid template substitution:  a b c</xmp></td>
+    <td></td>
+    <th>multi word variable tag</th>
+  </tr>
+  <tr>
+    <td><xmp>${ _ }</xmp></td>
+    <td><xmp>{ _: "foo" }</xmp></td>
+    <td>Error: _ is not defined</td>
+    <td></td>
+    <th>_ (underscore) cannot be used by data</th>
+  </tr>
+  <tr>
+    <td><xmp>${ $ }</xmp></td>
+    <td><xmp>{ "$": "foo" }</xmp></td>
+    <td>Error: $ is not defined</td>
+    <td></td>
+    <th>$ cannot be used by data</th>
+  </tr>
+  <tr>
+    <td><xmp>{{syntax_error }}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>Error:I do not know how to compile {{syntax_error }}</td>
+    <td></td>
+    <th>sytax error passing</th>
+  </tr>
+  <tr>
+    <td><xmp>{{type_error }}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>Error:I do not know how to compile {{type_error }}</td>
+    <td></td>
+    <th>type error passing</th>
+  </tr>
+  <tr>
+    <td><xmp>{{reference_error }}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>Error:I do not know how to compile {{reference_error }}</td>
+    <td></td>
+    <th>reference error passing</th>
+  </tr>
+  <tr>
+    <td><xmp>${
+  
+one
+ }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>first</td>
+    <td></td>
+    <th>newlines do not kill tags</th>
+  </tr>
+  <tr>
+    <td>${&#xd; &#xd;&#xa;one&#xd;&#xa; }</td>
+    <td><xmp>testData</xmp></td>
+    <td>first</td>
+    <td></td>
+    <th>carriage returns do notkill tags</th>
+  </tr>
+  <tr>
+    <td><xmp>${ "on\re" }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>on
+e</td>
+    <td></td>
+    <th>returns in strings don't kill tags</th>
+  </tr>
+  <tr>
+    <td><xmp>${ "on\\e" }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>on\e</td>
+    <td></td>
+    <th>slashes in strings don't kill tags</th>
+  </tr>
+  <tr>
+    <td><xmp>a
+b
+c${ 8 }.</xmp></td>
+    <td><xmp>null</xmp></td>
+    <td>a
+b
+c8.</td>
+    <td></td>
+    <th>newlines don't kill parsing</th>
+  </tr>
+  <tr>
+    <td><xmp>{{}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>{{}}</td>
+    <td></td>
+    <th>default</th>
+  </tr>
+  <tr>
+    <td><xmp>{{ }}</xmp></td>
+    <td><xmp>null</xmp></td>
+    <td>{{ }}</td>
+    <td></td>
+    <th>with whitespace</th>
+  </tr>
+  <tr>
+    <td><xmp>{{		}}</xmp></td>
+    <td><xmp>null</xmp></td>
+    <td>{{&#9;&#9;}}</td>
+    <td></td>
+    <th>with tabs whitespace</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if 1}}{{if 1}}{{/if}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>Error:Unclosed block directives if in {{if 1}}{{if 1}}{{/if}}</td>
+    <td></td>
+    <th>default</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if 1}}{{/if}}{{/if}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>Error:Misplaced {{/if}} in {{if 1}}{{/if}}{{/if}}</td>
+    <td></td>
+    <th>extra /if</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if 1}}{{each arr}}{{/if}}{{/each}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>Error:Misplaced {{/if}} in {{if 1}}{{each arr}}{{/if}}{{/each}}</td>
+    <td></td>
+    <th>but terminated</th>
+  </tr>
+  <tr>
+    <td><xmp>a {{one } b</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>a {{one } b</td>
+    <td></td>
+    <th>ignore malformed a {{one } b</th>
+  </tr>
+  <tr>
+    <td><xmp>${ one }} {{${ two }}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>first} {{second}</td>
+    <td></td>
+    <th>ignore malformed first} {{second }</th>
+  </tr>
+  <tr>
+    <td><xmp>{{one }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>{{one }</td>
+    <td></td>
+    <th>ignore malformed {{one }</th>
+  </tr>
+  <tr>
+    <td><xmp>${ function(){} }</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td><xmp>Error:Invalid template substitution:  function(){</xmp></td>
+    <td></td>
+    <th>Disallow function operator</th>
+  </tr>
+  <tr>
+    <td><xmp>${ return a }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td><xmp>Error:Invalid template substitution:  return a</xmp></td>
+    <td></td>
+    <th>Disallow return</th>
+  </tr>
+  <tr>
+    <td><xmp>${ for a }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td><xmp>Error:Invalid template substitution:  for a</xmp></td>
+    <td></td>
+    <th>Disallow for</th>
+  </tr>
+  <tr>
+    <td><xmp>${ do{ a }while(a) }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td><xmp>Error:Invalid template substitution:  do{ a </xmp></td>
+    <td></td>
+    <th>Disallow do/while</th>
+  </tr>
+  <tr>
+    <td><xmp>{{= do{ a }while(a) }}</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td><xmp>Error:Invalid template substitution:  do{ a }while(a) </xmp></td>
+    <td></td>
+    <th>Disallow do/while 2</th>
+  </tr>
+  <tr>
+    <td><xmp>${ if (a)1 }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td><xmp>Error:Invalid template substitution:  if (a)1</xmp></td>
+    <td></td>
+    <th>Disallow if</th>
+  </tr>
+  <tr>
+    <td><xmp>{{= try{b.s}catch(e){} }}</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td><xmp>Error:Invalid template substitution:  try{b.s}catch(e){}</xmp></td>
+    <td></td>
+    <th>Disallow try/catch</th>
+  </tr>
+  <tr>
+    <td><xmp>{{= with (a){1} }}</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td><xmp>Error:Invalid template substitution:  with (a){1}</xmp></td>
+    <td></td>
+    <th>Disallow with keyword</th>
+  </tr>
+  <tr>
+    <td><xmp>${ throw "foo" }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td><xmp>Error:Invalid template substitution:  throw "foo"</xmp></td>
+    <td></td>
+    <th>Disallow throw keyword</th>
+  </tr>
+  <tr>
+    <td><xmp>${ foo["bar"] }</xmp></td>
+    <td><xmp>{foo:{bar:'baz'}}</xmp></td>
+    <td>baz</td>
+    <td></td>
+    <th>bracketed accessor foo["bar"]</th>
+  </tr>
+  <tr>
+    <td><xmp>${ foo['bar'] }</xmp></td>
+    <td><xmp>{foo:{bar:'baz'}}</xmp></td>
+    <td>baz</td>
+    <td></td>
+    <th>bracketed accessor foo['bar']</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 'foo<div>bar</div>baz' }</xmp></td>
+    <td><xmp>null</xmp></td>
+    <td>foo&lt;div&gt;bar&lt;/div&gt;baz</td>
+    <td></td>
+    <th>echoing escapes html</th>
+  </tr>
+  <tr>
+    <td><xmp>${ r }</xmp></td>
+    <td><xmp>{r:'foo<div>bar</div>baz'}</xmp></td>
+    <td>foo&lt;div&gt;bar&lt;/div&gt;baz</td>
+    <td></td>
+    <th>echoing escapes html (lookup)</th>
+  </tr>
+  <tr>
+    <td><xmp>${ '&' }</xmp></td>
+    <td><xmp>null</xmp></td>
+    <td>&amp;</td>
+    <td></td>
+    <th>echoing escapes ampersands 1</th>
+  </tr>
+  <tr>
+    <td><xmp>${ '&amp;' }</xmp></td>
+    <td><xmp>null</xmp></td>
+    <td>&amp;amp;</td>
+    <td></td>
+    <th>echoing escapes ampersands 2</th>
+  </tr>
+  <tr>
+    <td><xmp>${ '-<&>-<&>-' }</xmp></td>
+    <td><xmp>null</xmp></td>
+    <td>-&lt;&amp;&gt;-&lt;&amp;&gt;-</td>
+    <td></td>
+    <th>echoing escapes &amp; &lt; &gt;</th>
+  </tr>
+  <tr>
+    <td><xmp>A{{! comments test }}B</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>AB</td>
+    <td></td>
+    <th>comments are removed</th>
+  </tr>
+  <tr>
+    <td><xmp>{{! inky }}foo{{! blinky }}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>foo</td>
+    <td></td>
+    <th>comments are removed (2)</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>A{{! comments "}}" test }}B</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>AB</td>
+    <td></td>
+    <th>comments may include string of comments</th>
+  </tr>
+  <tr>
+    <td><xmp>A{# C{# E #}D #}B</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>AD #}B</td>
+    <td></td>
+    <th>comments cannot nest other comments</th>
+  </tr>
+  <tr>
+    <td><xmp>A{# comments "str"ing" test #}B</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>AB</td>
+    <td></td>
+    <th>comments may include strings with escapes (double)</th>
+  </tr>
+  <tr>
+    <td><xmp>A{# comments 'str'ing' test #}B</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>AB</td>
+    <td></td>
+    <th>comments may include strings with escapes (single)</th>
+  </tr>
+  <tr>
+    <td><xmp>A{# {{= v }} #}B</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>AB</td>
+    <td></td>
+    <th>comments may include tags</th>
+  </tr>
+  <tr>
+    <td><xmp>A{# 
+comments test
+ #}B</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>AB</td>
+    <td></td>
+    <th>comments may span lines</th>
+  </tr>
+  <tr>
+    <td><xmp>1{{! {{ INVALID_TAG }} }}2</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>12</td>
+    <td></td>
+    <th>comments may contain invalid content (invalid tag)</th>
+  </tr>
+  <tr>
+    <td><xmp>1{{! {{/if}} }}2</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>12</td>
+    <td></td>
+    <th>comments may contain invalid content (stray end tag)</th>
+  </tr>
+  <tr>
+    <td><xmp>1{{! {{else}} }}2</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>12</td>
+    <td></td>
+    <th>comments may contain invalid content (stray else)</th>
+  </tr>
+  <tr>
+    <td><xmp>1{{! {{if ...}} }}2</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>12</td>
+    <td></td>
+    <th>comments may contain invalid content (invalid javascript)</th>
+  </tr>
+  <tr>
+    <td><xmp>{{= one }}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>first</td>
+    <td></td>
+    <th>variable replacement</th>
+  </tr>
+  <tr>
+    <td><xmp>{{= one }}/{{= two }}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>first/second</td>
+    <td></td>
+    <th>many variables work</th>
+  </tr>
+  <tr>
+    <td><xmp>${ one }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>first</td>
+    <td></td>
+    <th>alternative variable syntax</th>
+  </tr>
+  <tr>
+    <td><xmp>${ one }/${ two }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>first/second</td>
+    <td></td>
+    <th>many variables work with alt syntax</th>
+  </tr>
+  <tr>
+    <td><xmp>${ "string" }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>string</td>
+    <td></td>
+    <th>basic string output (double)</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 'string' }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>string</td>
+    <td></td>
+    <th>basic string output (single)</th>
+  </tr>
+  <tr>
+    <td><xmp>${ "str\"i\"ng" }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>str"i"ng</td>
+    <td></td>
+    <th>string quote escapes (double)</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 'str\'i\'ng' }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>str'i'ng</td>
+    <td></td>
+    <th>string quote escapes (single)</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ "\{\{ tag \}\}" }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>{{ tag }}</td>
+    <td></td>
+    <th>string output with tag</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ "\}\}" }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>}}</td>
+    <td></td>
+    <th>string output with end of tag</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>{{=		}}</xmp></td>
+    <td><xmp>{ self: "self" }</xmp></td>
+    <td>self</td>
+    <td></td>
+    <th>empty variable tag (with tabs whitespace)</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>{{= }}</xmp></td>
+    <td><xmp>{ self: "self" }</xmp></td>
+    <td>self</td>
+    <td></td>
+    <th>empty variable tag</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>{{=}}</xmp></td>
+    <td><xmp>{ self: "self" }</xmp></td>
+    <td>self</td>
+    <td></td>
+    <th>empty variable tag (with space)</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ is_undefined }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td></td>
+    <td></td>
+    <th>variable lookup error suppression</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ is_undefined.member }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td> </td>
+    <td></td>
+    <th>variable lookup error suppression (with member)</th>
+  </tr>
+  <tr>
+    <td><xmp>A${ one }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>Afirst</td>
+    <td></td>
+    <th>variable and text (1)</th>
+  </tr>
+  <tr>
+    <td><xmp>${ one }B</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>firstB</td>
+    <td></td>
+    <th>variable and text (2)</th>
+  </tr>
+  <tr>
+    <td><xmp>A${ one }B</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>AfirstB</td>
+    <td></td>
+    <th>variable and text (3)</th>
+  </tr>
+  <tr>
+    <td><xmp>${ a.b.c }</xmp></td>
+    <td><xmp>{a:{b:{c:"abc"}}}</xmp></td>
+    <td>abc</td>
+    <td></td>
+    <th>lookups work for submembers</th>
+  </tr>
+  <tr>
+    <td><xmp>${ a.b.c }</xmp></td>
+    <td><xmp>{a:{b:{c:"abc"}}}</xmp></td>
+    <td>abc</td>
+    <td></td>
+    <th>error suppression works for submembers</th>
+  </tr>
+  <tr>
+    <td><xmp>${ foo() }</xmp></td>
+    <td><xmp>{ foo:function(s){ return 'bar'; }}</xmp></td>
+    <td>bar</td>
+    <td></td>
+    <th>functions can be called with in tags</th>
+  </tr>
+  <tr>
+    <td><xmp>${ foo("bar") }</xmp></td>
+    <td><xmp>{ foo:function(s){ return s; }}</xmp></td>
+    <td>bar</td>
+    <td></td>
+    <th>functions pass strings correctly</th>
+  </tr>
+  <tr>
+    <td><xmp>${ foo(bar) }</xmp></td>
+    <td><xmp>{ foo:function(s){ return s; }, 'bar':'baz'}</xmp></td>
+    <td>baz</td>
+    <td></td>
+    <th>functions pass arguments correctly</th>
+  </tr>
+  <tr>
+    <td><xmp>${ foo }</xmp></td>
+    <td><xmp>{foo: {toString:function () {return 'S';},toValue:function () {return 'V';}}}</xmp></td>
+    <td>S</td>
+    <td></td>
+    <th>variables use toString, not toValue</th>
+  </tr>
+  <tr>
+    <td><xmp>${ dot,dot,comma,dash }</xmp></td>
+    <td><xmp>{dot:'.','comma':',','dash':'-'}</xmp></td>
+    <td>-</td>
+    <td></td>
+    <th>comma passes variables correctly</th>
+  </tr>
+  <!-- @borgar says: I don't like this: it should use foo() to be consistant with foo().bar() -->
+  <tr>
+    <td><xmp>${ fun }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>RETURNED</td>
+    <td></td>
+    <th>variable gets called if it is callable</th>
+  </tr>
+  <tr>
+    <td><xmp>${ obj.fun }</xmp></td>
+    <td><xmp>{obj: testData}</xmp></td>
+    <td>RETURNED</td>
+    <td></td>
+    <th>last variable in sequence gets called if it is callable</th>
+  </tr>
+  <tr>
+    <td><xmp>${ foo.bar }</xmp></td>
+    <td><xmp>{ foo: function () { return { bar: function () {return 'BAZ'; } } } }</xmp></td>
+    <td></td>
+    <td></td>
+    <th>member functions in a sequence don't get called</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 0 }</xmp></td>
+    <td><xmp>null</xmp></td>
+    <td>0</td>
+    <td></td>
+    <th>(0)</th>
+  </tr>
+  <tr>
+    <td><xmp>${ false }</xmp></td>
+    <td><xmp>null</xmp></td>
+    <td>false</td>
+    <td></td>
+    <th>(false)</th>
+  </tr>
+  <!-- It's debatable what we want here. -->
+  <tr>
+    <td><xmp>${ null }</xmp></td>
+    <td><xmp>null</xmp></td>
+    <td>null</td>
+    <td></td>
+    <th>(null)</th>
+  </tr>
+  <tr>
+    <td><xmp>${ undefined }</xmp></td>
+    <td><xmp>null</xmp></td>
+    <td></td>
+    <td></td>
+    <th>(undefined)</th>
+  </tr>
+  <tr>
+    <td><xmp>${ "" }</xmp></td>
+    <td><xmp>null</xmp></td>
+    <td></td>
+    <td></td>
+    <th>("")</th>
+  </tr>
+  <tr>
+    <td><xmp>${ '' }</xmp></td>
+    <td><xmp>null</xmp></td>
+    <td></td>
+    <td></td>
+    <th>('')</th>
+  </tr>
+  <tr>
+    <td><xmp>${ zero }</xmp></td>
+    <td><xmp>{zero: 0}</xmp></td>
+    <td>0</td>
+    <td></td>
+    <th>(false)</th>
+  </tr>
+  <tr>
+    <td><xmp>${ zero }</xmp></td>
+    <td><xmp>{zero: false}</xmp></td>
+    <td>false</td>
+    <td></td>
+    <th>(false)</th>
+  </tr>
+  <!-- It's debatable what we want here. -->
+  <tr>
+    <td><xmp>${ zero }</xmp></td>
+    <td><xmp>{zero: null}</xmp></td>
+    <td>null</td>
+    <td></td>
+    <th>(null)</th>
+  </tr>
+  <tr>
+    <td><xmp>${ zero }</xmp></td>
+    <td><xmp>{zero: undefined}</xmp></td>
+    <td></td>
+    <td></td>
+    <th>(undefined)</th>
+  </tr>
+  <tr>
+    <td><xmp>${ zero }</xmp></td>
+    <td><xmp>{zero: ""}</xmp></td>
+    <td></td>
+    <td></td>
+    <th>('')</th>
+  </tr>
+  <tr>
+    <td><xmp>${ one + "foo" }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>firstfoo</td>
+    <td></td>
+    <th>string concatenation</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 1 + 5 }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>6</td>
+    <td></td>
+    <th>adding</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 9 - 5 }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>4</td>
+    <td></td>
+    <th>subtracting</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 5 % 2 }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>1</td>
+    <td></td>
+    <th>modulo</th>
+  </tr>
+  <tr>
+    <td><xmp>${ -n }</xmp></td>
+    <td><xmp>{n:10}</xmp></td>
+    <td>-10</td>
+    <td></td>
+    <th>unary minus</th>
+  </tr>
+  <tr>
+    <td><xmp>${ +n }</xmp></td>
+    <td><xmp>{n:10}</xmp></td>
+    <td>10</td>
+    <td></td>
+    <th>unary plus</th>
+  </tr>
+  <tr>
+    <td><xmp>${ "bar" in foo }</xmp></td>
+    <td><xmp>{foo:{bar:'baz'}}</xmp></td>
+    <td>true</td>
+    <td></td>
+    <th>in operator</th>
+  </tr>
+  <tr>
+    <td><xmp>${ foo instanceof Date }</xmp></td>
+    <td><xmp>{foo:new Date()}</xmp></td>
+    <td>true</td>
+    <td></td>
+    <th>instanceof operator</th>
+  </tr>
+  <tr>
+    <td><xmp>${ typeof "str" }</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>string</td>
+    <td></td>
+    <th>typeof operator</th>
+  </tr>
+  <tr>
+    <td><xmp>${ n & 1 }</xmp></td>
+    <td><xmp>{n:5}</xmp></td>
+    <td>1</td>
+    <td></td>
+    <th>bitwise AND</th>
+  </tr>
+  <tr>
+    <td><xmp>${ n | 1 }</xmp></td>
+    <td><xmp>{n:4}</xmp></td>
+    <td>5</td>
+    <td></td>
+    <th>bitwise OR</th>
+  </tr>
+  <tr>
+    <td><xmp>${ n ^ 1 }</xmp></td>
+    <td><xmp>{n:5}</xmp></td>
+    <td>4</td>
+    <td></td>
+    <th>bitwise XOR</th>
+  </tr>
+  <tr>
+    <td><xmp>${ ~n }</xmp></td>
+    <td><xmp>{n:5}</xmp></td>
+    <td>-6</td>
+    <td></td>
+    <th>bitwise NOT</th>
+  </tr>
+  <tr>
+    <td><xmp>${ n << 1 }</xmp></td>
+    <td><xmp>{n:5}</xmp></td>
+    <td>10</td>
+    <td></td>
+    <th>left shift</th>
+  </tr>
+  <tr>
+    <td><xmp>${ n >> 1 }</xmp></td>
+    <td><xmp>{n:5}</xmp></td>
+    <td>2</td>
+    <td></td>
+    <th>right shift</th>
+  </tr>
+  <tr>
+    <td><xmp>${ n >>> 1 }</xmp></td>
+    <td><xmp>{n:5}</xmp></td>
+    <td>2</td>
+    <td></td>
+    <th>zero-fill right shift</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 1 == 5 }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>false</td>
+    <td></td>
+    <th>comparing ==</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 1 != 5 }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>true</td>
+    <td></td>
+    <th>comparing !=</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 5 === 5 }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>true</td>
+    <td></td>
+    <th>comparing ===</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 5 !== 5 }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>false</td>
+    <td></td>
+    <th>comparing !==</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 1 >= 5 }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>false</td>
+    <td></td>
+    <th>comparing >=</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 1 > 5 }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>false</td>
+    <td></td>
+    <th>comparing ></th>
+  </tr>
+  <tr>
+    <td><xmp>${ 1 <= 5 }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>true</td>
+    <td></td>
+    <th>comparing <=</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 1 < 5 }</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>true</td>
+    <td></td>
+    <th>comparing <</th>
+  </tr>
+  <tr>
+    <td><xmp>${ zero || "FALSY" }</xmp></td>
+    <td><xmp>{ zero: 0 }</xmp></td>
+    <td>FALSY</td>
+    <td></td>
+    <th>Logical OR</th>
+  </tr>
+  <tr>
+    <td><xmp>${ zero && "TRUEY" }</xmp></td>
+    <td><xmp>{ zero: 1 }</xmp></td>
+    <td>TRUEY</td>
+    <td></td>
+    <th>Logical AND</th>
+  </tr>
+  <tr>
+    <td><xmp>${ zero ? "zero" : "other" }</xmp></td>
+    <td><xmp>{ zero: 1 }</xmp></td>
+    <td>zero</td>
+    <td></td>
+    <th>Conditional Operator</th>
+  </tr>
+  <tr>
+    <td><xmp>${ !zero }</xmp></td>
+    <td><xmp>{ zero: 1 }</xmp></td>
+    <td>false</td>
+    <td></td>
+    <th>Unary logical NOT</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 'test' }</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>test</td>
+    <td></td>
+    <th>Single-Quoted Strings</th>
+  </tr>
+  <tr>
+    <td><xmp>${ 'test' == testvar }</xmp></td>
+    <td><xmp>{ testvar: "test" }</xmp></td>
+    <td>true</td>
+    <td></td>
+    <th>Single-Quoted Comparison</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ a += 1 }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td>Error:</td>
+    <td></td>
+    <th>Disallow incremental assignment</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ a -= 1 }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td>Error:</td>
+    <td></td>
+    <th>Disallow decremental assignment</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ a *= 1 }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td>Error:</td>
+    <td></td>
+    <th>Disallow multiply assignment</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ a /= 1 }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td>Error:</td>
+    <td></td>
+    <th>Disallow division assignment</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ a <<= 1 }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td>Error:</td>
+    <td></td>
+    <th>Disallow left shift assignment</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ a >>= 1 }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td>Error:</td>
+    <td></td>
+    <th>Disallow right shift assignment</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ a >>>= 1 }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td>Error:</td>
+    <td></td>
+    <th>Disallow zero-fill right shift assignment</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ a &= 1 }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td>Error:</td>
+    <td></td>
+    <th>Disallow bitwise AND assignment</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ a |= 1 }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td>Error:</td>
+    <td></td>
+    <th>Disallow bitwise OR assignment</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ a ^= 1 }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td>Error:</td>
+    <td></td>
+    <th>Disallow bitwise XOR assignment</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ { a:"a"} }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td>Error:</td>
+    <td></td>
+    <th>Disallow literal object creation</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ [1,2,3] }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td>Error:</td>
+    <td></td>
+    <th>Disallow literal array creation</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ --a }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td>Error:</td>
+    <td></td>
+    <th>Disallow decrement</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>${ (a = 2) }</xmp></td>
+    <td><xmp>{a:1}</xmp></td>
+    <td>Error:</td>
+    <td></td>
+    <th>Disallow assignments</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>{{each arr}}${ $index }:${ this }/{{/each}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>0:AA/1:BB/2:CC/</td>
+    <td></td>
+    <th>loop</th>
+  </tr>
+  <tr>
+    <td><xmp>{{each arr}}${ $index }:${ $value }/{{/each}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>0:AA/1:BB/2:CC/</td>
+    <td></td>
+    <th>loop</th>
+  </tr>
+  <tr>
+    <td><xmp>{{each(i, item) arr}}${ i }:${ item }/{{/each }}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>0:AA/1:BB/2:CC/</td>
+    <td></td>
+    <th>loop</th>
+  </tr>
+  <tr>
+    <td><xmp>{{each arr}}${ $index }:${ $value }/{{/each }}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>0:AA/1:BB/2:CC/</td>
+    <td></td>
+    <th>loop</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>{{each dict}}${ $index }:{{if $first }}first{{else}}!first{{/if }}/{{/each }}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>leovinus:first/scraliontis:!first/brobostigon:!first/</td>
+    <td></td>
+    <th>first</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>{{each dict}}{{if !$first }}, {{/if }}${ $index }:${ $value }}{{/each }}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>leovinus:this, scraliontis:that, brobostigon:other</td>
+    <td></td>
+    <th>first</th>
+  </tr>
+  <tr>
+    <td><xmp>{{each arr}}<a>${ $index }</a>{{/each}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td><a>0</a><a>1</a><a>2</a></td>
+    <td></td>
+    <th>html content</th>
+  </tr>
+  <tr>
+    <td><xmp>{{each arr}}<a>${ $value }</a>{{/each}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td><a>AA</a><a>BB</a><a>CC</a></td>
+    <td></td>
+    <th>html content</th>
+  </tr>
+  <tr>
+    <td><xmp>{{each arr}}<a>${ $value.data }</a>{{/each}}</xmp></td>
+    <td><xmp>{ arr: [{data: 0}, {data: 1}, {data: 2}] }</xmp></td>
+    <td><a>0</a><a>1</a><a>2</a></td>
+    <td></td>
+    <th>html content</th>
+  </tr>
+  <tr>
+    <td><xmp>{{each arr}}
+<a>${ $value.data }</a>
+{{/each}}</xmp></td>
+    <td><xmp>{ arr:  [{data: 0}, {data: 1}, {data: 2}] }</xmp></td>
+    <td>
+<a>0</a>
+
+<a>1</a>
+
+<a>2</a>
+</td>
+    <td></td>
+    <th>html content with newlines</th>
+  </tr>
+  <tr>
+    <td><xmp>{{each arr}}${ $i }{{syntax_error}}{{/each}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>Error:I do not know how to compile {{syntax_error}}</td>
+    <td></td>
+    <th>errors are passed back correctly (syntax)</th>
+  </tr>
+  <tr>
+    <td><xmp>{{each arr}}${ $i }{{reference_error}}{{/each}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>Error:I do not know how to compile {{reference_error}}</td>
+    <td></td>
+    <th>errors are passed back correctly (reference)</th>
+  </tr>
+  <tr>
+    <td><xmp>{{each arr}}${ $i }{{type_error}}{{/each}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>Error:I do not know how to compile {{type_error}}</td>
+    <td></td>
+    <th>errors are passed back correctly (type)</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if a}}TRUE{{else}}FALSE{{/if}}</xmp></td>
+    <td><xmp>{ a:true }</xmp></td>
+    <td>TRUE</td>
+    <td></td>
+    <th>if:true</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if a}}TRUE{{else}}FALSE{{/if}}</xmp></td>
+    <td><xmp>{ a:false }</xmp></td>
+    <td>FALSE</td>
+    <td></td>
+    <th>if:false</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if a}}TRUE{{else}}FALSE{{/if}}</xmp></td>
+    <td><xmp>{ a:null }</xmp></td>
+    <td>FALSE</td>
+    <td></td>
+    <th>if:null</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if a}}TRUE{{else}}FALSE{{/if}}</xmp></td>
+    <td><xmp>{ a:undefined }</xmp></td>
+    <td>FALSE</td>
+    <td></td>
+    <th>if:undefined</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if a}}TRUE{{else}}FALSE{{/if}}</xmp></td>
+    <td><xmp>{ a:{} }</xmp></td>
+    <td>TRUE</td>
+    <td></td>
+    <th>if:[]</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if a}}TRUE{{else}}FALSE{{/if}}</xmp></td>
+    <td><xmp>{ a:[] }</xmp></td>
+    <td>TRUE</td>
+    <td></td>
+    <th>if:{}</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if a}}TRUE{{else}}FALSE{{/if}}</xmp></td>
+    <td><xmp>{ a:"" }</xmp></td>
+    <td>FALSE</td>
+    <td></td>
+    <th>if:''</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if a}}TRUE{{else}}FALSE{{/if}}</xmp></td>
+    <td><xmp>{ a:"A" }</xmp></td>
+    <td>TRUE</td>
+    <td></td>
+    <th>if:A</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if a}}TRUE{{else}}FALSE{{/if}}</xmp></td>
+    <td><xmp>{ a:0 }</xmp></td>
+    <td>FALSE</td>
+    <td></td>
+    <th>if:0</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if a}}TRUE{{else}}FALSE{{/if}}</xmp></td>
+    <td><xmp>{ a:1 }</xmp></td>
+    <td>TRUE</td>
+    <td></td>
+    <th>if:1</th>
+  </tr>
+  <tr class="disabled">
+    <td><xmp>{{if a}}TRUE{{else}}FALSE{{/if a}}</xmp></td>
+    <td><xmp>{ a:1 }</xmp></td>
+    <td>TRUE</td>
+    <td></td>
+    <th>/if ignores following text</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if true}}{{syntax_error}}{{/if}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>Error:I do not know how to compile {{syntax_error}}</td>
+    <td></td>
+    <th>errors are passed back correctly (syntax)</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if true}}{{reference_error}}{{/if}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>Error:I do not know how to compile {{reference_error}}</td>
+    <td></td>
+    <th>errors are passed back correctly (reference)</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if true}}{{type_error}}{{/if}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>Error:I do not know how to compile {{type_error}}</td>
+    <td></td>
+    <th>errors are passed back correctly (type)</th>
+  </tr>
+  <tr>
+    <td><xmp><script id="test" type="text/x-jquery-tmpl">${ "test text" }</script>
+<script id="main" type="text/x-jquery-tmpl">{{tmpl "test"}}</script></xmp></td>
+    <td><xmp>null</xmp></td>
+    <td>test text</td>
+    <td></td>
+    <th>simple include</th>
+  </tr>
+  <tr>
+    <td><xmp><script id="test2" type="text/x-jquery-tmpl">{{each arr}}[${ $value }]-{{/each }}</script>
+<script id="main" type="text/x-jquery-tmpl">{{tmpl "test2"}}</script></xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>[AA]-[BB]-[CC]-</td>
+    <td></td>
+    <th>data access</th>
+  </tr>
+  <tr>
+    <td><xmp><script id="nested" type="text/x-jquery-tmpl">{{tmpl "nested0"}}</script>
+<script id="nested0" type="text/x-jquery-tmpl">${ foo }</script>
+<script id="main" type="text/x-jquery-tmpl">{{tmpl "nested"}}</script></xmp></td>
+    <td><xmp>{foo: "bar"}</xmp></td>
+    <td>bar</td>
+    <td></td>
+    <th>nested - 1 level</th>
+  </tr>
+  <tr>
+    <td><xmp><script id="nested0" type="text/x-jquery-tmpl">{{tmpl "nested1"}}</script>
+<script id="nested1" type="text/x-jquery-tmpl">{{tmpl "nested2"}}</script>
+<script id="nested2" type="text/x-jquery-tmpl">${ foo }</script>
+<script id="main" type="text/x-jquery-tmpl">{{tmpl "nested0" }}</script></xmp></td>
+    <td><xmp>{foo: "bar"}</xmp></td>
+    <td>bar</td>
+    <td></td>
+    <th>nested - 2 levels</th>
+  </tr>
+  <tr>
+    <td><xmp><script id="nested" type="text/x-jquery-tmpl">${ foo.bar.sweet }</script>
+<script id="main" type="text/x-jquery-tmpl">{{tmpl "nested" }}</script></xmp></td>
+    <td><xmp>{foo: {bar: {sweet: 1} } }</xmp></td>
+    <td>1</td>
+    <td></td>
+    <th>nested - 2 levels - complex data</th>
+  </tr>
+  <tr>
+    <td><xmp><script id="test" type="text/x-jquery-tmpl">${ $index }</script>
+<script id="main" type="text/x-jquery-tmpl">{{each arr}}{{tmpl "test" }}{{/each}}</script></xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>012</td>
+    <td></td>
+    <th>{{each}} index variable</th>
+  </tr>
+  <tr>
+    <td><xmp><script id="test" type="text/x-jquery-tmpl">${ n }</script>
+<script id="main" type="text/x-jquery-tmpl">{{each(n, item) arr}}{{tmpl "test"}}{{/each}}</script></xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>012</td>
+    <td></td>
+    <th>{{each}} index variable</th>
+  </tr>
+  <tr>
+    <td><xmp><script id="test" type="text/x-jquery-tmpl">${ item }</script>
+<script id="main" type="text/x-jquery-tmpl">{{each(n, item) arr}}{{tmpl "test" }}{{/each}}</script></xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>AABBCC</td>
+    <td></td>
+    <th>{{each}} item variable</th>
+  </tr>
+  <tr>
+    <td><xmp>{{= html}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td>&lt;a&gt;</td>
+    <td></td>
+    <th>encoded</th>
+  </tr>
+  <tr>
+    <td><xmp>{{html html}}</xmp></td>
+    <td><xmp>testData</xmp></td>
+    <td><a></td>
+    <td></td>
+    <th>unencoded</th>
+  </tr>
+</table>
+
+<hr>
+<address></address>
+<!-- hhmts start -->Last modified: Tue May 17 04:01:37 PDT 2011 <!-- hhmts end -->
+</body> </html>
