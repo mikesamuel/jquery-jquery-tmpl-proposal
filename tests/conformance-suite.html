@@ -84,11 +84,11 @@ function extractAndParseTemplates(templateSource) {
         }
         id = id[1] || id[2] || id[3];  // 2 quoted groups, one unquoted.
         oneTemplate = oneTemplate.replace(/^\s+|\s+$/g, "");
-        hasConsole && console.group("parse " + id);
+        if (hasConsole) { console.group("parse " + id); }
         try {
           $.template(id, oneTemplate);
         } finally {
-          hasConsole && console.groupEnd();
+          if (hasConsole) { console.groupEnd(); }
         }
         return "";
       });
@@ -125,7 +125,10 @@ function runTests() {
     if (!testFilter.test(testName)) { continue; }
     // Run the test.
     var pass = false;
-    hasConsole && console.group(testName);
+    // In production, error checking is turned off.  We ignore failures to
+    // produce an error in production mode and failureIgnored indicates that.
+    var failureIgnored = false;
+    if (hasConsole) { console.group(testName); }
     try {
       var testCell = cells[0], dataCell = cells[1],
           expectedCell = cells[2], actualCell = cells[3];
@@ -143,7 +146,7 @@ function runTests() {
         var compiled = $.template("main");
         result = compiled.tmpl(dataAndItems[0], dataAndItems[1]);
       } catch (ex) {
-        hasConsole && ex.stack && console.error(ex.stack);
+        if (hasConsole && ex.stack) { console.error(ex.stack); }
         result = "Error:" + (ex.message || ex.description);
       }
       var expectedText;
@@ -160,6 +163,11 @@ function runTests() {
         normResult = actualCell.innerHTML;
         expectedText = expectedCell.innerHTML;
         pass = normResult === expectedText;
+        // We are not required to report errors in production mode.
+        if (!pass && /^Error:/.test(expectedText)
+            && implementationName === "MINIFIED") {
+          pass = failureIgnored = true;
+        }
       }
       if (!pass && hasConsole) {
         console.error("%s !==\n%s",
@@ -169,11 +177,16 @@ function runTests() {
             parseTrees, dataAndItems, compiled);
       }
     } finally {
-      row.className = pass ? "pass" : "fail";
-      ++nTests;
-      if (pass) { ++nPasses; }
-      hasConsole && console.log(pass ? "pass" : "fail");
-      hasConsole && console.groupEnd(testName);
+      var classification = pass ? failureIgnored ? "disabled" : "pass" : "fail";
+      row.className = classification;
+      if (!failureIgnored) {
+        ++nTests;
+        if (pass) { ++nPasses; }
+      }
+      if (hasConsole) {
+        console.log(classification);
+        console.groupEnd(testName);
+      }
     }
   }
 
@@ -2049,5 +2062,5 @@ comments test
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Tue May 17 04:01:37 PDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Wed May 18 16:08:40 PDT 2011 <!-- hhmts end -->
 </body> </html>
