@@ -1,6 +1,6 @@
-REFERENCE_SOURCES=src/escapers.js src/jquery-templates-defs.js src/jquery-templates-parser.js src/jquery-templates-ref.js src/jquery-templates-builtins.js
+REFERENCE_SOURCES=src/minimal-escapers.js src/jquery-templates-defs.js src/jquery-templates-parser.js src/jquery-templates-ref.js src/jquery-templates-builtins.js
 
-STRAPPEND_SOURCES=src/escapers.js src/jquery-templates-defs.js src/jquery-templates-parser.js src/jquery-templates-impl.js src/jquery-templates-builtins.js
+STRAPPEND_SOURCES=src/minimal-escapers.js src/jquery-templates-defs.js src/jquery-templates-parser.js src/jquery-templates-impl.js src/jquery-templates-builtins.js
 
 OUTPUT_JS=build/jquery-templates-reference.js build/jquery-templates-strappend.js build/jquery-templates-compiled.js
 

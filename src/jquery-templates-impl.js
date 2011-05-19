@@ -7,23 +7,30 @@
  * @author Mike Samuel <mikesamuel@gmail.com>
  */
 
+$[ "extAll" ] = function ( target ) {
+  var args = arguments, i, source, k;
+  for ( i = 1; i < args.length; ++i ) {
+    for ( k in (source = args[ i ]) ) {
+      target[ k ] = source[ k ];
+    }
+  }
+  return target;
+};
+
 function compileToFunction( parseTree ) {
 	var TEMP_NAME_PREFIX = "$$tmplVar";
 	var javaScriptSource = [
 			"var " + TEMP_NAME_PREFIX + "0;"
+			// Make the options object available
+			+ "$item=$item||{};"
 			// Make available on the stack, the enumerable properties of the data
 			// object, and the enumerable properties of the options object.
 			// Data properties should trump options.
-			+ "$data=$.extend("
+      + "with($data=$.extAll("
 			// Where EcmaScript 5's Object.create is available, use that to prevent
 			// Object.prototype properties from masking globals.
 			+ "Object.create?Object.create(null):{},"
-			// We don't use parameter names to, again, avoid masking properties of
-			// the global object.
-			+ "$data||{});"
-			// Make the options object available
-			+ "$item=$item||{};"
-			+ "with($data){"
+			+ "$data||{})){"
 			// The below compiles the parse tree to an expression that returns a
 			// string.
 			+ "return("];
@@ -63,7 +70,7 @@ function compileToFunction( parseTree ) {
 						// the first time but not the second.
 						var wrapperStart = "", wrapperEnd = "";
 						content = content.replace(
-								/(=>\w+)+$/, function ( postDethunk ) {
+								/(=>[\w.$]+)+$/, function ( postDethunk ) {
 									postDethunk = postDethunk.split( "=>" );
 									wrapperEnd = new Array( postDethunk.length ).join( ")" );
 									wrapperStart = postDethunk.reverse().join( "(" );
@@ -80,9 +87,8 @@ function compileToFunction( parseTree ) {
 								wrapperEnd );
 					} else if ( kind === "if" ) {  // {{if condition}}...{{/if}}
 						// {{if a}}b{{else}}c{{/if}} -> (a ? "b" : "c")
-						hasValue = TRUTHY;
-						var pos = 2, elseIndex, i;
-						for ( ; true; pos = elseIndex + 1 ) {
+						var pos = 2, elseIndex, i, continues = hasValue = TRUTHY;
+						for ( ; continues; pos = elseIndex + 1 ) {
 							elseIndex = len;
 							for ( i = pos; i < elseIndex; ++i ) {
 								if ( parseTree[ i ][ 0 ] === "else" ) {
@@ -91,7 +97,7 @@ function compileToFunction( parseTree ) {
 							}
 							var cond = pos < len
 									? ( pos === 2 ? parseTree : parseTree[ pos - 1 ] )[ 1 ] : "";
-							var continues = /\S/.test( cond );
+							continues = /\S/.test( cond );
 							if ( DEBUG && !continues ) {
 								if ( pos === 2 ) {
 									throw new Error(
@@ -117,9 +123,6 @@ function compileToFunction( parseTree ) {
 									cond, continues ? ")?(" : "" );
 							hasValue = FALSEY;
 							$.each( parseTree.slice( pos, elseIndex ), walk );
-							if ( !continues ) {
-								break;
-							}
 						}
 						javaScriptSource.push( hasValue ? "))" : "''))" );
 					// {{each (key, value) obj}}...{{/each}}
@@ -195,7 +198,7 @@ function compileToFunction( parseTree ) {
 							  // Propagate any loop variables in scope when all data is
 							  // passed.
 								: inScope.length
-								? "[$.extend({},$data,{" + inScope + "}),$item]"
+								? "[$.extAll({},$data,{" + inScope + "}),$item]"
 								// If the content specifies neither data nor options, and
 								// no loop vars are in scope, use the arguments without the
 								// overhead of a call to $.extend.
@@ -216,13 +219,15 @@ function compileToFunction( parseTree ) {
 				}
 				hasValue = TRUTHY;
 			});
-	if ( !hasValue ) {
-		javaScriptSource.push( "''" );
-	}
-	javaScriptSource.push( ")}");
-	try {
+	javaScriptSource.push( hasValue ? ")}" : "'')}" );
+
+	if (DEBUG) {
+		try {
+			return Function( "$data", "$item", javaScriptSource.join( "" ) );
+		} catch ( ex ) {
+			throw new Error( javaScriptSource.join( "" ) );
+		}
+	} else {
 		return Function( "$data", "$item", javaScriptSource.join( "" ) );
-	} catch ( ex ) {
-		throw DEBUG ? new Error( javaScriptSource.join( "" ) ) : ex;
 	}
 }
