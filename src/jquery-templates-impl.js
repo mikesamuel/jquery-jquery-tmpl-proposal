@@ -63,7 +63,7 @@ function compileToFunction( parseTree ) {
 						// the first time but not the second.
 						var wrapperStart = "", wrapperEnd = "";
 						content = content.replace(
-								/(=>\w+)+$/, function ( postDethunk ) {
+								/(=>[\w.$]+)+$/, function ( postDethunk ) {
 									postDethunk = postDethunk.split( "=>" );
 									wrapperEnd = new Array( postDethunk.length ).join( ")" );
 									wrapperStart = postDethunk.reverse().join( "(" );
@@ -80,9 +80,8 @@ function compileToFunction( parseTree ) {
 								wrapperEnd );
 					} else if ( kind === "if" ) {  // {{if condition}}...{{/if}}
 						// {{if a}}b{{else}}c{{/if}} -> (a ? "b" : "c")
-						hasValue = TRUTHY;
-						var pos = 2, elseIndex, i;
-						for ( ; true; pos = elseIndex + 1 ) {
+						var pos = 2, elseIndex, i, continues = hasValue = TRUTHY;
+						for ( ; continues; pos = elseIndex + 1 ) {
 							elseIndex = len;
 							for ( i = pos; i < elseIndex; ++i ) {
 								if ( parseTree[ i ][ 0 ] === "else" ) {
@@ -91,7 +90,7 @@ function compileToFunction( parseTree ) {
 							}
 							var cond = pos < len
 									? ( pos === 2 ? parseTree : parseTree[ pos - 1 ] )[ 1 ] : "";
-							var continues = /\S/.test( cond );
+							continues = /\S/.test( cond );
 							if ( DEBUG && !continues ) {
 								if ( pos === 2 ) {
 									throw new Error(
@@ -117,9 +116,6 @@ function compileToFunction( parseTree ) {
 									cond, continues ? ")?(" : "" );
 							hasValue = FALSEY;
 							$.each( parseTree.slice( pos, elseIndex ), walk );
-							if ( !continues ) {
-								break;
-							}
 						}
 						javaScriptSource.push( hasValue ? "))" : "''))" );
 					// {{each (key, value) obj}}...{{/each}}
@@ -216,13 +212,15 @@ function compileToFunction( parseTree ) {
 				}
 				hasValue = TRUTHY;
 			});
-	if ( !hasValue ) {
-		javaScriptSource.push( "''" );
-	}
-	javaScriptSource.push( ")}");
-	try {
+	javaScriptSource.push( hasValue ? ")}" : "'')}" );
+
+	if (DEBUG) {
+		try {
+			return Function( "$data", "$item", javaScriptSource.join( "" ) );
+		} catch ( ex ) {
+			throw new Error( javaScriptSource.join( "" ) );
+		}
+	} else {
 		return Function( "$data", "$item", javaScriptSource.join( "" ) );
-	} catch ( ex ) {
-		throw DEBUG ? new Error( javaScriptSource.join( "" ) ) : ex;
 	}
 }

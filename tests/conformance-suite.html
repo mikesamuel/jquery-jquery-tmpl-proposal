@@ -20,7 +20,6 @@ table.testtable > * > tr > td:nth-of-type(2) {
   max-width: 40em
 }
 </style>
-<script src="../src/escapers.js"></script>
 <script src="../src/jquery-1.5.2.js"></script>
 <script src="../src/jquery-templates-defs.js"></script>
 <script>
@@ -38,11 +37,13 @@ var implementationName = "STRAPPEND";
         '<script src="../build/jquery-templates-compiled.js"><\/script>');
   } else if (/[&?]compiled(?=[=&]|$)/.test(location.search)) {
     document.write(
+        '<script src="../src/minimal-escapers.js"><\/script>',
         implementationName === "REFERENCE"
         ? '<script src="../build/jquery-templates-reference.js"><\/script>'
         : '<script src="../build/jquery-templates-strappend.js"><\/script>');
   } else {
     document.write(
+        '<script src="../src/minimal-escapers.js"><\/script>',
         '<script src="../src/jquery-templates-parser.js"><\/script>',
         (implementationName === "REFERENCE"
          ? '<script src="../src/jquery-templates-ref.js"><\/script>'
@@ -368,7 +369,7 @@ bar</td>
   <tr>
     <td><xmp>s=${s}, o=${o}, thunk=${thunk}, a=${a}</xmp></td>
     <td><xmp>{ s: new String("foo"), o: { toString: function () { return "[Obj]" } }, thunk: function () { return "Hello, World!"; }, a: [1, 2, 3] }</xmp></td>
-    <td>s=foo, o=[Obj], thunk=Hello, World!, a=123</td>
+    <td>s=foo, o=[Obj], thunk=Hello, World!, a=1,2,3</td>
     <td></td>
     <th>Substitution objects</th>
   </tr>
@@ -2062,5 +2063,5 @@ comments test
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Wed May 18 16:08:40 PDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Wed May 18 23:40:56 PDT 2011 <!-- hhmts end -->
 </body> </html>

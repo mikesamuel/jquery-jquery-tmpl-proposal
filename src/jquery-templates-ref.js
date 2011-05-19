@@ -152,7 +152,7 @@ function compileToFunction( parseTree ) {
 			// Given content ="x=>f=>g",
 			// we get contentBefore="g(f(", content="x", contentAfter="))"
 			content = content.replace(
-					/(=>\w+)+$/, function ( postDethunk ) {
+					/(=>[\w.$]+)+$/, function ( postDethunk ) {
 						postDethunk = postDethunk.split( "=>" );
 						contentAfter = new Array( postDethunk.length ).join( ")" );
 						contentBefore = postDethunk.reverse().join( "(" );

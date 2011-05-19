@@ -19,7 +19,7 @@ $[ TEMPLATE_PLUGINS_PROP_NAME ] = [
 				function autoescapeOne( _, parseTree ) {
 					if ( typeof parseTree !== "string" ) {
 						if ( parseTree[ 0 ] === "=" ) {
-							parseTree[ 1 ] += "=>escapeHtml";
+							parseTree[ 1 ] += "=>$.encode";
 						} else if ( parseTree[ 0 ] === "html" ) {
 							parseTree[ 0 ] = "=";
 						} else {
