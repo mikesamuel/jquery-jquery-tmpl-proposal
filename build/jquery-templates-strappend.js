@@ -433,23 +433,30 @@ function renderParseTree( parseTree, opt_blockDirectives ) {
  * @author Mike Samuel <mikesamuel@gmail.com>
  */
 
+$[ "extAll" ] = function ( target ) {
+  var args = arguments, i, source, k;
+  for ( i = 1; i < args.length; ++i ) {
+    for ( k in (source = args[ i ]) ) {
+      target[ k ] = source[ k ];
+    }
+  }
+  return target;
+};
+
 function compileToFunction( parseTree ) {
 	var TEMP_NAME_PREFIX = "$$tmplVar";
 	var javaScriptSource = [
 			"var " + TEMP_NAME_PREFIX + "0;"
+			// Make the options object available
+			+ "$item=$item||{};"
 			// Make available on the stack, the enumerable properties of the data
 			// object, and the enumerable properties of the options object.
 			// Data properties should trump options.
-			+ "$data=$.extend("
+      + "with($data=$.extAll("
 			// Where EcmaScript 5's Object.create is available, use that to prevent
 			// Object.prototype properties from masking globals.
 			+ "Object.create?Object.create(null):{},"
-			// We don't use parameter names to, again, avoid masking properties of
-			// the global object.
-			+ "$data||{});"
-			// Make the options object available
-			+ "$item=$item||{};"
-			+ "with($data){"
+			+ "$data||{})){"
 			// The below compiles the parse tree to an expression that returns a
 			// string.
 			+ "return("];
@@ -617,7 +624,7 @@ function compileToFunction( parseTree ) {
 							  // Propagate any loop variables in scope when all data is
 							  // passed.
 								: inScope.length
-								? "[$.extend({},$data,{" + inScope + "}),$item]"
+								? "[$.extAll({},$data,{" + inScope + "}),$item]"
 								// If the content specifies neither data nor options, and
 								// no loop vars are in scope, use the arguments without the
 								// overhead of a call to $.extend.
