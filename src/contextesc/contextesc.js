@@ -468,3 +468,5 @@ if ( typeof JSON !== "undefined" ) {
 		return clone;
 	};
 }
+
+$[ TEMPLATE_PLUGINS_PROP_NAME ].push( autoescape );
