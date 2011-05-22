@@ -55,8 +55,12 @@ If the reference implementation is behaving differently than it should, then the
     <td>Strappend implementation.  More efficient than the reference implementation.</td>
   </tr>
   <tr>
-    <td><tt>&nbsp; &#x21b3; jquery-templates-builtins.js</tt></td>
-    <td>Defines the <tt>$.template</tt> API and builtin pre-compile incl. autoescape.</td>
+    <td><tt>&nbsp; &#x21b3; jquery-templates-api.js</tt></td>
+    <td>Defines the <tt>$.template</tt> API.</td>
+  </tt>
+  <tr>
+    <td><tt>&nbsp; &#x21b3; jquery-templates-autoesc.js</tt></td>
+    <td>Implements na&iuml;ve autoescaping.</td>
   </tt>
   <tr>
     <td><tt>tests/</tt></td>

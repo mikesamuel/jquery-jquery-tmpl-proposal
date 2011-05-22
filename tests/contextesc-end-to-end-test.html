@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html><head>
+<title>Contextual Autoescaping End to End Test</title>
+<script src="../src/compat.js"></script>
+<script src="../src/jquery-1.5.2.js"></script>
+<script>
+// If the location contains ?compiled, then use the minified version.
+if (/[?&]compiled/.test(location.search)) {
+  document.write(
+      "<script src=\"../build/jquery-templates-contextesc-compiled.js\">",
+      "<\/script>");
+  DEBUG = false;
+  document.title += ' compiled';
+} else {
+  document.write(
+      "<script src=\"../src/jquery-templates-defs.js\"><\/script>",
+      "<script src=\"../src/jquery-templates-parser.js\"><\/script>",
+      "<script src=\"../src/jquery-templates-impl.js\"><\/script>",
+      "<script src=\"../src/jquery-templates-api.js\"><\/script>",
+      "<script src=\"../src/contextesc/context-defs.js\"><\/script>",
+      "<script src=\"../src/contextesc/escapers.js\"><\/script>",
+      "<script src=\"../src/contextesc/context-update.js\"><\/script>",
+      "<script src=\"../src/contextesc/contextesc.js\"><\/script>"
+      );
+}
+</script>
+
+<script src="asserts.js"></script>
+<script src="contextesc-end-to-end-test.js"></script>
+
+<link rel="stylesheet" type="text/css" href="test.css" />
+</head>
+<body>
+<script src="runtests.js"></script>
+</body></html>
