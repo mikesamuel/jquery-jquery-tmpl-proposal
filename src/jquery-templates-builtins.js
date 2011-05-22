@@ -8,6 +8,14 @@
  */
 
 /**
+ * @define {boolean}
+ * Can be set to compile a version that does not include the parser
+ * usable in environments where all templates have been precompiled.
+ */
+var JQUERY_TMPL_PRECOMPILED = false;
+
+
+/**
  * An array of plugin passed, functions that take a parse tree and return
  * a parse tree, to run beore compilation.
  */
@@ -84,6 +92,9 @@ function compileBundle( parseTrees, opt_exclusion ) {
 $[ TEMPLATES_PROP_NAME ] = {};
 
 $[ TEMPLATE_METHOD_NAME ] = function self( name, templateSource ) {
+	if ( JQUERY_TMPL_PRECOMPILED ) {
+		return $[ TEMPLATES_PROP_NAME ][ name ];
+	}
 	var t = $[ TEMPLATES_PROP_NAME ];
 	var parseTrees;
 	if ( arguments.length === 1 ) {

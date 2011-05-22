@@ -28,14 +28,6 @@ var FALSEY = 0;
 
 // JQuery Lexical Grammar.
 
-/** Regular expression text for a snippet of HTML text. @const */
-var HTML_SNIPPET_RE = (
-		"(?:"
-		+ "[^${]"               // A char that can't start a marker | substitution,
-		+ "|\\{(?!\\{/?[=a-z])" // A curly bracket that doesn't start a marker.
-		+ "|\\$(?!\\{)"         // A dollar that does not start a marker.
-		+ ")+");
-
 /** Regular expression text for a substitution.  ${...}. @const */
 var SUBSTITUTION_RE = (
 		"\\$\\{"
@@ -54,11 +46,13 @@ var MARKER_RE = (
 		+ ")"
 		+ "\\}\\}");
 
-/** Global regular expression that matches a single template token. */
+/**
+ * Global regular expression that matches the beginning of markers and
+ * substitution.
+ */
 var TOKEN = new RegExp(
-		HTML_SNIPPET_RE
-		+ "|" + SUBSTITUTION_RE
-		+ "|" + MARKER_RE,
+		"(?=" + SUBSTITUTION_RE
+		+ "|" + MARKER_RE + ")",
 		"gi");
 
 /** Regular expression text for a variable name.  @const */

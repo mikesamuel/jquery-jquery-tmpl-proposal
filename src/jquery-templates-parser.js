@@ -16,10 +16,10 @@
 function guessBlockDirectives( templateText ) {
 	var blockDirectives = {};
 	// For each token like {{/foo}} put "foo" into the block directives map.
-	templateText.replace(
-			TOKEN,
-			function ( tok ) {
-				var match = tok.match( /^\{\{\/(=|[a-z][a-z0-9]*)[\s\S]*\}\}$/i );
+	$.each(
+			templateText.split(TOKEN),
+			function ( _, tok ) {
+				var match = tok.match( /^\{\{\/(=|[a-z][a-z0-9]*)[\s\S]*\}\}/i );
 				if ( match ) {
 					blockDirectives[ match[ 1 ] ] = TRUTHY;
 				}
@@ -94,9 +94,9 @@ function parseTemplate( templateText, blockDirectives ) {
 													: token;
 										} )
 					// Match against a global regexp to pull out all tokens.
-					.match( TOKEN ) || [],
+					.split( TOKEN ),
 			function ( _, token ) {
-				var m = token.match( /^\{\{(\/?)(=|[a-z][a-z0-9]*)([\s\S]*)\}\}$/i );
+				var m = token.match( /^\{\{(\/?)(=|[a-z][a-z0-9]*)([\s\S]*)\}\}/i );
 				if ( m ) {  // A marker.
 					// "/" in group 1 if a close.  Name in group 2.  Content in group 3.
 					if ( m[ 1 ] ) {  // An end marker
@@ -135,8 +135,11 @@ function parseTemplate( templateText, blockDirectives ) {
 							stack.push( top = node );
 						}
 					}
+					// Consume marker so tail can be treated as text.
+					token = token.substring( m[ 0 ].length );
 				} else if ( token.substring( 0, 2 ) === "${" ) {  // A substitution.
-					top.push( [ "=", token.substring( 2, token.length - 1 ) ] );
+					var end = token.indexOf( "}" );
+					top.push( [ "=", token.substring( 2, end ) ] );
 					if ( DEBUG ) {
 						var content = top[ top.length - 1 ][ 1 ];
 						try {
@@ -146,7 +149,10 @@ function parseTemplate( templateText, blockDirectives ) {
 							throw new Error( "Invalid template substitution: " + content );
 						}
 					}
-				} else {  // An HTML snippet.
+					// Consume marker so tail can be treated as text.
+					token = token.substring( end + 1 );
+				}
+				if ( token ) {  // An HTML snippet.
 					top.push( token );
 				}
 			});
@@ -173,17 +179,21 @@ function parseTemplate( templateText, blockDirectives ) {
 function renderParseTree( parseTree, opt_blockDirectives ) {
 	var buffer = [];
 	( function render( _, parseTree ) {
-		 if ( typeof parseTree === "string" ) {
-			 buffer.push( parseTree );
-		 } else {
-			 var name = parseTree[ 0 ], n = parseTree.length;
-			 buffer.push( "{{", name, parseTree[ 1 ], "}}" );
-			 $.each( parseTree.slice( 2 ), render );
-			 if ( n !== 2 || !opt_blockDirectives
-					  || opt_blockDirectives[ name ] === TRUTHY ) {
-				 buffer.push( "{{/", name, "}}" );
-			 }
-		 }
-	 }( 2, parseTree ) );
+		if ( typeof parseTree === "string" ) {
+			buffer.push( parseTree );
+		} else {
+			var name = parseTree[ 0 ], n = parseTree.length;
+			if ( name === '=' && !/\}/.test( parseTree[ 1 ] ) ) {
+				buffer.push( "${", parseTree[ 1 ], "}" );
+			} else {
+				if (name) { buffer.push( "{{", name, parseTree[ 1 ], "}}" ); }
+				$.each( parseTree.slice( 2 ), render );
+				if ( name && ( n !== 2 || !opt_blockDirectives
+						 || opt_blockDirectives[ name ] === TRUTHY ) ) {
+					buffer.push( "{{/", name, "}}" );
+				}
+			}
+		}
+	}( 2, parseTree ) );
 	return buffer.join( "" );
 }

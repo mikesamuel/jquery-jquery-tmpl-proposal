@@ -190,7 +190,7 @@ function runTests() {
           failureLink[0].href = "#" + testCellId;
           var failure = $("<li></li>");
           failureLink.text(testName).appendTo(failure);
-	  failure.appendTo($("#failures"));
+          failure.appendTo($("#failures"));
         }
       }
       if (hasConsole) {
@@ -206,7 +206,6 @@ function runTests() {
   document.title += summary;
   $("h1").append(summary);
   document.body.className += (nTests && nTests === nPasses) ? " pass" : " fail";
-
 }
 </script>
 </head>
@@ -2074,5 +2073,5 @@ comments test
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Thu May 19 01:40:11 PDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Thu May 19 01:55:40 PDT 2011 <!-- hhmts end -->
 </body> </html>
