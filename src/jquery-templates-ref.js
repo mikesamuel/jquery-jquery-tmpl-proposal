@@ -65,6 +65,7 @@ function compileToFunction( parseTree ) {
 		var result = Function(
 				"$data", "$item",
 				"$data = $data || {};"
+			  + "if ('$' in $data) { throw new Error('$ overridden'); }"
 				+ "$item = $item || {};"
 				// Make sure that "arguments" can not be defined.
 				// This will prevent unintentional access to arguments.

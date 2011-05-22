@@ -392,6 +392,13 @@ bar</td>
     <th>Substitution objects</th>
   </tr>
   <tr>
+    <td><xmp>Hello, ${x}!</xmp></td>
+    <td><xmp>{ x: { toString: function () { return "string"; }, valueOf: function (typeHint) { return "value"; } } }</xmp></td>
+    <td>Hello, string!</td>
+    <td></td>
+    <th>toString vs valueOf</th>
+  </tr>
+  <tr>
     <td><xmp>i++=${i++}, i++=${i++}, readOnce=${readOnce}, counter=${counter}, counter=${counter}</xmp></td>
     <td><xmp>{ i: 0, readOnce: (function () { var run = false; return function() { if (run) throw Error(); run = true; return 42; }; })(), counter: (function () { var i = 0; return function () { return ++i; }; })() }</xmp></td>
     <td>i++=0, i++=1, readOnce=42, counter=1, counter=2</td>
@@ -876,8 +883,8 @@ var testData = eval("(" + $("#testdata-src").text() + ")");
     <td></td>
     <th>multi word variable tag</th>
   </tr>
-  <tr>
-    <td><xmp>${ _ }</xmp></td>
+  <tr class="disabled">
+    <td title="the original impl used _ as the name of a buffer"><xmp>${ _ }</xmp></td>
     <td><xmp>{ _: "foo" }</xmp></td>
     <td>Error: _ is not defined</td>
     <td></td>
@@ -886,7 +893,7 @@ var testData = eval("(" + $("#testdata-src").text() + ")");
   <tr>
     <td><xmp>${ $ }</xmp></td>
     <td><xmp>{ "$": "foo" }</xmp></td>
-    <td>Error: $ is not defined</td>
+    <td>Error: $ overridden</td>
     <td></td>
     <th>$ cannot be used by data</th>
   </tr>
@@ -2081,5 +2088,5 @@ comments test
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Sat May 21 18:37:07 PDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Sun May 22 03:51:07 PDT 2011 <!-- hhmts end -->
 </body> </html>
