@@ -81,7 +81,7 @@ function parseTemplate( templateText, blockDirectives ) {
 					// Handle {#...} style non-nesting comments.
 					.replace( /\{#[\s\S]*?#\}/g, "" )
 					// Handle {{! ... }} style comments which can contain arbitrary nested
-	        // {{...}} sections.
+					// {{...}} sections.
 					.replace( /\{\{!?|\}\}|(?:[^{}]|\{(?!\{)|\}(?!}))+/g,
 										function (token) {
 											return token === "{{!"

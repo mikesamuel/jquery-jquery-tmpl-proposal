@@ -95,7 +95,7 @@ $[ TEMPLATE_METHOD_NAME ] = function self( name, templateSource ) {
 	var parseTree = parseTemplate(
 			templateSource,
 			$.extend( guessBlockDirectives( templateSource ),
-							  DEFAULT_BLOCK_DIRECTIVES ) );
+								DEFAULT_BLOCK_DIRECTIVES ) );
 	if ( name === null ) {
 		return compileBundle( parseTrees = { "_": parseTree }, "_" );
 	}

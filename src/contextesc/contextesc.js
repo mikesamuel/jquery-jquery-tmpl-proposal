@@ -224,7 +224,7 @@ function autoescape( jqueryTemplatesByName ) {
 								if ( DEBUG ) {
 									throw new Error(
 											errorLocation( parseTree )
-									  	+ ": Branch ends in irreconcilable contexts "
+											+ ": Branch ends in irreconcilable contexts "
 											+ contextToString( context ) + " and "
 											+ contextToString( outputContext ) );
 								} else {
