@@ -60,15 +60,13 @@ function rewrittenSource(input) {
   }
   function normalize(templateText) {
     // Convert the thunk syntax a=>foo to foo(a).
-    var prefix = "", suffix = "";
-    var middle = templateText.replace(
+    templateText = templateText.replace(
 	/\$\{([^}]*?)((?:=>[\w.$\[\]]+)+)\}/g, function (_, expr, operators) {
 	  operators = operators.split("=>");
-	  var suffix = new Array(operators.length).join( ")");
+	  var suffix = new Array(operators.length).join(")");
 	  var prefix = operators.reverse().join("(");
 	  return "${" + prefix + expr + suffix + "}";
 	});
-    templateText = prefix + middle + suffix;
 
     // Unpack DEBUG form escaping directives.  See above.
     if (!DEBUG) {
