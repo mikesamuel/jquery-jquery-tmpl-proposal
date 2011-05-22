@@ -70,7 +70,7 @@ function compileToFunction( parseTree ) {
 						// the first time but not the second.
 						var wrapperStart = "", wrapperEnd = "";
 						content = content.replace(
-								/(=>[\w.$]+)+$/, function ( postDethunk ) {
+								/(=>[\w.$\[\]]+)+$/, function ( postDethunk ) {
 									postDethunk = postDethunk.split( "=>" );
 									wrapperEnd = new Array( postDethunk.length ).join( ")" );
 									wrapperStart = postDethunk.reverse().join( "(" );

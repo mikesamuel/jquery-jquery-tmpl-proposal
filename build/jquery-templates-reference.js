@@ -213,7 +213,7 @@ function parseTemplate( templateText, blockDirectives ) {
 					// Handle {#...} style non-nesting comments.
 					.replace( /\{#[\s\S]*?#\}/g, "" )
 					// Handle {{! ... }} style comments which can contain arbitrary nested
-	        // {{...}} sections.
+					// {{...}} sections.
 					.replace( /\{\{!?|\}\}|(?:[^{}]|\{(?!\{)|\}(?!}))+/g,
 										function (token) {
 											return token === "{{!"
@@ -396,6 +396,7 @@ function compileToFunction( parseTree ) {
 		var result = Function(
 				"$data", "$item",
 				"$data = $data || {};"
+				+ "if ('$' in $data) { throw new Error('$ overridden'); }"
 				+ "$item = $item || {};"
 				// Make sure that "arguments" can not be defined.
 				// This will prevent unintentional access to arguments.
@@ -483,7 +484,7 @@ function compileToFunction( parseTree ) {
 			// Given content ="x=>f=>g",
 			// we get contentBefore="g(f(", content="x", contentAfter="))"
 			content = content.replace(
-					/(=>[\w.$]+)+$/, function ( postDethunk ) {
+					/(=>[\w.$\[\]]+)+$/, function ( postDethunk ) {
 						postDethunk = postDethunk.split( "=>" );
 						contentAfter = new Array( postDethunk.length ).join( ")" );
 						contentBefore = postDethunk.reverse().join( "(" );
@@ -619,7 +620,7 @@ $[ TEMPLATE_METHOD_NAME ] = function self( name, templateSource ) {
 	var parseTree = parseTemplate(
 			templateSource,
 			$.extend( guessBlockDirectives( templateSource ),
-							  DEFAULT_BLOCK_DIRECTIVES ) );
+								DEFAULT_BLOCK_DIRECTIVES ) );
 	if ( name === null ) {
 		return compileBundle( parseTrees = { "_": parseTree }, "_" );
 	}
