@@ -28,7 +28,6 @@ function testSafeHtmlGoodInputs() {
       $.template("test").tmpl(data));
 }
 
-
 function testSafeHtmlBadInputs() {
   var data = {
     url: "javascript:alert(1337)//",
@@ -42,5 +41,20 @@ function testSafeHtmlBadInputs() {
       + " onclick=alert(&#39;\\x22Hello&#32;World&#39;)"
       + " style=\"color: zSafehtmlz\">"
       + "&lt;script&gt;alert(1337)&lt;/script&gt;</a>",
+      $.template("test").tmpl(data));
+}
+
+function testThunks() {
+  var data = {
+    url: "http://www.google.com/search",
+    query: "Hello World",
+    msg: function () { return "Hello World"; },
+    color: { toString: function () { return "red"; } },
+    linkText: "Hello & Goodbye"
+  };
+  assertEquals(
+      "<a href=\"http://www.google.com/search?q=Hello%20World\""
+      + " onclick=alert(&#39;Hello&#32;World&#39;)"
+      + " style=\"color: red\">Hello &amp; Goodbye</a>",
       $.template("test").tmpl(data));
 }

@@ -412,11 +412,10 @@ function autoescape( jqueryTemplatesByName ) {
 					if ( escapingModes ) {
 						var expr = parseTreeNode[ 1 ];
 						for ( var i = 0; i < escapingModes.length; ++i ) {
-							expr = "$.encode" + (
+							expr += "=>$.encode" + (
 									DEBUG
 									? "." + SANITIZER_FOR_ESC_MODE[ escapingModes[ i ] ].name
-									: "[" + escapingModes[ i ] + "]" )
-									+ "(" + expr + ")";
+									: "[" + escapingModes[ i ] + "]" );
 						}
 						parseTreeNode[ 1 ] = expr;
 					}
