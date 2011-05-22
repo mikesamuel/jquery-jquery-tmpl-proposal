@@ -43,12 +43,13 @@ var implementationName = "STRAPPEND";
         : '<script src="../build/jquery-templates-strappend.js"><\/script>');
   } else {
     document.write(
-        '<script src="../src/minimal-escapers.js"><\/script>',
         '<script src="../src/jquery-templates-parser.js"><\/script>',
         (implementationName === "REFERENCE"
          ? '<script src="../src/jquery-templates-ref.js"><\/script>'
          : '<script src="../src/jquery-templates-impl.js"><\/script>'),
-        '<script src="../src/jquery-templates-api.js"><\/script>');
+        '<script src="../src/jquery-templates-api.js"><\/script>',
+        '<script src="../src/minimal-escapers.js"><\/script>',
+        '<script src="../src/jquery-templates-autoesc.js"><\/script>');
   }
   if (implementationName === "MINIFIED") {
     // The spec does not specify error messages.
@@ -363,11 +364,18 @@ bar</td>
     <th>Substitution numbers</th>
   </tr>
   <tr>
-    <td><xmp>s=${s}, n=${n}, nul=${nul}, supp=${supp}, orphans=${orphans}</xmp></td>
-    <td><xmp>{ s: "Hello, World!", n: "42", supp: "\ud800\udc00", orphans: "\ud800-\udc00", nul: "\u0000" }</xmp></td>
-    <td>s=Hello, World!, n=42, nul=&#0;, supp=&#x10000;, orphans=&#xd800;-&#xdc00;</td>
+    <td><xmp>s=${s}, n=${n}, nul=${nul}, supp=${supp}</xmp></td>
+    <td><xmp>{ s: "Hello, World!", n: "42", supp: "\ud800\udc00", nul: "\u0000" }</xmp></td>
+    <td>s=Hello, World!, n=42, nul=&#0;, supp=&#x10000;</td>
     <td></td>
     <th>Substitution strings</th>
+  </tr>
+  <tr>
+    <td><xmp>orphans=${orphans}</xmp></td>
+    <td><xmp>{ orphans: "\ud800-\udc00" }</xmp></td>
+    <td>orphans=&#xd800;-&#xdc00;</td>
+    <td></td>
+    <th>Substitution non-unicode strings</th>
   </tr>
   <tr>
     <td><xmp>t=${t}, f=${f}</xmp></td>
@@ -2073,5 +2081,5 @@ comments test
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Sat May 21 18:12:49 PDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Sat May 21 18:37:07 PDT 2011 <!-- hhmts end -->
 </body> </html>

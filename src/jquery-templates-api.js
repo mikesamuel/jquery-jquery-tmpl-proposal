@@ -19,25 +19,7 @@ var JQUERY_TMPL_PRECOMPILED = false;
  * An array of plugin passed, functions that take a parse tree and return
  * a parse tree, to run beore compilation.
  */
-$[ TEMPLATE_PLUGINS_PROP_NAME ] = [
-	// Naive auto-escape.
-	function autoescape( parseTrees ) {
-		$.each(
-				parseTrees,
-				function autoescapeOne( _, parseTree ) {
-					if ( typeof parseTree !== "string" ) {
-						if ( parseTree[ 0 ] === "=" ) {
-							parseTree[ 1 ] += "=>$.encode";
-						} else if ( parseTree[ 0 ] === "html" ) {
-							parseTree[ 0 ] = "=";
-						} else {
-							$.each( parseTree, autoescapeOne );
-						}
-					}
-				});
-		return parseTrees;
-	}
-];
+$[ TEMPLATE_PLUGINS_PROP_NAME ] = [];
 
 function needsCompile( name ) {
 	var tmpl = $[ TEMPLATES_PROP_NAME ][ name ];

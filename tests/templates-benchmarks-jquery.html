@@ -17,17 +17,18 @@
     }
     if (implementationName === "MINIFIED") {
       document.write(
-          '<script src="../build/jquery-templates-compiled.js"><\/script>');
+          "<script src=\"../build/jquery-templates-compiled.js\"><\/script>");
     } else {
       document.write(
-          '<script src="../src/minimal-escapers.js"><\/script>',
-          '<script src="../src/jquery-templates-defs.js"><\/script>',
-          '<script src="../src/jquery-templates-parser.js"><\/script>',
+          "<script src=\"../src/minimal-escapers.js\"><\/script>",
+          "<script src=\"../src/jquery-templates-defs.js\"><\/script>",
+          "<script src=\"../src/jquery-templates-parser.js\"><\/script>",
           (implementationName === "REFERENCE"
-           ? '<script src="../src/jquery-templates-ref.js"><\/script>'
-           : '<script src="../src/jquery-templates-impl.js"><\/script>'),
-          '<script src="../src/jquery-templates-api.js"><\/script>',
-          '<script>DEBUG = false;<\/script>'
+           ? "<script src=\"../src/jquery-templates-ref.js\"><\/script>"
+           : "<script src=\"../src/jquery-templates-impl.js\"><\/script>"),
+          "<script src=\"../src/jquery-templates-api.js\"><\/script>",
+          "<script src=\"../src/jquery-templates-autoesc.js\"><\/script>",
+          "<script>DEBUG = false;<\/script>"
           );
     }
     var match = location.search.match(/[&?]testFilter=([^&]*)/);

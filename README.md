@@ -59,6 +59,10 @@ If the reference implementation is behaving differently than it should, then the
     <td>Defines the <tt>$.template</tt> API.</td>
   </tt>
   <tr>
+    <td><tt>&nbsp; &#x21b3; jquery-templates-autoesc.js</tt></td>
+    <td>Implements na&iuml;ve autoescaping.</td>
+  </tt>
+  <tr>
     <td><tt>tests/</tt></td>
     <td>Test suites and benchmarks.</td>
   </tr>
