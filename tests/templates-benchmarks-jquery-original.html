@@ -40,7 +40,7 @@
         url: 'http://plugins.jquery.com/project/jquerytemplate',
         source: 'http://plugins.jquery.com/files/jquery.template.js.txt'
       };
-      output.append($.template('story_template') ($, { data: data }).join(''));
+      $.tmpl('story_template', data).appendTo(output);
     };
 
     $.template(
@@ -60,7 +60,7 @@
           {name: "George", body: "Thanks for this post!"}
         ]
       };
-      output.append($.template('loop_template')($, { data: data }).join(""));
+      $.tmpl('loop_template', data).appendTo(output);
     };
 
     $.benchmark(1, '#simple_test', $.benchmarks.test_simple);
