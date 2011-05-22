@@ -1,3 +1,13 @@
+// Wrap the compiler to attach the compiled parse tree to the output.
+(function () {
+  var origCompileToFunction = compileToFunction;
+  compileToFunction = function (parseTree) {
+    var fn = origCompileToFunction(parseTree);
+    fn.parseTree = parseTree;
+    return fn;
+  };
+}());
+
 // Takes the HTML textarea, finds templates in script tags, and type checks them
 // displaying the resulting template source in the output, and registering named
 // templates with jQuery.
@@ -15,27 +25,37 @@ function sanitize() {
     // Find <script type="text/x-jquery-tmpl">...<\/script> blocks.
     var scriptRe = /<script((?:[^>"']|"[^"]*"|'[^']*')*)>((?:[^<]+|<(?!=!--|\/script)|<!--[\s\S]*?-->)*)<\/script[^>]*>/ig;
     var parsed = jqueryTemplateText.match(scriptRe);
-    var templates = {};
-    for (var i = 0, n = parsed ? parsed.length : 0; i < n; ++i) {
-      scriptRe.lastIndex = 0;
-      var m = scriptRe.exec(parsed[i]);
-      var attrs = m[1], body = m[2].replace(/^\n[ \t]*|\n[ \t]*$/g, '');
-      if (/\btype\s*=\s*["']?\s*text\/x-jquery-tmpl\b/i.test(attrs)) {
-        var name = 'template' + i;
-        var m2 = attrs.match(/\bid\s*=\s*["']?([\w.:-]+)/i);
-        if (m2) { name = m2[1]; }
-        templates[name] = body;
+    var $Templates = {};
+    try {
+      $.templates = {};
+      for (var i = 0, n = parsed ? parsed.length : 0; i < n; ++i) {
+        scriptRe.lastIndex = 0;
+        var m = scriptRe.exec(parsed[i]);
+        var attrs = m[1], body = m[2].replace(/^\n[ \t]*|\n[ \t]*$/g, '');
+        if (/\btype\s*=\s*["']?\s*text\/x-jquery-tmpl\b/i.test(attrs)) {
+          var name = 'template' + i;
+          var m2 = attrs.match(/\bid\s*=\s*["']?([\w.:-]+)/i);
+          if (m2) { name = '#' + m2[1]; }
+          $.template(name, body);
+        }
+        templateOrder.push(name);
       }
-      templateOrder.push(name);
+      // Now that all have parsed, make sure that $.templates has the
+      // templates we just parsed, atomically.
+      $Templates = $.templates;
+    } finally {
+      $.templates = $Templates;
     }
 
-    var sanitizedTemplates = sanitizeTemplates(templates);
+    for (var i = 0, n = templateOrder.length; i < n; ++i) {
+      $.template(templateOrder[i]);
+    }
 
     // Present the output templates, including clones, in the order that
     // the base templates wer declared.
     var outputTemplateNames = [];
-    for (templateName in sanitizedTemplates) {
-      if (Object.hasOwnProperty.call(sanitizedTemplates, templateName)) {
+    for (templateName in $.templates) {
+      if (Object.hasOwnProperty.call($.templates, templateName)) {
         outputTemplateNames.push(templateName);
       }
     }
@@ -55,10 +75,10 @@ function sanitize() {
     var firstRunButton;
     for (var i = 0, n = outputTemplateNames.length; i < n; ++i) {
       templateName = outputTemplateNames[i];
-      sanitizedTemplateText = renderJqueryTemplate(
-          sanitizedTemplates[templateName])
-          .replace(/(\{\{(else|tmpl)(?:\}?[^}])*\}\})\{\{\/\2\}\}/g, '$1');
-      var sanitizedTemplate = $.template(templateName, sanitizedTemplateText);
+      var template = $.template(templateName);
+      if (!template.tmpl) { continue; } // Not compiled because not reachable
+      sanitizedTemplateText = renderParseTree(
+          $.templates[templateName].tmpl.parseTree, DEFAULT_BLOCK_DIRECTIVES);
       $('<h3/>').text(templateName).appendTo(outputHtml);
       $('<pre/>').html(templateTextToDisplayableHtml(sanitizedTemplateText))
           .appendTo(outputHtml);
@@ -108,7 +128,8 @@ function sanitize() {
   } catch (e) {
     if (typeof console !== 'undefined') {
       console.log(
-          'sanitizedTemplate ' + templateName + '=' + sanitizedTemplateText);
+          'sanitizedTemplate %s=%s: %o',
+          templateName, sanitizedTemplateText, e.stack);
     }
     return showError(e, outputContainer);
   }
@@ -135,13 +156,20 @@ ESC_MODE_HELP[filterNormalizeUri.name]
 
 // Converts template text to displayable HTML.
 function templateTextToDisplayableHtml(templateText) {
-  templateText = escapeHtml(templateText);
-  templateText = templateText.replace(
-      /[{(]((?:escape|normalize|filter)\w+)(?=\()/g,
-      function (_, sanitizer) {
-        return '<ins class="sanitizer"'
-            + ' title="' + escapeHtml(ESC_MODE_HELP[sanitizer] || '') + '">'
-            + _ + '</ins>';
+  templateText = escapeHtml(templateText).replace(
+      /\$\{([^}]*?)((?:=&gt;[\w.$\[\]]+)+)\}/g, function (_, expr, operators) {
+	operators = operators.split("=&gt;");
+        for (var i = operators.length; --i >= 0;) {
+          var sanitizer = operators[i].match(/^\$\.encode\.(.*)$/);
+          if (sanitizer) {
+            operators[i] = '<ins class="sanitizer"'
+                + ' title="' + escapeHtml(ESC_MODE_HELP[sanitizer[1]] || '') 
+                + '">' + operators[i] + '</ins>';
+          }
+        }
+	var suffix = new Array(operators.length).join(")");
+	var prefix = operators.reverse().join("(");
+	return "${" + prefix + expr + suffix + "}";
       });
   return templateText;
 }
@@ -172,19 +200,19 @@ function runTemplate(templateName) {
 
   var templateResult;
   try {
-    templateResult = $.tmpl(templateName, data);
+    templateResult = $.template(templateName).tmpl(data);
   } catch (e) {
     return showError(e, outputContainer);
   }
 
   var wrapper = $('<div/>');
-  templateResult.appendTo(wrapper);
+  wrapper.append(templateResult);
   var resultHtml = '' + wrapper.html();
 
   outputContainer.empty();
   $('<h3/>').text('Result for ' + templateName).appendTo(outputContainer);
   var resultContainer = $('<p/>');
-  templateResult.appendTo(resultContainer);
+  resultContainer.append(templateResult);
   resultContainer.appendTo(outputContainer);
   $('<h3/>').text('Result source').appendTo(outputContainer);
   $('<pre/>').text(resultHtml).appendTo(outputContainer);

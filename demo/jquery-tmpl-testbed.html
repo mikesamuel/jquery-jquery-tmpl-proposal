@@ -1,15 +1,18 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html><head>
 <title>Sanitized JQuery Templates Test</title>
-<script src="js/jquery-1.5.2.js"></script>
-<script src="js/jquery.tmpl.js"></script>
-<script src="js/compat.js"></script>
-<script src="js/contextDefs.js"></script>
-<script src="js/contextUpdate.js"></script>
-<script src="js/escapers.js"></script>
-<script src="js/jquery-templates.js"></script>
-<script src="js/fixupJson.js"></script>
-<script src="js/jqueryTemplatesTestbed.js"></script>
+<script src="../src/jquery-1.5.2.js"></script>
+<script src="../src/compat.js"></script>
+<script src="../src/jquery-templates-defs.js"></script>
+<script src="../src/jquery-templates-parser.js"></script>
+<script src="../src/jquery-templates-impl.js"></script>
+<script src="../src/jquery-templates-api.js"></script>
+<script src="../src/contextesc/context-defs.js"></script>
+<script src="../src/contextesc/escapers.js"></script>
+<script src="../src/contextesc/context-update.js"></script>
+<script src="../src/contextesc/contextesc.js"></script>
+<script src="fixup-json.js"></script>
+<script src="jquery-tmpl-testbed.js"></script>
 <style>
 body { padding: .5em }
 small { font-size: 50% }
@@ -62,18 +65,20 @@ JQuery template rewriter that adds encoding functions to
 You can use the buttons below to choose examples and play around with
 the templates and data.  For more details, you can read about the
 <a href="safetemplate.html">design</a> or peruse the
-<a href="http://code.google.com/p/js-quasis-libraries-and-repl/source/browse/trunk/js/jquery-templates.js">source</a>
-and <a href="http://code.google.com/p/js-quasis-libraries-and-repl/source/browse/trunk/js/jquery-templatesTest.js">tests</a>.
+<a href="https://github.com/mikesamuel/jquery-jquery-tmpl-proposal/tree/master/src">source</a> and
+<a href="https://github.com/mikesamuel/jquery-jquery-tmpl-proposal/tree/master/tests">tests</a>.
 </p>
 
 <p>
 That source code includes a rewriter from JQuery templates to JQuery
 templates.  It compresses well.  If you want to rewrite templates in
 the browser, the download is
-<a href="js/jquery-templates-compiled.js">less than 6kB gzipped</a>,
+<a href="../build/jquery-templates-contextesc-compiled.js"
+ >less than 6kB gzipped</a>,
 but if you want to rewrite the templates before serving them, then the
 only download is the escaping functions which takes
-<a href="js/jquery-escapers-only-compiled.js">less than 1.5kB gzipped</a>.
+<a href="../build/jquery-templates-contextesc-noparser-compiled.js"
+ >less than 1.5kB gzipped</a>.
 </p>
 
 <p>Examples: <span id="exampleList"></span></p>
@@ -141,5 +146,5 @@ Hello,
 
 <br>
 <center><small>
-<!-- hhmts start -->Last modified: Mon Apr 18 16:58:50 PDT 2011 <!-- hhmts end --></small></center>
+<!-- hhmts start -->Last modified: Sun May 22 14:42:32 PDT 2011 <!-- hhmts end --></small></center>
 </body></html>
