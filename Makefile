@@ -2,9 +2,9 @@ REGULAR_AUTOESCAPE_SOURCES=src/minimal-escapers.js
 
 CONTEXTESC_SOURCES=src/contextesc/context-defs.js src/contextesc/escapers.js
 
-REFERENCE_SOURCES=src/jquery-templates-defs.js src/jquery-templates-parser.js src/jquery-templates-ref.js src/jquery-templates-builtins.js
+REFERENCE_SOURCES=src/jquery-templates-defs.js src/jquery-templates-parser.js src/jquery-templates-ref.js src/jquery-templates-api.js
 
-STRAPPEND_SOURCES=src/jquery-templates-defs.js src/jquery-templates-parser.js src/jquery-templates-impl.js src/jquery-templates-builtins.js
+STRAPPEND_SOURCES=src/jquery-templates-defs.js src/jquery-templates-parser.js src/jquery-templates-impl.js src/jquery-templates-api.js
 
 OUTPUT_JS=build/jquery-templates-reference.js build/jquery-templates-strappend.js build/jquery-templates-compiled.js build/jquery-templates-noparser-compiled.js build/jquery-templates-contextesc-noparser-compiled.js
 
