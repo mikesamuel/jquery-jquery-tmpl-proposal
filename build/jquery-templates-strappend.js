@@ -526,8 +526,8 @@ function compileToFunction( parseTree ) {
 								// template selector is resolved as expected from the ordering
 								// of those in the content.
 								? "$.extend([],arguments,[" + dataAndOptions + "])"
-							  // Propagate any loop variables in scope when all data is
-							  // passed.
+								// Propagate any loop variables in scope when all data is
+								// passed.
 								: inScope.length
 								? "[$.extAll({},$data,{" + inScope + "}),$item]"
 								// If the content specifies neither data nor options, and
