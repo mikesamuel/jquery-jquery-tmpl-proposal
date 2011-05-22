@@ -401,11 +401,6 @@ var ESC_MODE_FILTER_NORMALIZE_URI = 13;
  */
 var ESC_MODE_NO_AUTOESCAPE = 14;
 
-/** Compresses better than false.  @const */
-var FALSEY = 0;
-/** Compresses better than true.  @const */
-var TRUTHY = 1;
-
 var IS_ESC_MODE_HTML_EMBEDDABLE = [];
 IS_ESC_MODE_HTML_EMBEDDABLE[ESC_MODE_ESCAPE_HTML] = TRUTHY;
 IS_ESC_MODE_HTML_EMBEDDABLE[ESC_MODE_ESCAPE_HTML_RCDATA] = TRUTHY;

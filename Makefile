@@ -23,6 +23,9 @@ OUTPUT_JS=build/jquery-templates-reference.js \
   build/jquery-templates-noparser-compiled.js \
   build/jquery-templates-contextesc-noparser-compiled.js
 
+CLOSURE_COMPILER=java -jar closure/compiler.jar \
+   --compilation_level ADVANCED_OPTIMIZATIONS
+
 all: $(OUTPUT_JS) sizereport
 
 clean:
@@ -36,8 +39,7 @@ build/jquery-templates-strappend.js: $(STRAPPEND_SOURCES) $(REGULAR_AUTOESCAPE_S
 
 build/jquery-templates-compiled.js: $(STRAPPEND_SOURCES) $(REGULAR_AUTOESCAPE_SOURCES)
 	@echo $^ | perl -pe 's/(?:^|\s+)(\S)/ --js $$1/g' \
-	| xargs java -jar closure/compiler.jar \
-	    --compilation_level ADVANCED_OPTIMIZATIONS \
+	| xargs $(CLOSURE_COMPILER) \
 	    --externs src/externs.js \
 	    --define DEBUG=false \
 	    --output_wrapper="(function(){%output%}())" \
@@ -47,8 +49,7 @@ build/jquery-templates-compiled.js: $(STRAPPEND_SOURCES) $(REGULAR_AUTOESCAPE_SO
 
 build/jquery-templates-noparser-compiled.js: $(STRAPPEND_SOURCES) $(REGULAR_AUTOESCAPE_SOURCES)
 	@echo $^ | perl -pe 's/(?:^|\s+)(\S)/ --js $$1/g' \
-	| xargs java -jar closure/compiler.jar \
-	    --compilation_level ADVANCED_OPTIMIZATIONS \
+	| xargs $(CLOSURE_COMPILER) \
 	    --externs src/externs.js \
 	    --define DEBUG=false \
 	    --define JQUERY_TMPL_PRECOMPILED=true \
@@ -59,8 +60,7 @@ build/jquery-templates-noparser-compiled.js: $(STRAPPEND_SOURCES) $(REGULAR_AUTO
 
 build/jquery-templates-contextesc-compiled.js: $(STRAPPEND_SOURCES) $(CONTEXTESC_SOURCES) 
 	@echo $^ | perl -pe 's/(?:^|\s+)(\S)/ --js $$1/g' \
-	| xargs java -jar closure/compiler.jar \
-	    --compilation_level ADVANCED_OPTIMIZATIONS \
+	| xargs $(CLOSURE_COMPILER) \
 	    --externs src/externs.js \
 	    --define DEBUG=false \
 	    --output_wrapper="(function(){%output%}())" \
@@ -70,8 +70,7 @@ build/jquery-templates-contextesc-compiled.js: $(STRAPPEND_SOURCES) $(CONTEXTESC
 
 build/jquery-templates-contextesc-noparser-compiled.js: $(STRAPPEND_SOURCES) $(CONTEXTESC_SOURCES) 
 	@echo $^ | perl -pe 's/(?:^|\s+)(\S)/ --js $$1/g' \
-	| xargs java -jar closure/compiler.jar \
-	    --compilation_level ADVANCED_OPTIMIZATIONS \
+	| xargs $(CLOSURE_COMPILER) \
 	    --externs src/externs.js \
 	    --define DEBUG=false \
 	    --define JQUERY_TMPL_PRECOMPILED=true \

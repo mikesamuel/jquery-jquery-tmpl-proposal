@@ -113,9 +113,9 @@ var SanitizedUri = defineSanitizedContentSubclass(CONTENT_KIND_URI);
 
 
 // exports
-window['SanitizedHtml'] = SanitizedHtml;
-window['SanitizedJsStrChars'] = SanitizedJsStrChars;
-window['SanitizedUri'] = SanitizedUri;
+window["SanitizedHtml"] = SanitizedHtml;
+window["SanitizedJsStrChars"] = SanitizedJsStrChars;
+window["SanitizedUri"] = SanitizedUri;
 
 
 /**
