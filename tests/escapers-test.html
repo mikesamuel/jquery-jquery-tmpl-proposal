@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html><head>
+<title>Escapers Test</title>
+<script src="../src/compat.js"></script>
+<script src="../src/jquery-1.5.2.js"></script>
+<script src="../src/contextesc/context-defs.js"></script>
+<script>
+var compiled = /[?&]compiled/.test(location.search);
+// If the location contains ?compiled, then use the minified version.
+if (compiled) {
+  DEBUG = false;
+  document.title += ' compiled';
+  document.write(
+      '<script src="../build/jquery-templates-contextesc-noparser-compiled.js"><\/script>');
+} else {
+  document.write(
+      '<script src="../src/contextesc/context-update.js"><\/script>' +
+      '<script src="../src/contextesc/escapers.js"><\/script>');
+}
+</script>
+<script src="asserts.js"></script>
+<script src="escapers-test.js"></script>
+
+<link rel="stylesheet" type="text/css" href="test.css" />
+</head>
+<body>
+<script src="runtests.js"></script>
+</body></html>
