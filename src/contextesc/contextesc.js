@@ -264,7 +264,7 @@ function autoescape( jqueryTemplatesByName ) {
 					}
 				}
 			} else if ( type === "tmpl" || type === "wrap" ) {
-				// Expect content of the form "#" + templateName in double quotes.
+				// Expect content with a templateName in double quotes.
 				var calleeBaseName = getCalleeName( parseTree );
 				if ( calleeBaseName ) {
 					if ( !/__C\d+$/.test( calleeBaseName ) ) {
@@ -273,6 +273,11 @@ function autoescape( jqueryTemplatesByName ) {
 							inferences.calleeName[ parseTree.parseTreeNodeId ]
 									= callee.jqueryTemplateName;
 							context = getTemplateOutputContext(callee, context, inferences );
+						} else if ( DEBUG ) {
+							if ( typeof console !== "undefined" ) {
+								console.warn(
+										"Template unavailable to autoescaper %s", calleeBaseName );
+							}
 						}
 					}
 				} else {
@@ -347,8 +352,8 @@ function autoescape( jqueryTemplatesByName ) {
 	}
 
 	function getCalleeName( parseTree ) {
-		var m = parseTree[ 1 ].match( /(?:^|\))\s*"#([^)\s]+)"\s*$/ );
-		return m && m[ 1 ];
+		var m = parseTree[ 1 ].match( /(?:^|\))\s*("[^)\s]+")\s*$/ );
+		return m && Function( "return " + m[ 1 ] )();
 	}
 
 	function callsTypable( parseTree ) {
@@ -427,7 +432,7 @@ function autoescape( jqueryTemplatesByName ) {
 					// The form of a {{tmpl}}'s content is
 					//    ['(' [<data>[, <options>]] ')'] '"#'<name>'"'
 					parseTreeNode[ 1 ] = parseTreeNode[ 1 ].replace(
-							/\s*"#[^)\s]+"\s*$/, " \"#" + calleeName + "\"" );
+							/"#[^)\s]+"\s*$/, escapeJsValue(calleeName) );
 				}
 				break;
 		}

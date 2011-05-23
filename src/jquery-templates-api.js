@@ -35,9 +35,9 @@ function compileBundle( parseTrees, opt_exclusion ) {
 				if ( node[ 0 ] === "tmpl" || node[ 0 ] === "wrap" ) {
 					var match = node[ 1 ].match( TMPL_DIRECTIVE_CONTENT );
 					if ( match ) {
-						var depName = match[ 2 ];
+						var depName = Function( "return " + match[ 2 ] )();
 						if ( needsCompile( depName )
-								&& processedNames[ depName ] !== TRUTHY ) {
+								 && processedNames[ depName ] !== TRUTHY ) {
 							process(
 									depName,
 									parseTrees[ depName ] = $[ TEMPLATES_PROP_NAME ][ depName ] );
@@ -77,7 +77,7 @@ $[ TEMPLATE_METHOD_NAME ] = function self( name, templateSource ) {
 	if ( JQUERY_TMPL_PRECOMPILED ) {
 		return $[ TEMPLATES_PROP_NAME ][ name ];
 	}
-	var t = $[ TEMPLATES_PROP_NAME ];
+	var templates = $[ TEMPLATES_PROP_NAME ];
 	var parseTrees;
 	if ( arguments.length === 1 ) {
 		if ( name.indexOf( "<" ) + 1 ) {
@@ -85,10 +85,10 @@ $[ TEMPLATE_METHOD_NAME ] = function self( name, templateSource ) {
 		}
 		if ( needsCompile( name ) ) {
 			parseTrees = {};
-			parseTrees[ name ] = t[ name ];
+			parseTrees[ name ] = templates[ name ];
 			compileBundle( parseTrees );
 		}
-		return t[ name ];
+		return templates[ name ];
 	}
 	// We delay compiling until we've got a bunch of definitions together.
 	// This allows plugins to process entire template graphs.
@@ -99,5 +99,5 @@ $[ TEMPLATE_METHOD_NAME ] = function self( name, templateSource ) {
 	if ( name === null ) {
 		return compileBundle( parseTrees = { "_": parseTree }, "_" );
 	}
-	t[ name ] = parseTree;
+	templates[ name ] = parseTree;
 };
