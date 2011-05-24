@@ -18,7 +18,8 @@ function contextToString( context ) {
 	switch ( stateOf( context ) ) {
 		case STATE_HTML_PCDATA: parts.push( "HTML_PCDATA" ); break;
 		case STATE_HTML_RCDATA: parts.push( "HTML_RCDATA" ); break;
-		case STATE_HTML_BEFORE_TAG_NAME: parts.push( "HTML_BEFORE_TAG_NAME" ); break;
+		case STATE_HTML_BEFORE_TAG_NAME:
+			parts.push( "HTML_BEFORE_TAG_NAME" ); break;
 		case STATE_HTML_TAG_NAME: parts.push( "HTML_TAG_NAME" ); break;
 		case STATE_HTML_TAG: parts.push( "HTML_TAG" ); break;
 		case STATE_HTML_ATTRIBUTE_NAME: parts.push( "HTML_ATTRIBUTE_NAME" ); break;
@@ -206,7 +207,8 @@ function contextUnion( a, b ) {
 		return b;
 	}
 
-	if ( aState === STATE_HTML_TAG && elementTypeOf( a ) === elementTypeOf( b ) ) {
+	if ( aState === STATE_HTML_TAG
+			 && elementTypeOf( a ) === elementTypeOf( b ) ) {
 		// If one branch is waiting for an attribute name and the other is waiting
 		// for an equal sign before an attribute value, then commit to the view that
 		// the attribute name was a valueless attribute and transition to a state
@@ -289,7 +291,8 @@ var processRawText = ( function () {
 	};
 
 	function unescapeHtml( html ) {
-		if ( html.indexOf( "&" ) < 0 ) { return html; }  // Fast path for common case.
+		// Fast path for common case.
+		if ( html.indexOf( "&" ) < 0 ) { return html; }
 		return html.replace(
 			/&(?:#(?:(x[0-9a-f]+)|([0-9]+))|(lt|gt|amp|quot|apos));/gi,
 			function ( entity, hex, decimal, entityName ) {
@@ -586,8 +589,9 @@ var processRawText = ( function () {
 	TransitionSubclass(
 			JsPuncTransition,
 			function ( prior, match ) {
-				return ( prior & ~JS_FOLLOWING_SLASH_ALL ) | ( isRegexPreceder( match[ 0 ] )
-						? JS_FOLLOWING_SLASH_REGEX : JS_FOLLOWING_SLASH_DIV_OP );
+				return ( prior & ~JS_FOLLOWING_SLASH_ALL )
+						| ( isRegexPreceder( match[ 0 ] )
+								? JS_FOLLOWING_SLASH_REGEX : JS_FOLLOWING_SLASH_DIV_OP );
 			} );
 
 	/**
@@ -694,7 +698,8 @@ var processRawText = ( function () {
 				} else {
 					state = STATE_CSS_URI;
 				}
-				return ( prior & ~( STATE_ALL | URI_PART_ALL ) ) | state | URI_PART_START;
+				return ( prior & ~( STATE_ALL | URI_PART_ALL ) )
+						| state | URI_PART_START;
 			} );
 
 	/**
@@ -794,13 +799,15 @@ var processRawText = ( function () {
 		TRANSITION_TO_SELF ];
 	TRANSITIONS[ STATE_CSS_DQ_STRING ] = [
 		new TransitionToState( /"/, STATE_CSS ),
-		new TransitionToSelf( /\\(?:\r\n?|[\n\f"])/ ), // Line continuation or escape.
+		// Line continuation or escape.
+		new TransitionToSelf( /\\(?:\r\n?|[\n\f"])/ ),
 		new ToTransition( /[\n\r\f]/, STATE_ERROR ),
 		STYLE_TAG_END,  // TODO: Make this an error transition?
 		TRANSITION_TO_SELF ];
 	TRANSITIONS[ STATE_CSS_SQ_STRING ] = [
 		new TransitionToState( /'/, STATE_CSS ),
-		new TransitionToSelf( /\\(?:\r\n?|[\n\f'])/ ), // Line continuation or escape.
+		// Line continuation or escape.
+		new TransitionToSelf( /\\(?:\r\n?|[\n\f'])/ ),
 		new ToTransition( /[\n\r\f]/, STATE_ERROR ),
 		STYLE_TAG_END,  // TODO: Make this an error transition?
 		TRANSITION_TO_SELF ];
@@ -812,13 +819,15 @@ var processRawText = ( function () {
 	TRANSITIONS[ STATE_CSS_SQ_URI ] = [
 		new TransitionToState( /'/, STATE_CSS ),
 		URI_PART_TRANSITION,
-		new TransitionToSelf( /\\(?:\r\n?|[\n\f'])/ ), // Line continuation or escape.
+		// Line continuation or escape.
+		new TransitionToSelf( /\\(?:\r\n?|[\n\f'])/ ),
 		new ToTransition( /[\n\r\f]/, STATE_ERROR ),
 		STYLE_TAG_END ];
 	TRANSITIONS[ STATE_CSS_DQ_URI ] = [
 		new TransitionToState( /"/, STATE_CSS ),
 		URI_PART_TRANSITION,
-		new TransitionToSelf( /\\(?:\r\n?|[\n\f"])/ ), // Line continuation or escape.
+		// Line continuation or escape.
+		new TransitionToSelf( /\\(?:\r\n?|[\n\f"])/ ),
 		new ToTransition( /[\n\r\f]/, STATE_ERROR ),
 		STYLE_TAG_END ];
 	TRANSITIONS[ STATE_JS ] = [
@@ -903,7 +912,8 @@ var processRawText = ( function () {
 	 * Output is stored in member variables.
 	 * @param {string} text Non empty.
 	 */
-	RawTextContextUpdater.prototype.processNextToken = function ( text, context ) {
+	RawTextContextUpdater.prototype.processNextToken
+			= function ( text, context ) {
 		if ( isErrorContext( context ) ) {  // The ERROR state is infectious.
 			this.numCharsConsumed = text.length;
 			this.next = context;
@@ -936,7 +946,8 @@ var processRawText = ( function () {
 		}
 
 		if ( earliestTransition ) {
-			this.next = earliestTransition.computeNextContext( context, earliestMatch );
+			this.next = earliestTransition.computeNextContext(
+					context, earliestMatch );
 			this.numCharsConsumed = earliestEnd;
 		} else {
 			this.next = STATE_ERROR;
@@ -1022,7 +1033,8 @@ var processRawText = ( function () {
 
 				// We use this example more in the comments below.
 
-				var attrValueTail = unescapeHtml( rawText.substring( 0, attrValueEnd ) );
+				var attrValueTail = unescapeHtml(
+						rawText.substring( 0, attrValueEnd ) );
 				// attrValueTail is "!\")" in the example above.
 
 				// Recurse on the decoded value.
