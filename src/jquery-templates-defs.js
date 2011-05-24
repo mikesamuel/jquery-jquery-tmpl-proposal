@@ -1,5 +1,5 @@
 //-*- mode: js2-mode; indent-tabs-mode: t; tab-width: 2; -*-
-/*jslint evil: true, unparam: true, maxerr: 50, indent: 4 */
+/*jslint evil: true, unparam: true, maxerr: 50 */
 
 /**
  * Common definitions for jQuery templates and plugin passes

@@ -82,16 +82,21 @@ function parseTemplate( templateText, blockDirectives ) {
 					.replace( /\{#[\s\S]*?#\}/g, "" )
 					// Handle {{! ... }} style comments which can contain arbitrary nested
 					// {{...}} sections.
-					.replace( /\{\{!?|\}\}|(?:[^{}]|\{(?!\{)|\}(?!}))+/g,
+					.replace( /\{\{!?|\}\}|(?:[^{}]|\{(?!\{)|\}(?!\}))+/g,
 										function (token) {
-											return token === "{{!"
-													? ( ++commentDepth, "" )
-													: commentDepth
-													? ( token === "}}"
-															? --commentDepth
-															: token === "{{" && ++commentDepth,
-															"" )
-													: token;
+											if ( token === "{{!" ) {
+												++commentDepth;
+												return "";
+											} else if ( commentDepth ) {
+												if ( token === "}}" ) {
+													--commentDepth;
+												} else if ( token === "{{" ) {
+													++commentDepth;
+												}
+												return "";
+											} else {
+												return token;
+											}
 										} )
 					// Match against a global regexp to pull out all tokens.
 					.split( TOKEN ),

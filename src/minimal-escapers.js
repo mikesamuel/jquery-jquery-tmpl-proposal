@@ -97,4 +97,9 @@ function escapeJsValue( value ) {
 	return "'" + String( value ).replace( jsSpecialChar, replacerForJs ) + "'";
 }
 
-$[ "encode" ] = escapeHtml;
+/**
+ * @const
+ * @private
+ */
+var ENCODE_METHOD_NAME = "encode";
+$[ ENCODE_METHOD_NAME ] = escapeHtml;

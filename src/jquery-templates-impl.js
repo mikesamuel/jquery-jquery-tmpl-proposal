@@ -7,14 +7,22 @@
  * @author Mike Samuel <mikesamuel@gmail.com>
  */
 
-$[ "extAll" ] = function ( target ) {
-  var args = arguments, i, source, k;
-  for ( i = 1; i < args.length; ++i ) {
-    for ( k in ( source = args[ i ] ) ) {
-      target[ k ] = source[ k ];
-    }
-  }
-  return target;
+var EXT_ALL_METHOD_NAME = "extAll";
+
+/**
+ * Like $.extend but copies properties whose values are undefined.
+ * @param {Object} target
+ * @param {Object...} var_args containers of properties to copy into target.
+ * @return {Object} target
+ */
+$[ EXT_ALL_METHOD_NAME ] = function ( target, var_args ) {
+	var args = arguments, i, source, k;
+	for ( i = 1; i < args.length; ++i ) {
+		for ( k in ( source = args[ i ] ) ) {
+			target[ k ] = source[ k ];
+		}
+	}
+	return target;
 };
 
 function compileToFunction( parseTree ) {
@@ -26,7 +34,7 @@ function compileToFunction( parseTree ) {
 			// Make available on the stack, the enumerable properties of the data
 			// object, and the enumerable properties of the options object.
 			// Data properties should trump options.
-      + "with($data=$.extAll("
+			+ "with($data=$." + EXT_ALL_METHOD_NAME + "("
 			// Where EcmaScript 5's Object.create is available, use that to prevent
 			// Object.prototype properties from masking globals.
 			+ "Object.create?Object.create(null):{},"
@@ -34,7 +42,7 @@ function compileToFunction( parseTree ) {
 			// The below compiles the parse tree to an expression that returns a
 			// string.
 			+ "return("];
-  var inScope = [];  // Used to propagate variables in scope through {{tmpl}}.
+	var inScope = [];  // Used to propagate variables in scope through {{tmpl}}.
 	var hasValue;
 	var nestLevel = 0;
 	$.each(
@@ -87,7 +95,7 @@ function compileToFunction( parseTree ) {
 								wrapperEnd );
 					} else if ( kind === "if" ) {  // {{if condition}}...{{/if}}
 						// {{if a}}b{{else}}c{{/if}} -> (a ? "b" : "c")
-						var pos = 2, elseIndex, i, continues = hasValue = TRUTHY;
+						var pos = 2, elseIndex, i, continues = ( hasValue = TRUTHY );
 						for ( ; continues; pos = elseIndex + 1 ) {
 							elseIndex = len;
 							for ( i = pos; i < elseIndex; ++i ) {
@@ -198,7 +206,8 @@ function compileToFunction( parseTree ) {
 								// Propagate any loop variables in scope when all data is
 								// passed.
 								: inScope.length
-								? "[$.extAll({},$data,{" + inScope + "}),$item]"
+								? ( "[$." + EXT_ALL_METHOD_NAME
+										+ "({},$data,{" + inScope + "}),$item]" )
 								// If the content specifies neither data nor options, and
 								// no loop vars are in scope, use the arguments without the
 								// overhead of a call to $.extend.

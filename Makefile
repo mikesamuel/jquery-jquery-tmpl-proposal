@@ -36,10 +36,10 @@ clean:
 	rm -f $(OUTPUT_JS) README.html
 
 build/jquery-templates-reference.js: $(REFERENCE_SOURCES) $(REGULAR_AUTOESCAPE_SOURCES)
-	@(echo "(function () {"; cat $^; echo " })()") > $@
+	@(echo "(function () {"; cat $^; echo " }())") > $@
 
 build/jquery-templates-strappend.js: $(STRAPPEND_SOURCES) $(REGULAR_AUTOESCAPE_SOURCES)
-	@(echo "(function () {"; cat $^; echo " })()") > $@
+	@(echo "(function () {"; cat $^; echo " }())") > $@
 
 build/jquery-templates-compiled.js: $(STRAPPEND_SOURCES) $(REGULAR_AUTOESCAPE_SOURCES)
 	@echo $^ | perl -pe 's/(?:^|\s+)(\S)/ --js $$1/g' \

@@ -9,7 +9,8 @@
 
 /** Like <code>$.extend</code> but copies undefined properties. */
 function extendWithUndef( target, source ) {
-	for ( var k in source ) {
+	var k;
+	for ( k in source ) {
 		target[ k ] = source[ k ];
 	}
 	return target;
@@ -124,7 +125,7 @@ function compileToFunction( parseTree ) {
 			var pos, elseIndex, i;
 			for ( pos = 0, elseIndex; pos < body.length; pos = elseIndex + 1 ) {
 				elseIndex = body.length;
-				for ( var i = pos; i < elseIndex; ++i ) {
+				for ( i = pos; i < elseIndex; ++i ) {
 					if ( body[ i ][ 0 ] === "else" ) {
 						elseIndex = i;
 					}
