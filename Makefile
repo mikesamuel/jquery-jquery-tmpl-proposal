@@ -23,6 +23,10 @@ OUTPUT_JS=build/jquery-templates-reference.js \
   build/jquery-templates-noparser-compiled.js \
   build/jquery-templates-contextesc-noparser-compiled.js
 
+EXTERNS=--externs closure/externs.js \
+  --externs closure/jquery-1.5.js \
+  --externs closure/webkit_console.js
+
 CLOSURE_COMPILER=java -jar closure/compiler.jar \
    --compilation_level ADVANCED_OPTIMIZATIONS
 
@@ -40,7 +44,7 @@ build/jquery-templates-strappend.js: $(STRAPPEND_SOURCES) $(REGULAR_AUTOESCAPE_S
 build/jquery-templates-compiled.js: $(STRAPPEND_SOURCES) $(REGULAR_AUTOESCAPE_SOURCES)
 	@echo $^ | perl -pe 's/(?:^|\s+)(\S)/ --js $$1/g' \
 	| xargs $(CLOSURE_COMPILER) \
-	    --externs src/externs.js \
+	    $(EXTERNS) \
 	    --define DEBUG=false \
 	    --output_wrapper="(function(){%output%}())" \
 	    | perl -pe 's/\bwindow.//g; s/;\}/}/g' \
@@ -50,7 +54,7 @@ build/jquery-templates-compiled.js: $(STRAPPEND_SOURCES) $(REGULAR_AUTOESCAPE_SO
 build/jquery-templates-noparser-compiled.js: $(STRAPPEND_SOURCES) $(REGULAR_AUTOESCAPE_SOURCES)
 	@echo $^ | perl -pe 's/(?:^|\s+)(\S)/ --js $$1/g' \
 	| xargs $(CLOSURE_COMPILER) \
-	    --externs src/externs.js \
+	    $(EXTERNS) \
 	    --define DEBUG=false \
 	    --define JQUERY_TMPL_PRECOMPILED=true \
 	    --output_wrapper="(function(){%output%}())" \
@@ -61,7 +65,7 @@ build/jquery-templates-noparser-compiled.js: $(STRAPPEND_SOURCES) $(REGULAR_AUTO
 build/jquery-templates-contextesc-compiled.js: $(STRAPPEND_SOURCES) $(CONTEXTESC_SOURCES) 
 	@echo $^ | perl -pe 's/(?:^|\s+)(\S)/ --js $$1/g' \
 	| xargs $(CLOSURE_COMPILER) \
-	    --externs src/externs.js \
+	    $(EXTERNS) \
 	    --define DEBUG=false \
 	    --output_wrapper="(function(){%output%}())" \
 	    | perl -pe 's/\bwindow.//g; s/;\}/}/g' \
@@ -71,7 +75,7 @@ build/jquery-templates-contextesc-compiled.js: $(STRAPPEND_SOURCES) $(CONTEXTESC
 build/jquery-templates-contextesc-noparser-compiled.js: $(STRAPPEND_SOURCES) $(CONTEXTESC_SOURCES) 
 	@echo $^ | perl -pe 's/(?:^|\s+)(\S)/ --js $$1/g' \
 	| xargs $(CLOSURE_COMPILER) \
-	    --externs src/externs.js \
+	    $(EXTERNS) \
 	    --define DEBUG=false \
 	    --define JQUERY_TMPL_PRECOMPILED=true \
 	    --output_wrapper="(function(){%output%}())" \

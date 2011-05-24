@@ -432,7 +432,7 @@ function autoescape( jqueryTemplatesByName ) {
 					// The form of a {{tmpl}}'s content is
 					//    ['(' [<data>[, <options>]] ')'] '"#'<name>'"'
 					parseTreeNode[ 1 ] = parseTreeNode[ 1 ].replace(
-							/"#[^)\s]+"\s*$/, escapeJsValue(calleeName) );
+							/"[^)\s]*"\s*$/, JSON.stringify( calleeName ) );
 				}
 				break;
 		}
