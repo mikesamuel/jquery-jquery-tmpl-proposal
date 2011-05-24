@@ -145,7 +145,7 @@ function parseTemplate( templateText, blockDirectives ) {
 						try {
 							// See notes on {{=...}} sanity check above.
 							Function( "(" + content + ")" );
-						} catch ( e2 ) {
+						} catch ( e3 ) {
 							throw new Error( "Invalid template substitution: " + content );
 						}
 					}

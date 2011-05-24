@@ -19,6 +19,7 @@ var escapeMapForHtml = {
  */
 function replacerForHtml( ch ) {
 	return escapeMapForHtml[ ch ]
+			// Intentional assignment that caches the result of encoding ch.
 			|| ( escapeMapForHtml[ ch ] = "&#" + ch.charCodeAt( 0 ) + ";" );
 }
 
@@ -81,7 +82,7 @@ var jsSpecialChar = /[\x00\x08-\x0d"&'\/<->\\\x85\u2028\u2029]/g;
  * @return {string} The escaped text.
  */
 function escapeHtml( value ) {
-	return value === void 0
+	return value === undefined
       ? "" : String( value ).replace( htmlSpecialChar, replacerForHtml );
 }
 

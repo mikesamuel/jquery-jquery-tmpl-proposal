@@ -10,7 +10,7 @@
 $[ "extAll" ] = function ( target ) {
   var args = arguments, i, source, k;
   for ( i = 1; i < args.length; ++i ) {
-    for ( k in (source = args[ i ]) ) {
+    for ( k in ( source = args[ i ] ) ) {
       target[ k ] = source[ k ];
     }
   }
