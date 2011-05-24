@@ -324,11 +324,11 @@ function testSimpleEachLoop() {
 function testCall() {
   assertContextualRewriting(
       {
-        "foo": "{{tmpl \"#bar\"}}",
+        "foo": "{{tmpl \"bar\"}}",
         "bar": "Hello, ${$.encode.escapeHtml(world)}!"
       },
       {
-        "foo": "{{tmpl \"#bar\"}}",
+        "foo": "{{tmpl \"bar\"}}",
         "bar": "Hello, ${world}!"
       });
 }
@@ -336,11 +336,11 @@ function testCall() {
 function testCallWithParams() {
   assertContextualRewriting(
       {
-        "foo": "{{tmpl ({ x: y }) \"#bar\"}}",
+        "foo": "{{tmpl ({ x: y }) \"bar\"}}",
         "bar": "Hello, ${$.encode.escapeHtml(world)}!"
       },
       {
-        "foo": "{{tmpl ({ x: y }) \"#bar\"}}",
+        "foo": "{{tmpl ({ x: y }) \"bar\"}}",
         "bar": "Hello, ${world}!"
       });
 }
@@ -349,18 +349,18 @@ function testSameTemplateCalledInDifferentContexts() {
   assertContextualRewriting(
       {
         "foo": join(
-            "{{tmpl \"#bar\"}}",
+            "{{tmpl \"bar\"}}",
             "<script>",
-            "alert('{{tmpl \"#bar__C20\"}}');",
+            "alert('{{tmpl \"bar__C20\"}}');",
             "</script>"),
         "bar": "Hello, ${$.encode.escapeHtml(world)}!",
         "bar__C20": "Hello, ${$.encode.escapeJsString(world)}!"
       },
       {
         "foo": join(
-            "{{tmpl \"#bar\"}}",
+            "{{tmpl \"bar\"}}",
             "<script>",
-            "alert('{{tmpl \"#bar\"}}');",
+            "alert('{{tmpl \"bar\"}}');",
             "</script>"),
         "bar": "Hello, ${world}!"
       });
@@ -371,25 +371,25 @@ function testRecursiveTemplateGuessWorks() {
       {
         "foo": join(
             "<script>",
-              "x = [{{tmpl \"#countDown__C8208\"}}]",
+              "x = [{{tmpl \"countDown__C8208\"}}]",
             "</script>"),
         "countDown": join(
             "{{if x > 0}}",
               "${$.encode.escapeHtml(--x)},",
-              "{{tmpl \"#countDown\"}}",
+              "{{tmpl \"countDown\"}}",
             "{{/if}}"),
         "countDown__C8208": join(
             "{{if x > 0}}",
               "${$.encode.escapeJsValue(--x)},",
-              "{{tmpl \"#countDown__C8208\"}}",
+              "{{tmpl \"countDown__C8208\"}}",
             "{{/if}}")
       },
       {
         "foo": join(
             "<script>",
-              "x = [{{tmpl \"#countDown\"}}]",
+              "x = [{{tmpl \"countDown\"}}]",
             "</script>"),
-        "countDown": "{{if x > 0}}${--x},{{tmpl \"#countDown\"}}{{/if}}"
+        "countDown": "{{if x > 0}}${--x},{{tmpl \"countDown\"}}{{/if}}"
       });
 }
 
@@ -399,7 +399,7 @@ function testTemplateWithUnknownJsSlash() {
         "foo": join(
             "<script>",
               "{{if declare}}var {{/if}}",
-              "x = {{tmpl \"#bar__C8208\"}}\n",
+              "x = {{tmpl \"bar__C8208\"}}\n",
               "y = 2",
             "</script>"),
         "bar": join(
@@ -417,7 +417,7 @@ function testTemplateWithUnknownJsSlash() {
         "foo": join(
             "<script>",
               "{{if declare}}var {{/if}}",
-              "x = {{tmpl \"#bar\"}}\n",
+              "x = {{tmpl \"bar\"}}\n",
               // At this point we don't know whether or not a slash would start
               // a RegExp or not, but we don't see a slash so it doesn't matter.
               "y = 2",
@@ -438,7 +438,7 @@ function testTemplateUnknownJsSlashMatters() {
         "foo": join(
             "<script>\n",
               "{{if declare}}var {{/if}}\n",
-              "x = {{tmpl \"#bar\"}}\n",
+              "x = {{tmpl \"bar\"}}\n",
               // At this point we don't know whether or not a slash would start
               // a RegExp or not, so this constitutes an error.
               "/ 2\n",
@@ -487,10 +487,10 @@ function testRecursiveTemplateGuessFails() {
       {
         "foo": join(
             "<script>",
-              "{{tmpl \"#quot\"}}",
+              "{{tmpl \"quot\"}}",
             "</script>"),
         "quot": join(
-            "\" {{if Math.random() < 0.5}}{{tmpl \"#quot\"}}{{/if}}")
+            "\" {{if Math.random() < 0.5}}{{tmpl \"quot\"}}{{/if}}")
       },
       "quot__C19:1:`{{if Math.random...{{/tmpl}}{{/if}}`:"
       + " Branch ends in irreconcilable contexts [Context JS_DQ_STRING]"
@@ -557,7 +557,7 @@ function testNoInterferenceWithNonContextualTemplates() {
               "<!--\n",
             "{{/if}}\n",
             // Cannot reconcile contexts HTML_COMMENT and HTML_PCDATA.
-            "{{tmpl \"#foo\"}}")
+            "{{tmpl \"foo\"}}")
       });
 
   // But if it doesn't, it's none of our business.
@@ -589,7 +589,7 @@ function testExternTemplates() {
       {
         "foo": join(
             "<script>",
-              "var x = {{tmpl \"#bar\"}},",
+              "var x = {{tmpl \"bar\"}},",
               "y = ${$.encode.escapeJsValue(y)};",
             "</script>")
       },
@@ -597,7 +597,7 @@ function testExternTemplates() {
         "foo": join(
             "<script>",
               // Undefined in this compilation unit.
-              "var x = {{tmpl \"#bar\"}},",
+              "var x = {{tmpl \"bar\"}},",
               "y = ${y};",
             "</script>")
       });
@@ -607,21 +607,21 @@ function testNonContextualCallers() {
   assertContextualRewriting(
       {
         "foo": "${$.encode.escapeHtml(x)}",
-        "bar": "<b>{{tmpl \"#foo\"}}</b> ${y}"
+        "bar": "<b>{{tmpl \"foo\"}}</b> ${y}"
       },
       {
         "foo": "${x}",
-        "bar": "{{noAutoescape}}<b>{{tmpl \"#foo\"}}</b> ${y}"
+        "bar": "{{noAutoescape}}<b>{{tmpl \"foo\"}}</b> ${y}"
       });
 
   assertContextualRewriting(
       {
         "ns.foo": "${$.encode.escapeHtml(x)}",
-        "ns.bar": "<b>{{tmpl \"#ns.foo\"}}</b> ${y}"
+        "ns.bar": "<b>{{tmpl \"ns.foo\"}}</b> ${y}"
       },
       {
         "ns.foo": "${x}",
-        "ns.bar": "{{noAutoescape}}<b>{{tmpl \"#ns.foo\"}}</b> ${y}"
+        "ns.bar": "{{noAutoescape}}<b>{{tmpl \"ns.foo\"}}</b> ${y}"
       });
 }
 
@@ -749,7 +749,7 @@ function testWrapAndHtml() {
       {
         "myTmpl": join(
             "The following wraps some HTML content:\n",
-            "{{wrap \"#tableWrapper\"}}",
+            "{{wrap \"tableWrapper\"}}",
               "<div>",
                 "First <b>content</b>",
               "</div>",
@@ -771,7 +771,7 @@ function testWrapAndHtml() {
       {
         "myTmpl": join(
             "The following wraps some HTML content:\n",
-            "{{wrap \"#tableWrapper\"}}",
+            "{{wrap \"tableWrapper\"}}",
               "<div>",
                 "First <b>content</b>",
               "</div>",
@@ -797,7 +797,7 @@ function testWrapOutsidePcdata() {
       {
         "myTmpl": join(
             "<script>",
-            "{{wrap \"#listWrapper__C8208\"}}",
+            "{{wrap \"listWrapper__C8208\"}}",
               // The body is in an HTML context even if the {{wrap}} is not.
               "<li>${$.encode.escapeHtml(a)}</li>",
               "<li title=${$.encode.escapeHtmlAttributeNospace(t)}>${$.encode.escapeHtml(b)}</li>",
@@ -826,7 +826,7 @@ function testWrapOutsidePcdata() {
       {
         "myTmpl": join(
             "<script>",  // Start a script here
-            "{{wrap \"#listWrapper\"}}",  // Call {{wrap}} in a JS context.
+            "{{wrap \"listWrapper\"}}",  // Call {{wrap}} in a JS context.
               "<li>${a}</li>",
               "<li title=${t}>${b}</li>",
             "{{/wrap}}"),
