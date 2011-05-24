@@ -731,6 +731,9 @@ var processRawText = (function () {
     new ToTagTransition(/<title(?=[\s>\/]|$)/i, ELEMENT_TYPE_TITLE),
     new ToTagTransition(/<xmp(?=[\s>\/]|$)/i, ELEMENT_TYPE_XMP),
     new ToTransition(/<\/?/, STATE_HTML_BEFORE_TAG_NAME)];
+  TRANSITIONS[STATE_HTML_RCDATA] = [
+    new RcdataEndTagTransition(/<\/(\w+)\b/),
+    TRANSITION_TO_SELF];
   TRANSITIONS[STATE_HTML_BEFORE_TAG_NAME] = [
     new ToTransition(/^[a-z]+/i, STATE_HTML_TAG_NAME),
     new ToTransition(/^(?=[^a-z])/i, STATE_HTML_PCDATA)];
@@ -879,9 +882,6 @@ var processRawText = (function () {
     // percent decoding triggered by a protocol in (DATA, JAVASCRIPT, NONE)
     // added to Context?
   TRANSITIONS[STATE_URI] = [URI_PART_TRANSITION];
-  TRANSITIONS[STATE_HTML_RCDATA] = [
-    new RcdataEndTagTransition(/<\/(\w+)\b/),
-    TRANSITION_TO_SELF];
 
 
   /** @constructor */
@@ -905,7 +905,7 @@ var processRawText = (function () {
     }
 
     // Find the transition whose pattern matches earliest in the raw text.
-    var earliestStart = 0x7fffffff;
+    var earliestStart = Infinity;
     var earliestEnd = -1;
     var earliestTransition;
     var earliestMatch;
@@ -936,7 +936,7 @@ var processRawText = (function () {
       this.next = STATE_ERROR;
       this.numCharsConsumed = text.length;
     }
-    if (this.numCharsConsumed === 0
+    if (!this.numCharsConsumed
         && stateOf(this.next) === stateOf(context)) {
       throw new Error(  // Infinite loop.
           // Avoid an explicit dependency on contentToString.  If we're
@@ -1020,7 +1020,7 @@ var processRawText = (function () {
 
         // Recurse on the decoded value.
         var attrCu = new RawTextContextUpdater();
-        while (attrValueTail.length !== 0) {
+        while (attrValueTail.length) {
           attrCu.processNextToken(attrValueTail, context);
           attrValueTail = attrValueTail.substring(attrCu.numCharsConsumed);
           context = attrCu.next;

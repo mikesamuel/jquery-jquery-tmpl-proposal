@@ -459,13 +459,13 @@ function autoescape( jqueryTemplatesByName ) {
 var cloneJson;
 if ( typeof JSON !== "undefined" ) {
 	cloneJson = function ( ptree ) {
-		return JSON[ "parse" ]( JSON[ "stringify" ]( ptree ) );
+		return JSON.parse( JSON.stringify( ptree ) );
 	};
 } else {
 	cloneJson = function ( ptree ) {
 		var clone = ptree.slice();
 		for ( var i = clone.length; --i >= 0; ) {
-			if ( typeof clone[ i ] == "object" ) {
+			if ( typeof clone[ i ] === "object" ) {
 				clone[ i ] = cloneJson( clone[ i ] );
 			}
 		}
@@ -473,4 +473,6 @@ if ( typeof JSON !== "undefined" ) {
 	};
 }
 
-$[ TEMPLATE_PLUGINS_PROP_NAME ].push( autoescape );
+if ( !JQUERY_TMPL_PRECOMPILED ) {
+	$[ TEMPLATE_PLUGINS_PROP_NAME ].push( autoescape );
+}

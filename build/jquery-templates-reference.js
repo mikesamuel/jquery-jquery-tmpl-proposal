@@ -551,6 +551,13 @@ function needsCompile( name ) {
 	return tmpl && "function" !== typeof tmpl[ TMPL_METHOD_NAME ];
 }
 
+/**
+ * Compiles the given bundle of parse trees together and stores the compiled
+ * results in $.templates.
+ *
+ * @param parseTrees Mapping of template names to parse trees.
+ * @param opt_exclusion Optional name of a template not to store in $.templates.
+ */
 function compileBundle( parseTrees, opt_exclusion ) {
 	var processedNames = {};
 	$.each( parseTrees, function process( name, parseTree ) {
@@ -733,22 +740,24 @@ $[ "encode" ] = escapeHtml;
  * @author Mike Samuel <mikesamuel@gmail.com>
  */
 
-$[ TEMPLATE_PLUGINS_PROP_NAME ].push(
-	// Naive auto-escape.
-	function autoescape( parseTrees ) {
-		$.each(
-				parseTrees,
-				function autoescapeOne( _, parseTree ) {
-					if ( typeof parseTree !== "string" ) {
-						if ( parseTree[ 0 ] === "=" ) {
-							parseTree[ 1 ] += "=>$.encode";
-						} else if ( parseTree[ 0 ] === "html" ) {
-							parseTree[ 0 ] = "=";
-						} else {
-							$.each( parseTree, autoescapeOne );
-						}
-					}
-				});
-		return parseTrees;
-	} );
+if ( !JQUERY_TMPL_PRECOMPILED ) {
+	$[ TEMPLATE_PLUGINS_PROP_NAME ].push(
+			// Naive auto-escape.
+			function autoescape( parseTrees ) {
+				$.each(
+						parseTrees,
+						function autoescapeOne( _, parseTree ) {
+							if ( typeof parseTree !== "string" ) {
+								if ( parseTree[ 0 ] === "=" ) {
+									parseTree[ 1 ] += "=>$.encode";
+								} else if ( parseTree[ 0 ] === "html" ) {
+									parseTree[ 0 ] = "=";
+								} else {
+									$.each( parseTree, autoescapeOne );
+								}
+							}
+						});
+				return parseTrees;
+			} );
+}
  })()

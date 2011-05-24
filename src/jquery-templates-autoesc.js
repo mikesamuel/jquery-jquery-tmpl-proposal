@@ -6,21 +6,23 @@
  * @author Mike Samuel <mikesamuel@gmail.com>
  */
 
-$[ TEMPLATE_PLUGINS_PROP_NAME ].push(
-	// Naive auto-escape.
-	function autoescape( parseTrees ) {
-		$.each(
-				parseTrees,
-				function autoescapeOne( _, parseTree ) {
-					if ( typeof parseTree !== "string" ) {
-						if ( parseTree[ 0 ] === "=" ) {
-							parseTree[ 1 ] += "=>$.encode";
-						} else if ( parseTree[ 0 ] === "html" ) {
-							parseTree[ 0 ] = "=";
-						} else {
-							$.each( parseTree, autoescapeOne );
-						}
-					}
-				});
-		return parseTrees;
-	} );
+if ( !JQUERY_TMPL_PRECOMPILED ) {
+	$[ TEMPLATE_PLUGINS_PROP_NAME ].push(
+			// Naive auto-escape.
+			function autoescape( parseTrees ) {
+				$.each(
+						parseTrees,
+						function autoescapeOne( _, parseTree ) {
+							if ( typeof parseTree !== "string" ) {
+								if ( parseTree[ 0 ] === "=" ) {
+									parseTree[ 1 ] += "=>$.encode";
+								} else if ( parseTree[ 0 ] === "html" ) {
+									parseTree[ 0 ] = "=";
+								} else {
+									$.each( parseTree, autoescapeOne );
+								}
+							}
+						});
+				return parseTrees;
+			} );
+}
