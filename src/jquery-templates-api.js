@@ -26,6 +26,13 @@ function needsCompile( name ) {
 	return tmpl && "function" !== typeof tmpl[ TMPL_METHOD_NAME ];
 }
 
+/**
+ * Compiles the given bundle of parse trees together and stores the compiled
+ * results in $.templates.
+ *
+ * @param parseTrees Mapping of template names to parse trees.
+ * @param opt_exclusion Optional name of a template not to store in $.templates.
+ */
 function compileBundle( parseTrees, opt_exclusion ) {
 	var processedNames = {};
 	$.each( parseTrees, function process( name, parseTree ) {
