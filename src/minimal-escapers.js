@@ -45,9 +45,9 @@ var escapeMapForJs = {
  * @private
  */
 function escapeJsChar( ch ) {
-  var s = ch.charCodeAt( 0 ).toString( 16 );
-  var prefix = s.length <= 2 ? "\\x00" : "\\u0000";
-  return prefix.substring( 0, prefix.length - s.length ) + s;
+	var s = ch.charCodeAt( 0 ).toString( 16 );
+	var prefix = s.length <= 2 ? "\\x00" : "\\u0000";
+	return prefix.substring( 0, prefix.length - s.length ) + s;
 }
 
 /**
@@ -83,7 +83,7 @@ var jsSpecialChar = /[\x00\x08-\x0d"&'\/<->\\\x85\u2028\u2029]/g;
  */
 function escapeHtml( value ) {
 	return value === undefined
-      ? "" : String( value ).replace( htmlSpecialChar, replacerForHtml );
+			? "" : String( value ).replace( htmlSpecialChar, replacerForHtml );
 }
 
 /**

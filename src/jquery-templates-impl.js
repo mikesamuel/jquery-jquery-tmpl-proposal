@@ -41,7 +41,7 @@ function compileToFunction( parseTree ) {
 			+ "$data||{})){"
 			// The below compiles the parse tree to an expression that returns a
 			// string.
-			+ "return("];
+			+ "return(" ];
 	var inScope = [];  // Used to propagate variables in scope through {{tmpl}}.
 	var hasValue;
 	var nestLevel = 0;
@@ -53,7 +53,7 @@ function compileToFunction( parseTree ) {
 					javaScriptSource.push( "+" );
 				}
 				var match;
-				if ( typeof parseTree === "string") {  // HTML snippet
+				if ( typeof parseTree === "string" ) {  // HTML snippet
 					// 'foo' -> "\'foo\'"
 					javaScriptSource.push( escapeJsValue( parseTree ) );
 				} else {
@@ -83,7 +83,7 @@ function compileToFunction( parseTree ) {
 									wrapperEnd = new Array( postDethunk.length ).join( ")" );
 									wrapperStart = postDethunk.reverse().join( "(" );
 									return "";
-								});
+								} );
 						// To make it easy for passes to rewrite expressions without
 						// preventing thunking we convert syntax like
 						// "x=>a=>b" into "a(b(x))"
@@ -150,7 +150,7 @@ function compileToFunction( parseTree ) {
 						// the compiled each operator.
 						match = content.match( EACH_DIRECTIVE_CONTENT );
 						if ( DEBUG && !match ) {
-							throw new Error( 'Malformed {{each}} content: ' + content );
+							throw new Error( "Malformed {{each}} content: " + content );
 						}
 						var keyVar = match[ 1 ] || DEFAULT_EACH_KEY_VARIABLE_NAME,
 								valueVar = match[ 2 ] || DEFAULT_EACH_VALUE_VARIABLE_NAME;
@@ -159,7 +159,7 @@ function compileToFunction( parseTree ) {
 						javaScriptSource.push(
 								"(", tmpName, "=[],$.each((", containerExpr,
 								"),function(", keyVar, ",", valueVar, "){var ",
-								TEMP_NAME_PREFIX, nestLevel, ";", tmpName, ".push(");
+								TEMP_NAME_PREFIX, nestLevel, ";", tmpName, ".push(" );
 						hasValue = FALSEY;
 						inScope.push( keyVar + ":" + keyVar, valueVar + ":" + valueVar );
 						$.each( parseTree.slice( 2 ), walk );
@@ -182,7 +182,7 @@ function compileToFunction( parseTree ) {
 
 						match = content.match( TMPL_DIRECTIVE_CONTENT );
 						if ( DEBUG && !match ) {
-							throw new Error( 'Malformed {{tmpl}} content: ' + content );
+							throw new Error( "Malformed {{tmpl}} content: " + content );
 						}
 						// The data and options come separated by a comma.
 						// Parsing JavaScript expressions to figure out where a comma
@@ -214,7 +214,7 @@ function compileToFunction( parseTree ) {
 								: "arguments",
 								",$.template((",
 								match[ 2 ],
-								")).tmpl(", tmpName, "[0],", tmpName, "[1]))");
+								")).tmpl(", tmpName, "[0],", tmpName, "[1]))" );
 
 					// {html} and {wrap} are handled by translation to ${...} and ${tmpl}
 					// respectively.
@@ -227,10 +227,10 @@ function compileToFunction( parseTree ) {
 					}
 				}
 				hasValue = TRUTHY;
-			});
+			} );
 	javaScriptSource.push( hasValue ? ")}" : "'')}" );
 
-	if (DEBUG) {
+	if ( DEBUG ) {
 		try {
 			return Function( "$data", "$item", javaScriptSource.join( "" ) );
 		} catch ( ex ) {

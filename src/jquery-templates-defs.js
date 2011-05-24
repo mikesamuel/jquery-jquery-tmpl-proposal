@@ -32,7 +32,7 @@ var FALSEY = 0;
 var SUBSTITUTION_RE = (
 		"\\$\\{"
 		+ "[^}]*"               // ${...} cannot contain curlies but {{=...}} can.
-		+ "\\}");
+		+ "\\}" );
 
 /** Regular expression text for a directive name. @const */
 var NAME_RE = "(?:=|[a-z][a-z0-9]*)";
@@ -44,7 +44,7 @@ var MARKER_RE = (
 		+ NAME_RE + "[\\s\\S]*?" // A start marker.
 		+ "|/" + NAME_RE + "\\s*" // An end marker.
 		+ ")"
-		+ "\\}\\}");
+		+ "\\}\\}" );
 
 /**
  * Global regular expression that matches the beginning of markers and
@@ -53,7 +53,7 @@ var MARKER_RE = (
 var TOKEN = new RegExp(
 		"(?=" + SUBSTITUTION_RE
 		+ "|" + MARKER_RE + ")",
-		"gi");
+		"gi" );
 
 /** Regular expression text for a variable name.  @const */
 // We may need to exclude keywords if these names used outside a param decl.
@@ -80,7 +80,7 @@ var EACH_DIRECTIVE_CONTENT = new RegExp(
 		+ ")"
 		+ "\\s*"
 		+ "$",  // Finish at the end.
-		"i");
+		"i" );
 
 /** Matches the content of a <code>{{tmpl}}</code> directive. @const */
 var TMPL_DIRECTIVE_CONTENT = new RegExp(

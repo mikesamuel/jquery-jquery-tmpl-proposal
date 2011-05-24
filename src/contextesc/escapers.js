@@ -1,7 +1,4 @@
-// ==ClosureCompiler==
-// @compilation_level ADVANCED_OPTIMIZATIONS
-// ==/ClosureCompiler==
-
+//-*- mode: js2-mode; indent-tabs-mode: t; tab-width: 2; -*-
 
 /**
  * @fileoverview
@@ -28,7 +25,7 @@
  * revivers.
  * @const
  */
-var CONTENT_PROPNAME = 'content';
+var CONTENT_PROPNAME = "content";
 
 /**
  * The name of the property that contains a CONTENT_KIND_* enum value.
@@ -36,7 +33,7 @@ var CONTENT_PROPNAME = 'content';
  * revivers.
  * @const
  */
-var CONTENT_KIND_PROPNAME = 'contentKind';
+var CONTENT_KIND_PROPNAME = "contentKind";
 
 /**
  * A string-like object that carries a content-type.
@@ -50,29 +47,29 @@ function SanitizedContent() {}
  * @override
  */
 SanitizedContent.prototype.toString = function() {
-  return this[CONTENT_PROPNAME];
+	return this[ CONTENT_PROPNAME ];
 };
 
 /**
  * @param {number!} contentKind
  */
-function defineSanitizedContentSubclass(contentKind) {
-  /**
-   * @param {string!} content
-   * @constructor
-   */
-  function SanitizedContentCtor(content) {
-    this[CONTENT_PROPNAME] = content;
-  }
+function defineSanitizedContentSubclass( contentKind ) {
+	/**
+	 * @param {string!} content
+	 * @constructor
+	 */
+	function SanitizedContentCtor( content ) {
+		this[ CONTENT_PROPNAME ] = content;
+	}
 
-  /** @type {SanitizedContent} */
-  var proto = (SanitizedContentCtor.prototype = new SanitizedContent());
-  proto.constructor = SanitizedContentCtor;
+	/** @type {SanitizedContent} */
+	var proto = ( SanitizedContentCtor.prototype = new SanitizedContent() );
+	proto.constructor = SanitizedContentCtor;
 
-  /** @override */
-  proto[CONTENT_KIND_PROPNAME] = CONTENT_KIND_HTML;
+	/** @override */
+	proto[ CONTENT_KIND_PROPNAME ] = CONTENT_KIND_HTML;
 
-  return SanitizedContentCtor;
+	return SanitizedContentCtor;
 }
 
 
@@ -86,7 +83,7 @@ function defineSanitizedContentSubclass(contentKind) {
  *     and you wouldn't write a template that produces {@code s} on security or
  *     privacy grounds, then don't pass {@code s} here.
  */
-var SanitizedHtml = defineSanitizedContentSubclass(CONTENT_KIND_HTML);
+var SanitizedHtml = defineSanitizedContentSubclass( CONTENT_KIND_HTML );
 
 
 /**
@@ -99,7 +96,7 @@ var SanitizedHtml = defineSanitizedContentSubclass(CONTENT_KIND_HTML);
  *     any side effects not known statically to the app authors.
  */
 var SanitizedJsStrChars
-    = defineSanitizedContentSubclass(CONTENT_KIND_JS_STR_CHARS);
+		= defineSanitizedContentSubclass( CONTENT_KIND_JS_STR_CHARS );
 
 
 /**
@@ -109,13 +106,13 @@ var SanitizedJsStrChars
  * @param {string!} content A chunk of URI that the caller knows is safe to
  *     emit in a template.
  */
-var SanitizedUri = defineSanitizedContentSubclass(CONTENT_KIND_URI);
+var SanitizedUri = defineSanitizedContentSubclass( CONTENT_KIND_URI );
 
 
 // exports
-window["SanitizedHtml"] = SanitizedHtml;
-window["SanitizedJsStrChars"] = SanitizedJsStrChars;
-window["SanitizedUri"] = SanitizedUri;
+window[ "SanitizedHtml" ] = SanitizedHtml;
+window[ "SanitizedJsStrChars" ] = SanitizedJsStrChars;
+window[ "SanitizedUri" ] = SanitizedUri;
 
 
 /**
@@ -128,16 +125,16 @@ window["SanitizedUri"] = SanitizedUri;
  *     but the value will be coerced to a string.
  * @return {string|SanitizedHtml} An escaped version of value.
  */
-function escapeHtml(value) {
-  if (value && value[CONTENT_KIND_PROPNAME] === CONTENT_KIND_HTML) {
-    return /** @type {SanitizedHtml} */ (value);
-  } else if (value instanceof Array) {
-    return value.map(escapeHtml).join('');
-  } else if (value === void 0) {
-    return "";
-  } else {
-    return escapeHtmlHelper(value);
-  }
+function escapeHtml( value ) {
+	if ( value && value[ CONTENT_KIND_PROPNAME ] === CONTENT_KIND_HTML ) {
+		return /** @type {SanitizedHtml} */ ( value );
+	} else if ( value instanceof Array ) {
+		return value.map( escapeHtml ).join( "" );
+	} else if ( value === void 0 ) {
+		return "";
+	} else {
+		return escapeHtmlHelper( value );
+	}
 }
 
 
@@ -159,11 +156,11 @@ function escapeHtml(value) {
  *     but the value will be coerced to a string.
  * @return {string} An escaped version of value.
  */
-function escapeHtmlRcdata(value) {
-  if (value && value[CONTENT_KIND_PROPNAME] === CONTENT_KIND_HTML) {
-    return normalizeHtmlHelper(value[CONTENT_PROPNAME]);
-  }
-  return escapeHtmlHelper(value);
+function escapeHtmlRcdata( value ) {
+	if ( value && value[ CONTENT_KIND_PROPNAME ] === CONTENT_KIND_HTML ) {
+		return normalizeHtmlHelper( value[ CONTENT_PROPNAME ] );
+	}
+	return escapeHtmlHelper( value );
 }
 
 
@@ -176,8 +173,8 @@ function escapeHtmlRcdata(value) {
  * @return {string} A representation of value without tags, HTML comments, or
  *     other content.
  */
-function stripHtmlTags(value) {
-  return String(value).replace(HTML_TAG_REGEX_, '');
+function stripHtmlTags( value ) {
+	return String( value ).replace( HTML_TAG_REGEX_, "" );
 }
 
 
@@ -188,11 +185,11 @@ function stripHtmlTags(value) {
  *     value will be coerced to a string.
  * @return {string} An escaped version of value.
  */
-function escapeHtmlAttribute(value) {
-  if (value && value[CONTENT_KIND_PROPNAME] === CONTENT_KIND_HTML) {
-    return normalizeHtmlHelper(stripHtmlTags(value[CONTENT_PROPNAME]));
-  }
-  return escapeHtmlHelper(value);
+function escapeHtmlAttribute( value ) {
+	if ( value && value[ CONTENT_KIND_PROPNAME ] === CONTENT_KIND_HTML ) {
+		return normalizeHtmlHelper( stripHtmlTags( value[ CONTENT_PROPNAME ] ) );
+	}
+	return escapeHtmlHelper( value );
 }
 
 
@@ -204,12 +201,12 @@ function escapeHtmlAttribute(value) {
  *     value will be coerced to a string.
  * @return {string} An escaped version of value.
  */
-function escapeHtmlAttributeNospace(value) {
-  if (value && value[CONTENT_KIND_PROPNAME] === CONTENT_KIND_HTML) {
-    return normalizeHtmlNospaceHelper(
-        stripHtmlTags(value[CONTENT_PROPNAME]));
-  }
-  return escapeHtmlNospaceHelper(value);
+function escapeHtmlAttributeNospace( value ) {
+	if ( value && value[ CONTENT_KIND_PROPNAME ] === CONTENT_KIND_HTML ) {
+		return normalizeHtmlNospaceHelper(
+				stripHtmlTags( value[ CONTENT_PROPNAME ] ) );
+	}
+	return escapeHtmlNospaceHelper( value );
 }
 
 
@@ -221,22 +218,22 @@ function escapeHtmlAttributeNospace(value) {
  * @return {string} A valid HTML attribute name part or name/value pair.
  *     {@code "zSafehtmlz"} if the input is invalid.
  */
-function filterHtmlAttribute(value) {
-  var str = filterHtmlAttributeHelper(value);
-  var ch, eq = str.indexOf('=');
-  return eq >= 0 && (ch = str.charAt(str.length - 1)) != '"' && ch != "'"
-      // Quote any attribute values so that a contextually autoescaped whole
-      // attribute does not end up having a following value associated with
-      // it.
-      // The contextual autoescaper, since it propagates context left to
-      // right, is unable to distinguish
-      //     <div {$x}>
-      // from
-      //     <div {$x}={$y}>.
-      // If {$x} is "dir=ltr", and y is "foo" make sure the parser does not
-      // see the attribute "dir=ltr=foo".
-      ? str.substring(0, eq + 1) + '"' + str.substring(eq + 1) + '"'
-      : str;
+function filterHtmlAttribute( value ) {
+	var str = filterHtmlAttributeHelper( value );
+	var ch, eq = str.indexOf( "=" );
+	return eq >= 0 && ( ch = str.charAt( str.length - 1 ) ) != "\"" && ch != "'"
+			// Quote any attribute values so that a contextually autoescaped whole
+			// attribute does not end up having a following value associated with
+			// it.
+			// The contextual autoescaper, since it propagates context left to
+			// right, is unable to distinguish
+			//     <div {$x}>
+			// from
+			//     <div {$x}={$y}>.
+			// If {$x} is "dir=ltr", and y is "foo" make sure the parser does not
+			// see the attribute "dir=ltr=foo".
+			? str.substring( 0, eq + 1 ) + "\"" + str.substring( eq + 1 ) + "\""
+			: str;
 }
 
 
@@ -248,8 +245,8 @@ function filterHtmlAttribute(value) {
  * @return {string} A valid HTML element name part.
  *     {@code "zSafehtmlz"} if the input is invalid.
  */
-function filterHtmlElementName(value) {
-  return filterHtmlElementNameHelper(value);
+function filterHtmlElementName( value ) {
+	return filterHtmlElementNameHelper( value );
 }
 
 
@@ -261,11 +258,11 @@ function filterHtmlElementName(value) {
  *     will be coerced to a string.
  * @return {string} An escaped version of value.
  */
-function escapeJsString(value) {
-  if (value && value[CONTENT_KIND_PROPNAME] === CONTENT_KIND_JS_STR_CHARS) {
-    return value[CONTENT_PROPNAME];
-  }
-  return escapeJsStringHelper(value);
+function escapeJsString( value ) {
+	if ( value && value[ CONTENT_KIND_PROPNAME ] === CONTENT_KIND_JS_STR_CHARS ) {
+		return value[ CONTENT_PROPNAME ];
+	}
+	return escapeJsStringHelper( value );
 }
 
 
@@ -274,10 +271,10 @@ function escapeJsString(value) {
  * @return {string}
  * @private
  */
-function escapeJsChar_(ch) {
-  var s = ch.charCodeAt(0).toString(16);
-  var prefix = s.length <= 2 ? '\\x00' : '\\u0000';
-  return prefix.substring(0, prefix.length - s.length) + s;
+function escapeJsChar_( ch ) {
+	var s = ch.charCodeAt( 0 ).toString( 16 );
+	var prefix = s.length <= 2 ? "\\x00" : "\\u0000";
+	return prefix.substring( 0, prefix.length - s.length ) + s;
 }
 
 
@@ -288,18 +285,18 @@ function escapeJsChar_(ch) {
  *     will be coerced to a string.
  * @return {string} A JavaScript code representation of the input.
  */
-function escapeJsValue(value) {
-  // We surround values with spaces so that they can't be interpolated into
-  // identifiers by accident.
-  // We could use parentheses but those might be interpreted as a function call.
-  var type;
-  return value == null  // Intentionally matches undefined.
-      // We always output null for compatibility with Java/python server side
-      // frameworks which do not have a distinct undefined value.
-      ? ' null '
-      : (type = typeof value) == "boolean" || type == "number"
-        ? ' ' + value + ' '
-        : "'" + escapeJsString(value) + "'";
+function escapeJsValue( value ) {
+	// We surround values with spaces so that they can't be interpolated into
+	// identifiers by accident.
+	// We could use parentheses but those might be interpreted as a function call.
+	var type;
+	return value == null  // Intentionally matches undefined.
+			// We always output null for compatibility with Java/python server side
+			// frameworks which do not have a distinct undefined value.
+			? " null "
+			: ( type = typeof value ) == "boolean" || type == "number"
+				? " " + value + " "
+				: "'" + escapeJsString( value ) + "'";
 }
 
 
@@ -311,8 +308,8 @@ function escapeJsValue(value) {
  *     will be coerced to a string.
  * @return {string} An escaped version of value.
  */
-function escapeJsRegex(value) {
-  return escapeJsRegexHelper(value);
+function escapeJsRegex( value ) {
+	return escapeJsRegexHelper( value );
 }
 
 
@@ -334,8 +331,8 @@ var problematicUriMarks_ = /['()]/g;
  * @return {string}
  * @private
  */
-function pctEncode_(ch) {
-  return '%' + ch.charCodeAt(0).toString(16);
+function pctEncode_( ch ) {
+	return "%" + ch.charCodeAt( 0 ).toString( 16 );
 }
 
 /**
@@ -345,16 +342,16 @@ function pctEncode_(ch) {
  *     will be coerced to a string.
  * @return {string} An escaped version of value.
  */
-function escapeUri(value) {
-  if (value && value[CONTENT_KIND_PROPNAME] === CONTENT_KIND_URI) {
-    return normalizeUri(value);
-  }
-  // Apostophes and parentheses are not matched by encodeURIComponent.
-  // They are technically special in URIs, but only appear in the obsolete mark
-  // production in Appendix D.2 of RFC 3986, so can be encoded without changing
-  // semantics.
-  var encoded = encodeURIComponent(/** @type {string} */ (value));
-  return encoded.replace(problematicUriMarks_, pctEncode_);
+function escapeUri( value ) {
+	if ( value && value[ CONTENT_KIND_PROPNAME ] === CONTENT_KIND_URI ) {
+		return normalizeUri( value );
+	}
+	// Apostophes and parentheses are not matched by encodeURIComponent.
+	// They are technically special in URIs, but only appear in the obsolete mark
+	// production in Appendix D.2 of RFC 3986, so can be encoded without changing
+	// semantics.
+	var encoded = encodeURIComponent( /** @type {string} */ ( value ) );
+	return encoded.replace( problematicUriMarks_, pctEncode_ );
 }
 
 
@@ -365,17 +362,17 @@ function escapeUri(value) {
  *     will be coerced to a string.
  * @return {string} An escaped version of value.
  */
-function normalizeUri(value) {
-  value = String(value);
-  if (/[\0- "<>\\{}\x7f\x85\xa0\u2028\u2029\uff00-\uffff]|%(?![a-f0-9]{2})/i
-      .test(value)) {
-    var parts = value.split(/(%[a-f0-9]{2}|[#$&+,/:;=?@\[\]])/i);
-    for (var i = parts.length - 1; i >= 0; i -= 2) {
-      parts[i] = encodeURIComponent(parts[i]);
-    }
-    value = parts.join('');
-  }
-  return value.replace(problematicUriMarks_, pctEncode_);
+function normalizeUri( value ) {
+	value = String( value );
+	if ( /[\0- "<>\\{}\x7f\x85\xa0\u2028\u2029\uff00-\uffff]|%(?![a-f0-9]{2})/i
+			.test( value ) ) {
+		var parts = value.split( /(%[a-f0-9]{2}|[#$&+,/:;=?@\[\]])/i );
+		for ( var i = parts.length - 1; i >= 0; i -= 2 ) {
+			parts[ i ] = encodeURIComponent( parts[ i ] );
+		}
+		value = parts.join( "" );
+	}
+	return value.replace( problematicUriMarks_, pctEncode_ );
 }
 
 
@@ -387,13 +384,13 @@ function normalizeUri(value) {
  *     will be coerced to a string.
  * @return {string} An escaped version of value.
  */
-function filterNormalizeUri(value) {
-  var str = String(value);
-  if (!FILTER_FOR_FILTER_NORMALIZE_URI_.test(str)) {
-    return '#zSafehtmlz';
-  } else {
-    return normalizeUri(value);
-  }
+function filterNormalizeUri( value ) {
+	var str = String( value );
+	if ( !FILTER_FOR_FILTER_NORMALIZE_URI_.test( str ) ) {
+		return "#zSafehtmlz";
+	} else {
+		return normalizeUri( value );
+	}
 }
 
 
@@ -404,8 +401,8 @@ function filterNormalizeUri(value) {
  *     will be coerced to a string.
  * @return {string} An escaped version of value.
  */
-function escapeCssString(value) {
-  return escapeCssStringHelper(value);
+function escapeCssString( value ) {
+	return escapeCssStringHelper( value );
 }
 
 
@@ -416,12 +413,12 @@ function escapeCssString(value) {
  *     will be coerced to a string.
  * @return {string} A safe CSS identifier part, keyword, or quanitity.
  */
-function filterCssValue(value) {
-  // Uses == to intentionally match null and undefined for Java compatibility.
-  if (value == null) {
-    return '';
-  }
-  return filterCssValueHelper(value);
+function filterCssValue( value ) {
+	// Uses == to intentionally match null and undefined for Java compatibility.
+	if ( value == null ) {
+		return "";
+	}
+	return filterCssValueHelper( value );
 }
 
 
@@ -438,10 +435,10 @@ function filterCssValue(value) {
  * @private
  */
 var ESCAPE_MAP_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_ = {
-  '\x22': '\x26quot;',
-  '\x26': '\x26amp;',
-  '\x3c': '\x26lt;',
-  '\x3e': '\x26gt;'
+	"\"": "&quot;",
+	"&": "&amp;",
+	"<": "&lt;",
+	">": "&gt;"
 };
 
 /**
@@ -450,9 +447,9 @@ var ESCAPE_MAP_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__A
  * @return {string} A token in the output language.
  * @private
  */
-function REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_(ch) {
-  return ESCAPE_MAP_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_[ch]
-      || (ESCAPE_MAP_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_[ch] = '\x26#' + ch.charCodeAt(0) + ';');
+function REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_( ch ) {
+	return ESCAPE_MAP_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_[ ch ]
+			|| ( ESCAPE_MAP_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_[ ch ] = "&#" + ch.charCodeAt( 0 ) + ";" );
 }
 
 /**
@@ -461,13 +458,13 @@ function REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE
  * @private
  */
 var ESCAPE_MAP_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_ = {
-  // We do not escape '\x08' to '\\b' since that means word-break in RegExps.
-  '\x09': '\\t',
-  '\x0a': '\\n',
-  '\x0c': '\\f',
-  '\x0d': '\\r',
-  '\/': '\\\/',
-  '\\': '\\\\'
+	// We do not escape "\x08" to "\\b" since that means word-break in RegExps.
+	"\x09": "\\t",
+	"\x0a": "\\n",
+	"\x0c": "\\f",
+	"\x0d": "\\r",
+	"\/": "\\\/",
+	"\\": "\\\\"
 };
 
 /**
@@ -476,10 +473,10 @@ var ESCAPE_MAP_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_ = {
  * @return {string} A token in the output language.
  * @private
  */
-function REPLACER_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_(ch) {
-  return ESCAPE_MAP_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_[ch]
-     || (ESCAPE_MAP_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_[ch]
-         = escapeJsChar_(ch));
+function REPLACER_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_( ch ) {
+	return ESCAPE_MAP_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_[ ch ]
+		 || ( ESCAPE_MAP_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_[ ch ]
+				 = escapeJsChar_( ch ) );
 }
 
 /**
@@ -495,10 +492,10 @@ var ESCAPE_MAP_FOR_ESCAPE_CSS_STRING_ = {};
  * @return {string} A token in the output language.
  * @private
  */
-function REPLACER_FOR_ESCAPE_CSS_STRING_(ch) {
-  return ESCAPE_MAP_FOR_ESCAPE_CSS_STRING_[ch] || (
-     ESCAPE_MAP_FOR_ESCAPE_CSS_STRING_[ch]
-         = '\\' + ch.charCodeAt(0).toString(16) + ' ');
+function REPLACER_FOR_ESCAPE_CSS_STRING_( ch ) {
+	return ESCAPE_MAP_FOR_ESCAPE_CSS_STRING_[ ch ] || (
+		 ESCAPE_MAP_FOR_ESCAPE_CSS_STRING_[ ch ]
+				 = "\\" + ch.charCodeAt( 0 ).toString( 16 ) + " " );
 }
 
 /**
@@ -507,7 +504,7 @@ function REPLACER_FOR_ESCAPE_CSS_STRING_(ch) {
  * @private
  * @const
  */
-var MATCHER_FOR_ESCAPE_HTML_ = /[\x00\x22\x26\x27\x3c\x3e]/g;
+var MATCHER_FOR_ESCAPE_HTML_ = /[\x00"&'<>]/g;
 
 /**
  * Matches characters that need to be escaped for the named directives.
@@ -515,7 +512,7 @@ var MATCHER_FOR_ESCAPE_HTML_ = /[\x00\x22\x26\x27\x3c\x3e]/g;
  * @private
  * @const
  */
-var MATCHER_FOR_NORMALIZE_HTML_ = /[\x00\x22\x27\x3c\x3e]/g;
+var MATCHER_FOR_NORMALIZE_HTML_ = /[\x00"'<>]/g;
 
 /**
  * Matches characters that need to be escaped for the named directives.
@@ -524,7 +521,7 @@ var MATCHER_FOR_NORMALIZE_HTML_ = /[\x00\x22\x27\x3c\x3e]/g;
  * @const
  */
 var MATCHER_FOR_ESCAPE_HTML_NOSPACE_
-    = /[\x00\x09-\x0d \x22\x26\x27\x2d\/\x3c-\x3e`\x85\xa0\u2028\u2029]/g;
+		= /[\x00\x09-\x0d "&'\-\/<->`\x85\xa0\u2028\u2029]/g;
 
 /**
  * Matches characters that need to be escaped for the named directives.
@@ -533,7 +530,7 @@ var MATCHER_FOR_ESCAPE_HTML_NOSPACE_
  * @const
  */
 var MATCHER_FOR_NORMALIZE_HTML_NOSPACE_
-    = /[\x00\x09-\x0d \x22\x27\x2d\/\x3c-\x3e`\x85\xa0\u2028\u2029]/g;
+		= /[\x00\x09-\x0d "'\-\/<->`\x85\xa0\u2028\u2029]/g;
 
 /**
  * Matches characters that need to be escaped for the named directives.
@@ -542,7 +539,7 @@ var MATCHER_FOR_NORMALIZE_HTML_NOSPACE_
  * @const
  */
 var MATCHER_FOR_ESCAPE_JS_STRING_
-    = /[\x00\x08-\x0d\x22\x26\x27\/\x3c-\x3e\\\x85\u2028\u2029]/g;
+		= /[\x00\x08-\x0d"&'\/<->\\\x85\u2028\u2029]/g;
 
 /**
  * Matches characters that need to be escaped for the named directives.
@@ -550,7 +547,7 @@ var MATCHER_FOR_ESCAPE_JS_STRING_
  * @private
  * @const
  */
-var MATCHER_FOR_ESCAPE_JS_REGEX_ = /[\x00\x08-\x0d\x22\x24\x26-\/\x3a\x3c-\x3f\x5b-\x5e\x7b-\x7d\x85\u2028\u2029]/g;
+var MATCHER_FOR_ESCAPE_JS_REGEX_ = /[\x00\x08-\x0d"$&-\/:<-?\[-^\x7b-\x7d\x85\u2028\u2029]/g;
 
 /**
  * Matches characters that need to be escaped for the named directives.
@@ -558,7 +555,7 @@ var MATCHER_FOR_ESCAPE_JS_REGEX_ = /[\x00\x08-\x0d\x22\x24\x26-\/\x3a\x3c-\x3f\x
  * @private
  * @const
  */
-var MATCHER_FOR_ESCAPE_CSS_STRING_ = /[\x00\x08-\x0d\x22\x26-\x2a\/\x3a-\x3e@\\\x7b\x7d\x85\xa0\u2028\u2029]/g;
+var MATCHER_FOR_ESCAPE_CSS_STRING_ = /[\x00\x08-\x0d"&-*\/:->@\\\x7b\x7d\x85\xa0\u2028\u2029]/g;
 
 /**
  * A pattern that vets values produced by the named directives.
@@ -575,7 +572,7 @@ var FILTER_FOR_FILTER_CSS_VALUE_ = /^(?!-*(?:expression|(?:moz-)?binding))(?:[.#
  * @const
  */
 var FILTER_FOR_FILTER_NORMALIZE_URI_
-    = /^(?:(?:https?|mailto):|[^&:\/?#]*(?:[\/?#]|$))/i;
+		= /^(?:(?:https?|mailto):|[^&:\/?#]*(?:[\/?#]|$))/i;
 
 /**
  * A pattern that vets values produced by the named directives.
@@ -592,18 +589,18 @@ var FILTER_FOR_FILTER_HTML_ATTRIBUTE_ = /^(?!style|on|action|archive|background|
  * @const
  */
 var FILTER_FOR_FILTER_HTML_ELEMENT_NAME_
-    = /^(?!script|style|title|textarea|xmp|no)[a-z0-9_$:-]*$/i;
+		= /^(?!script|style|title|textarea|xmp|no)[a-z0-9_$:-]*$/i;
 
 /**
  * A helper for the Soy directive |escapeHtml
  * @param {*} value Can be of any type but will be coerced to a string.
  * @return {string} The escaped text.
  */
-function escapeHtmlHelper(value) {
-  var str = String(value);
-  return str.replace(
-      MATCHER_FOR_ESCAPE_HTML_,
-      REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_);
+function escapeHtmlHelper( value ) {
+	var str = String( value );
+	return str.replace(
+			MATCHER_FOR_ESCAPE_HTML_,
+			REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_ );
 }
 
 /**
@@ -611,11 +608,11 @@ function escapeHtmlHelper(value) {
  * @param {*} value Can be of any type but will be coerced to a string.
  * @return {string} The escaped text.
  */
-function normalizeHtmlHelper(value) {
-  var str = String(value);
-  return str.replace(
-      MATCHER_FOR_NORMALIZE_HTML_,
-      REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_);
+function normalizeHtmlHelper( value ) {
+	var str = String( value );
+	return str.replace(
+			MATCHER_FOR_NORMALIZE_HTML_,
+			REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_ );
 }
 
 /**
@@ -623,11 +620,11 @@ function normalizeHtmlHelper(value) {
  * @param {*} value Can be of any type but will be coerced to a string.
  * @return {string} The escaped text.
  */
-function escapeHtmlNospaceHelper(value) {
-  var str = String(value);
-  return str.replace(
-      MATCHER_FOR_ESCAPE_HTML_NOSPACE_,
-      REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_);
+function escapeHtmlNospaceHelper( value ) {
+	var str = String( value );
+	return str.replace(
+			MATCHER_FOR_ESCAPE_HTML_NOSPACE_,
+			REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_ );
 }
 
 /**
@@ -635,11 +632,11 @@ function escapeHtmlNospaceHelper(value) {
  * @param {*} value Can be of any type but will be coerced to a string.
  * @return {string} The escaped text.
  */
-function normalizeHtmlNospaceHelper(value) {
-  var str = String(value);
-  return str.replace(
-      MATCHER_FOR_NORMALIZE_HTML_NOSPACE_,
-      REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_);
+function normalizeHtmlNospaceHelper( value ) {
+	var str = String( value );
+	return str.replace(
+			MATCHER_FOR_NORMALIZE_HTML_NOSPACE_,
+			REPLACER_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_ );
 }
 
 /**
@@ -647,11 +644,11 @@ function normalizeHtmlNospaceHelper(value) {
  * @param {*} value Can be of any type but will be coerced to a string.
  * @return {string} The escaped text.
  */
-function escapeJsStringHelper(value) {
-  var str = String(value);
-  return str.replace(
-      MATCHER_FOR_ESCAPE_JS_STRING_,
-      REPLACER_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_);
+function escapeJsStringHelper( value ) {
+	var str = String( value );
+	return str.replace(
+			MATCHER_FOR_ESCAPE_JS_STRING_,
+			REPLACER_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_ );
 }
 
 /**
@@ -659,11 +656,11 @@ function escapeJsStringHelper(value) {
  * @param {*} value Can be of any type but will be coerced to a string.
  * @return {string} The escaped text.
  */
-function escapeJsRegexHelper(value) {
-  var str = String(value);
-  return str.replace(
-      MATCHER_FOR_ESCAPE_JS_REGEX_,
-      REPLACER_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_);
+function escapeJsRegexHelper( value ) {
+	var str = String( value );
+	return str.replace(
+			MATCHER_FOR_ESCAPE_JS_REGEX_,
+			REPLACER_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_ );
 }
 
 /**
@@ -671,11 +668,11 @@ function escapeJsRegexHelper(value) {
  * @param {*} value Can be of any type but will be coerced to a string.
  * @return {string} The escaped text.
  */
-function escapeCssStringHelper(value) {
-  var str = String(value);
-  return str.replace(
-      MATCHER_FOR_ESCAPE_CSS_STRING_,
-      REPLACER_FOR_ESCAPE_CSS_STRING_);
+function escapeCssStringHelper( value ) {
+	var str = String( value );
+	return str.replace(
+			MATCHER_FOR_ESCAPE_CSS_STRING_,
+			REPLACER_FOR_ESCAPE_CSS_STRING_ );
 }
 
 /**
@@ -683,12 +680,12 @@ function escapeCssStringHelper(value) {
  * @param {*} value Can be of any type but will be coerced to a string.
  * @return {string} The escaped text.
  */
-function filterCssValueHelper(value) {
-  var str = String(value);
-  if (!FILTER_FOR_FILTER_CSS_VALUE_.test(str)) {
-    return 'zSafehtmlz';
-  }
-  return str;
+function filterCssValueHelper( value ) {
+	var str = String( value );
+	if ( !FILTER_FOR_FILTER_CSS_VALUE_.test( str ) ) {
+		return "zSafehtmlz";
+	}
+	return str;
 }
 
 /**
@@ -696,12 +693,12 @@ function filterCssValueHelper(value) {
  * @param {*} value Can be of any type but will be coerced to a string.
  * @return {string} The escaped text.
  */
-function filterHtmlAttributeHelper(value) {
-  var str = String(value);
-  if (!FILTER_FOR_FILTER_HTML_ATTRIBUTE_.test(str)) {
-    return 'zSafehtmlz';
-  }
-  return str;
+function filterHtmlAttributeHelper( value ) {
+	var str = String( value );
+	if ( !FILTER_FOR_FILTER_HTML_ATTRIBUTE_.test( str ) ) {
+		return "zSafehtmlz";
+	}
+	return str;
 }
 
 /**
@@ -709,12 +706,12 @@ function filterHtmlAttributeHelper(value) {
  * @param {*} value Can be of any type but will be coerced to a string.
  * @return {string} The escaped text.
  */
-function filterHtmlElementNameHelper(value) {
-  var str = String(value);
-  if (!FILTER_FOR_FILTER_HTML_ELEMENT_NAME_.test(str)) {
-    return 'zSafehtmlz';
-  }
-  return str;
+function filterHtmlElementNameHelper( value ) {
+	var str = String( value );
+	if ( !FILTER_FOR_FILTER_HTML_ELEMENT_NAME_.test( str ) ) {
+		return "zSafehtmlz";
+	}
+	return str;
 }
 
 /**
@@ -729,40 +726,40 @@ var HTML_TAG_REGEX_ = /<(?:!|\/?[a-z])(?:[^>'"]|"[^"]*"|'[^']*')*>/gi;
 // END GENERATED CODE
 
 var SANITIZER_FOR_ESC_MODE = [];
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML] = escapeHtml;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML_RCDATA] = escapeHtmlRcdata;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML_ATTRIBUTE] = escapeHtmlAttribute;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE]
-    = escapeHtmlAttributeNospace;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_FILTER_HTML_ELEMENT_NAME]
-    = filterHtmlElementName;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_FILTER_HTML_ATTRIBUTE] = filterHtmlAttribute;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_JS_STRING] = escapeJsString;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_JS_VALUE] = escapeJsValue;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_JS_REGEX] = escapeJsRegex;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_CSS_STRING] = escapeCssString;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_FILTER_CSS_VALUE] = filterCssValue;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_ESCAPE_URI] = escapeUri;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_NORMALIZE_URI] = normalizeUri;
-SANITIZER_FOR_ESC_MODE[ESC_MODE_FILTER_NORMALIZE_URI] = filterNormalizeUri;
+SANITIZER_FOR_ESC_MODE[ ESC_MODE_ESCAPE_HTML ] = escapeHtml;
+SANITIZER_FOR_ESC_MODE[ ESC_MODE_ESCAPE_HTML_RCDATA ] = escapeHtmlRcdata;
+SANITIZER_FOR_ESC_MODE[ ESC_MODE_ESCAPE_HTML_ATTRIBUTE ] = escapeHtmlAttribute;
+SANITIZER_FOR_ESC_MODE[ ESC_MODE_ESCAPE_HTML_ATTRIBUTE_NOSPACE ]
+		= escapeHtmlAttributeNospace;
+SANITIZER_FOR_ESC_MODE[ ESC_MODE_FILTER_HTML_ELEMENT_NAME ]
+		= filterHtmlElementName;
+SANITIZER_FOR_ESC_MODE[ ESC_MODE_FILTER_HTML_ATTRIBUTE ] = filterHtmlAttribute;
+SANITIZER_FOR_ESC_MODE[ ESC_MODE_ESCAPE_JS_STRING ] = escapeJsString;
+SANITIZER_FOR_ESC_MODE[ ESC_MODE_ESCAPE_JS_VALUE ] = escapeJsValue;
+SANITIZER_FOR_ESC_MODE[ ESC_MODE_ESCAPE_JS_REGEX ] = escapeJsRegex;
+SANITIZER_FOR_ESC_MODE[ ESC_MODE_ESCAPE_CSS_STRING ] = escapeCssString;
+SANITIZER_FOR_ESC_MODE[ ESC_MODE_FILTER_CSS_VALUE ] = filterCssValue;
+SANITIZER_FOR_ESC_MODE[ ESC_MODE_ESCAPE_URI ] = escapeUri;
+SANITIZER_FOR_ESC_MODE[ ESC_MODE_NORMALIZE_URI ] = normalizeUri;
+SANITIZER_FOR_ESC_MODE[ ESC_MODE_FILTER_NORMALIZE_URI ] = filterNormalizeUri;
 
 // Make the escapers available as members of $.encode.
 // The contextual escaper introduces calls like $.encode[0]
 // which compress well.
-escapeHtml[ESC_MODE_ESCAPE_HTML] = $["encode"]
-    = $.extend(escapeHtml, SANITIZER_FOR_ESC_MODE);
+escapeHtml[ ESC_MODE_ESCAPE_HTML ] = $[ "encode" ]
+		= $.extend( escapeHtml, SANITIZER_FOR_ESC_MODE );
 
-if (DEBUG) {
-  // In debug mode use the human readable version of the name.
-  $.each(SANITIZER_FOR_ESC_MODE,
-         function (i, sanitizer) {
-           if (sanitizer) {
-             var name = sanitizer["name"];
-             if (!name) {
-               name = sanitizer["name"] = ("" + sanitizer)
-                   .match(/^function\s+(\w+)/)[0];
-             }
-             $["encode"][name] = sanitizer;
-           }
-         });
+if ( DEBUG ) {
+	// In debug mode use the human readable version of the name.
+	$.each( SANITIZER_FOR_ESC_MODE,
+				 function ( i, sanitizer ) {
+					 if ( sanitizer ) {
+						 var name = sanitizer[ "name" ];
+						 if ( !name ) {
+							 name = sanitizer[ "name" ] = ( "" + sanitizer )
+									 .match( /^function\s+(\w+)/ )[ 0 ];
+						 }
+						 $[ "encode" ][ name ] = sanitizer;
+					 }
+				 } );
 }

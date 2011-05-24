@@ -63,7 +63,7 @@ function compileToFunction( parseTree ) {
 		// ahead and wrap it in the proper scope and actually execute it.
 		// We use Function instead of eval to truncate the lexical environment
 		// at the root environment.
-		var result = Function(
+		return Function(
 				"$data", "$item",
 				"$data = $data || {};"
 				+ "if ('$' in $data) { throw new Error('$ overridden'); }"
@@ -76,7 +76,6 @@ function compileToFunction( parseTree ) {
 				+ "}})) {"
 				+ "with ($data) { return (" + expressionText + ") } }" )(
 				scope, options );
-		return result;
 	}
 
 	function recurseToBody( body, scope, options ) {
@@ -116,14 +115,14 @@ function compileToFunction( parseTree ) {
 						childScope[ key ] = k;
 						childScope[ value ] = v;
 						htmlBuffer += recurseToBody( body, childScope, options );
-					});
+					} );
 			return htmlBuffer;
 		} else if ( name === "else" ) {
 			return !/\S/.test( content )
 				|| evaluateInScope( content, scope, options );
 		} else if ( name === "if" ) {
 			var pos, elseIndex, i;
-			for ( pos = 0, elseIndex; pos < body.length; pos = elseIndex + 1 ) {
+			for ( pos = 0; pos < body.length; pos = elseIndex + 1 ) {
 				elseIndex = body.length;
 				for ( i = pos; i < elseIndex; ++i ) {
 					if ( body[ i ][ 0 ] === "else" ) {
@@ -159,7 +158,7 @@ function compileToFunction( parseTree ) {
 						contentAfter = new Array( postDethunk.length ).join( ")" );
 						contentBefore = postDethunk.reverse().join( "(" );
 						return "";
-					});
+					} );
 			var result = evaluateInScope( content, scope, options );
 			// De-thunkify if necessary.
 			if ( typeof result === "function" ) {
@@ -178,13 +177,13 @@ function compileToFunction( parseTree ) {
 				.replace( /[\ud800-\udbff](?![\udc00-\udfff])/g,
 								 function ( orphanedHighSurrogate ) {
 									 return "&#" + orphanedHighSurrogate.charCodeAt( 0 ) + ";";
-								 })
+								 } )
 				// Fix up orphaned low surrogates.  Alternately replace w/ "$1\ufffd".
 				.replace( /(^|[^\ud800-\udbff])([\udc00-\udfff])/g,
 								 function ( _, preceder, orphanedLowSurrogate ) {
 									 return preceder + "&#"
 											 + orphanedLowSurrogate.charCodeAt( 0 ) + ";";
-								 })
+								 } )
 				.replace( /\u0000/g, "&#0;" );
 	}
 
