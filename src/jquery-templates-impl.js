@@ -7,14 +7,22 @@
  * @author Mike Samuel <mikesamuel@gmail.com>
  */
 
-$[ "extAll" ] = function ( target ) {
-  var args = arguments, i, source, k;
-  for ( i = 1; i < args.length; ++i ) {
-    for ( k in (source = args[ i ]) ) {
-      target[ k ] = source[ k ];
-    }
-  }
-  return target;
+var EXT_ALL_METHOD_NAME = "extAll";
+
+/**
+ * Like $.extend but copies properties whose values are undefined.
+ * @param {Object} target
+ * @param {...Object} var_args containers of properties to copy into target.
+ * @return {Object} target
+ */
+$[ EXT_ALL_METHOD_NAME ] = function ( target, var_args ) {
+	var args = arguments, i, source, k;
+	for ( i = 1; i < args.length; ++i ) {
+		for ( k in ( source = args[ i ] ) ) {
+			target[ k ] = source[ k ];
+		}
+	}
+	return target;
 };
 
 function compileToFunction( parseTree ) {
@@ -26,15 +34,15 @@ function compileToFunction( parseTree ) {
 			// Make available on the stack, the enumerable properties of the data
 			// object, and the enumerable properties of the options object.
 			// Data properties should trump options.
-      + "with($data=$.extAll("
+			+ "with($data=$." + EXT_ALL_METHOD_NAME + "("
 			// Where EcmaScript 5's Object.create is available, use that to prevent
 			// Object.prototype properties from masking globals.
 			+ "Object.create?Object.create(null):{},"
 			+ "$data||{})){"
 			// The below compiles the parse tree to an expression that returns a
 			// string.
-			+ "return("];
-  var inScope = [];  // Used to propagate variables in scope through {{tmpl}}.
+			+ "return(" ];
+	var inScope = [];  // Used to propagate variables in scope through {{tmpl}}.
 	var hasValue;
 	var nestLevel = 0;
 	$.each(
@@ -45,7 +53,7 @@ function compileToFunction( parseTree ) {
 					javaScriptSource.push( "+" );
 				}
 				var match;
-				if ( typeof parseTree === "string") {  // HTML snippet
+				if ( typeof parseTree === "string" ) {  // HTML snippet
 					// 'foo' -> "\'foo\'"
 					javaScriptSource.push( escapeJsValue( parseTree ) );
 				} else {
@@ -75,7 +83,7 @@ function compileToFunction( parseTree ) {
 									wrapperEnd = new Array( postDethunk.length ).join( ")" );
 									wrapperStart = postDethunk.reverse().join( "(" );
 									return "";
-								});
+								} );
 						// To make it easy for passes to rewrite expressions without
 						// preventing thunking we convert syntax like
 						// "x=>a=>b" into "a(b(x))"
@@ -87,7 +95,7 @@ function compileToFunction( parseTree ) {
 								wrapperEnd );
 					} else if ( kind === "if" ) {  // {{if condition}}...{{/if}}
 						// {{if a}}b{{else}}c{{/if}} -> (a ? "b" : "c")
-						var pos = 2, elseIndex, i, continues = hasValue = TRUTHY;
+						var pos = 2, elseIndex, i, continues = ( hasValue = TRUTHY );
 						for ( ; continues; pos = elseIndex + 1 ) {
 							elseIndex = len;
 							for ( i = pos; i < elseIndex; ++i ) {
@@ -142,7 +150,7 @@ function compileToFunction( parseTree ) {
 						// the compiled each operator.
 						match = content.match( EACH_DIRECTIVE_CONTENT );
 						if ( DEBUG && !match ) {
-							throw new Error( 'Malformed {{each}} content: ' + content );
+							throw new Error( "Malformed {{each}} content: " + content );
 						}
 						var keyVar = match[ 1 ] || DEFAULT_EACH_KEY_VARIABLE_NAME,
 								valueVar = match[ 2 ] || DEFAULT_EACH_VALUE_VARIABLE_NAME;
@@ -151,7 +159,7 @@ function compileToFunction( parseTree ) {
 						javaScriptSource.push(
 								"(", tmpName, "=[],$.each((", containerExpr,
 								"),function(", keyVar, ",", valueVar, "){var ",
-								TEMP_NAME_PREFIX, nestLevel, ";", tmpName, ".push(");
+								TEMP_NAME_PREFIX, nestLevel, ";", tmpName, ".push(" );
 						hasValue = FALSEY;
 						inScope.push( keyVar + ":" + keyVar, valueVar + ":" + valueVar );
 						$.each( parseTree.slice( 2 ), walk );
@@ -174,7 +182,7 @@ function compileToFunction( parseTree ) {
 
 						match = content.match( TMPL_DIRECTIVE_CONTENT );
 						if ( DEBUG && !match ) {
-							throw new Error( 'Malformed {{tmpl}} content: ' + content );
+							throw new Error( "Malformed {{tmpl}} content: " + content );
 						}
 						// The data and options come separated by a comma.
 						// Parsing JavaScript expressions to figure out where a comma
@@ -198,14 +206,15 @@ function compileToFunction( parseTree ) {
 								// Propagate any loop variables in scope when all data is
 								// passed.
 								: inScope.length
-								? "[$.extAll({},$data,{" + inScope + "}),$item]"
+								? ( "[$." + EXT_ALL_METHOD_NAME
+										+ "({},$data,{" + inScope + "}),$item]" )
 								// If the content specifies neither data nor options, and
 								// no loop vars are in scope, use the arguments without the
 								// overhead of a call to $.extend.
 								: "arguments",
 								",$.template((",
 								match[ 2 ],
-								")).tmpl(", tmpName, "[0],", tmpName, "[1]))");
+								")).tmpl(", tmpName, "[0],", tmpName, "[1]))" );
 
 					// {html} and {wrap} are handled by translation to ${...} and ${tmpl}
 					// respectively.
@@ -218,10 +227,10 @@ function compileToFunction( parseTree ) {
 					}
 				}
 				hasValue = TRUTHY;
-			});
+			} );
 	javaScriptSource.push( hasValue ? ")}" : "'')}" );
 
-	if (DEBUG) {
+	if ( DEBUG ) {
 		try {
 			return Function( "$data", "$item", javaScriptSource.join( "" ) );
 		} catch ( ex ) {

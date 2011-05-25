@@ -22,7 +22,7 @@ if ( !JQUERY_TMPL_PRECOMPILED ) {
 									$.each( parseTree, autoescapeOne );
 								}
 							}
-						});
+						} );
 				return parseTrees;
 			} );
 }

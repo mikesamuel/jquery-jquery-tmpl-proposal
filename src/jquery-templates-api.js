@@ -51,9 +51,9 @@ function compileBundle( parseTrees, opt_exclusion ) {
 						}
 					}
 				}
-			});
+			} );
 		}
-	});
+	} );
 	function makePrepassCaller( pluginIndex ) {
 		return function ( parseTrees ) {
 			var i;
@@ -74,7 +74,7 @@ function compileBundle( parseTrees, opt_exclusion ) {
 						} else {
 							result = tmplObj;
 						}
-					});
+					} );
 	return result;
 }
 

@@ -17,13 +17,13 @@ function guessBlockDirectives( templateText ) {
 	var blockDirectives = {};
 	// For each token like {{/foo}} put "foo" into the block directives map.
 	$.each(
-			templateText.split(TOKEN),
+			templateText.split( TOKEN ),
 			function ( _, tok ) {
 				var match = tok.match( /^\{\{\/(=|[a-z][a-z0-9]*)[\s\S]*\}\}/i );
 				if ( match ) {
 					blockDirectives[ match[ 1 ] ] = TRUTHY;
 				}
-			});
+			} );
 	return blockDirectives;
 }
 
@@ -75,23 +75,28 @@ function parseTemplate( templateText, blockDirectives ) {
 			stack = [ root ],
 			// The topmost element of the stack
 			top = root,
-      commentDepth = 0;
+			commentDepth = 0;
 	$.each(
 			templateText
 					// Handle {#...} style non-nesting comments.
 					.replace( /\{#[\s\S]*?#\}/g, "" )
 					// Handle {{! ... }} style comments which can contain arbitrary nested
 					// {{...}} sections.
-					.replace( /\{\{!?|\}\}|(?:[^{}]|\{(?!\{)|\}(?!}))+/g,
-										function (token) {
-											return token === "{{!"
-													? ( ++commentDepth, "" )
-													: commentDepth
-													? ( token === "}}"
-															? --commentDepth
-															: token === "{{" && ++commentDepth,
-															"" )
-													: token;
+					.replace( /\{\{!?|\}\}|(?:[^{}]|\{(?!\{)|\}(?!\}))+/g,
+										function ( token ) {
+											if ( token === "{{!" ) {
+												++commentDepth;
+												return "";
+											} else if ( commentDepth ) {
+												if ( token === "}}" ) {
+													--commentDepth;
+												} else if ( token === "{{" ) {
+													++commentDepth;
+												}
+												return "";
+											} else {
+												return token;
+											}
 										} )
 					// Match against a global regexp to pull out all tokens.
 					.split( TOKEN ),
@@ -126,7 +131,7 @@ function parseTemplate( templateText, blockDirectives ) {
 									Function( "(" + tmplContent[ 2 ] + ")" );
 								} catch ( e2 ) {
 									throw new Error(
-											"Invalid {{" + m[2] + "}} content: " + m[ 3 ] );
+											"Invalid {{" + m[ 2 ] + "}} content: " + m[ 3 ] );
 								}
 							}
 						}
@@ -145,7 +150,7 @@ function parseTemplate( templateText, blockDirectives ) {
 						try {
 							// See notes on {{=...}} sanity check above.
 							Function( "(" + content + ")" );
-						} catch ( e2 ) {
+						} catch ( e3 ) {
 							throw new Error( "Invalid template substitution: " + content );
 						}
 					}
@@ -155,7 +160,7 @@ function parseTemplate( templateText, blockDirectives ) {
 				if ( token ) {  // An HTML snippet.
 					top.push( token );
 				}
-			});
+			} );
 	if ( DEBUG && stack.length > 1 ) {
 		throw new Error(
 				"Unclosed block directives "
@@ -183,10 +188,10 @@ function renderParseTree( parseTree, opt_blockDirectives ) {
 			buffer.push( parseTree );
 		} else {
 			var name = parseTree[ 0 ], n = parseTree.length;
-			if ( name === '=' && !/\}/.test( parseTree[ 1 ] ) ) {
+			if ( name === "=" && !/\}/.test( parseTree[ 1 ] ) ) {
 				buffer.push( "${", parseTree[ 1 ], "}" );
 			} else {
-				if (name) { buffer.push( "{{", name, parseTree[ 1 ], "}}" ); }
+				if ( name ) { buffer.push( "{{", name, parseTree[ 1 ], "}}" ); }
 				$.each( parseTree.slice( 2 ), render );
 				if ( name && ( n !== 2 || !opt_blockDirectives
 						 || opt_blockDirectives[ name ] === TRUTHY ) ) {

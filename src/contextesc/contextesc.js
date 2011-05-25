@@ -190,7 +190,7 @@ function autoescape( jqueryTemplatesByName ) {
 			var i = 2, n = parseTree.length;
 			var startContext = context;
 			var type = parseTree[ 0 ];
-			if (type === "html" ) {
+			if ( type === "html" ) {
 				// {{html xyz}} --> ${new SanitizedHtml(xyz)}
 				parseTree[ 0 ] = "=";
 				parseTree[ 1 ] = "new SanitizedHtml(" + parseTree[ 1 ] + ")";
@@ -239,7 +239,7 @@ function autoescape( jqueryTemplatesByName ) {
 					}
 				}
 				context = outputContext;
-			} else if (type === "each") {
+			} else if ( type === "each" ) {
 				// Blank out the type tag so we can recurse over the body.
 				for ( var timeThroughLoop = 2; --timeThroughLoop >= 0; ) {
 					var contextBefore = context, contextAfter;
@@ -272,7 +272,7 @@ function autoescape( jqueryTemplatesByName ) {
 						if ( callee ) {
 							inferences.calleeName[ parseTree.parseTreeNodeId ]
 									= callee.jqueryTemplateName;
-							context = getTemplateOutputContext(callee, context, inferences );
+							context = getTemplateOutputContext( callee, context, inferences );
 						} else if ( DEBUG ) {
 							if ( typeof console !== "undefined" ) {
 								console.warn(

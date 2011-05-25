@@ -19,6 +19,7 @@ var escapeMapForHtml = {
  */
 function replacerForHtml( ch ) {
 	return escapeMapForHtml[ ch ]
+			// Intentional assignment that caches the result of encoding ch.
 			|| ( escapeMapForHtml[ ch ] = "&#" + ch.charCodeAt( 0 ) + ";" );
 }
 
@@ -44,9 +45,9 @@ var escapeMapForJs = {
  * @private
  */
 function escapeJsChar( ch ) {
-  var s = ch.charCodeAt( 0 ).toString( 16 );
-  var prefix = s.length <= 2 ? "\\x00" : "\\u0000";
-  return prefix.substring( 0, prefix.length - s.length ) + s;
+	var s = ch.charCodeAt( 0 ).toString( 16 );
+	var prefix = s.length <= 2 ? "\\x00" : "\\u0000";
+	return prefix.substring( 0, prefix.length - s.length ) + s;
 }
 
 /**
@@ -81,8 +82,8 @@ var jsSpecialChar = /[\x00\x08-\x0d"&'\/<->\\\x85\u2028\u2029]/g;
  * @return {string} The escaped text.
  */
 function escapeHtml( value ) {
-	return value === void 0
-      ? "" : String( value ).replace( htmlSpecialChar, replacerForHtml );
+	return value === undefined
+			? "" : String( value ).replace( htmlSpecialChar, replacerForHtml );
 }
 
 /**
@@ -96,4 +97,9 @@ function escapeJsValue( value ) {
 	return "'" + String( value ).replace( jsSpecialChar, replacerForJs ) + "'";
 }
 
-$[ "encode" ] = escapeHtml;
+/**
+ * @const
+ * @private
+ */
+var ENCODE_METHOD_NAME = "encode";
+$[ ENCODE_METHOD_NAME ] = escapeHtml;
