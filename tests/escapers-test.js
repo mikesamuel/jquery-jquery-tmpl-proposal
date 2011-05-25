@@ -12,6 +12,24 @@ for ( var i = 0; i < 0x80; ++i ) {
 var EMBEDDING_HAZARDS = [
 			"</script", "</style", "<!--", "-->", "<![CDATA[", "]]>" ];
 
+/**
+ * Returns an object that coerces to the string "Hello, World!" the first time
+ * it is coerced and throws an Error subsequenrly.
+ * This helps us test that coercing methods always have a single consistent
+ * view of the world.
+ */
+function makeFragileToString(value) {
+	value = String(value);
+	var coerced = false;
+	return {
+		toString: function () {
+			if (coerced) { throw new Error(); }
+			coerced = true;
+			return value;
+		}
+	};
+}
+
 function testEscapeJsString() {
 	var escapeJsString = $.encode[ ESC_MODE_ESCAPE_JS_STRING ];
 
@@ -39,7 +57,12 @@ function testEscapeJsString() {
 			"PQRSTUVWXYZ[\\\\]^_" +
 			"`abcdefghijklmno" +
 			"pqrstuvwxyz{|}~\u007f" );
+
 	assertEquals( escapedAscii, escapeJsString( ASCII_CHARS ) );
+
+	assertEquals(
+			"Hello, World!",
+			escapeJsString( makeFragileToString( "Hello, World!" ) ) );
 }
 
 function testEscapeJsRegExpString() {
@@ -75,6 +98,10 @@ function testEscapeJsRegExpString() {
 			"`abcdefghijklmno" +
 			"pqrstuvwxyz\\x7b\\x7c\\x7d~\u007f" );
 	assertEquals( escapedAscii, escapeJsRegex( ASCII_CHARS ) );
+
+	assertEquals(
+			"Hello\\x2c World!",
+			escapeJsRegex( makeFragileToString( "Hello, World!" ) ) );
 }
 
 function testEscapeJsValue() {
@@ -87,6 +114,10 @@ function testEscapeJsValue() {
 	assertEquals( " 4.5 ", escapeJsValue( 4.5 ) );
 	assertEquals( " true ", escapeJsValue( true ) );
 	assertEquals( " null ", escapeJsValue( null ) );
+
+	assertEquals(
+			"'Hello, World!'",
+			escapeJsValue( makeFragileToString( "Hello, World!" ) ) );
 }
 
 function testEscapeCssString() {
@@ -116,6 +147,10 @@ function testEscapeCssString() {
 			"`abcdefghijklmno" +
 			"pqrstuvwxyz\\7b |\\7d ~\u007f" );
 	assertEquals( escapedAscii, escapeCssString( ASCII_CHARS ) );
+
+	assertEquals(
+			"Hello, World!",
+			escapeCssString( makeFragileToString( "Hello, World!" ) ) );
 }
 
 function testFilterCssValue() {
@@ -143,6 +178,13 @@ function testFilterCssValue() {
 		var hazard = EMBEDDING_HAZARDS[ i ];
 		assertFalse( hazard, filterCssValue( hazard ).indexOf( hazard ) >= 0 );
 	}
+
+	assertEquals(
+			"zSafehtmlz",
+			filterCssValue( makeFragileToString( "Hello, World!" ) ) );
+	assertEquals(
+			"Hello-World",
+			filterCssValue( makeFragileToString( "Hello-World" ) ) );
 }
 
 function testFilterHtmlAttribute() {
@@ -160,6 +202,13 @@ function testFilterHtmlAttribute() {
 		var hazard = EMBEDDING_HAZARDS[ i ];
 		assertFalse( hazard, filterHtmlAttribute( hazard ).indexOf( hazard ) >= 0 );
 	}
+
+	assertEquals(
+			"zSafehtmlz",
+			filterHtmlAttribute( makeFragileToString( "Hello=World" ) ) );
+	assertEquals(
+			"title",
+			filterHtmlAttribute( makeFragileToString( "title" ) ) );
 }
 
 function testFilterHtmlElementName() {
@@ -178,6 +227,13 @@ function testFilterHtmlElementName() {
 		assertFalse(
 				hazard, filterHtmlElementName( hazard ).indexOf( hazard ) >= 0 );
 	}
+
+	assertEquals(
+			"zSafehtmlz",
+			filterHtmlElementName( makeFragileToString( "script" ) ) );
+	assertEquals(
+			"h1",
+			filterHtmlElementName( makeFragileToString( "h1" ) ) );
 }
 
 function testEscapeUri() {
@@ -210,6 +266,10 @@ function testEscapeUri() {
 	assertEquals( "%EF%BC%83%EF%BC%9A", escapeUri( "\uff03\uff1a" ) );
 	// Test other unicode codepoints.
 	assertEquals( "%C2%85%E2%80%A8", escapeUri( "\u0085\u2028" ) );
+
+	assertEquals(
+			"Hello%2C%20World!",
+			escapeUri( makeFragileToString( "Hello, World!" ) ) );
 }
 
 function testNormalizeUriAndFilterNormalizeUri() {
@@ -323,6 +383,16 @@ function testNormalizeUriAndFilterNormalizeUri() {
 	assertEquals( "#", filterNormalizeUri( "#" ) );
 	assertEquals( "/", filterNormalizeUri( "/" ) );
 	assertEquals( "", filterNormalizeUri( "" ) );
+
+	assertEquals(
+			"Hello,%20World!",
+			normalizeUri( makeFragileToString( "Hello, World!" ) ) );
+	assertEquals(
+			"Hello,%20World!",
+			filterNormalizeUri( makeFragileToString( "Hello, World!" ) ) );
+	assertEquals(
+			"#zSafehtmlz",
+			filterNormalizeUri( makeFragileToString( "Hello:World!" ) ) );
 }
 
 function testEscapeHtml() {
@@ -344,7 +414,7 @@ function testEscapeHtml() {
 
 	function escapeHtmlSanitized( s ) {
 		return escapeHtml( {
-				contentKind: 0, content: s, toString: function () { return s; }
+				contentKind: 0, content: s, toString: function () { return "" + s; }
 		} );
 	}
 
@@ -359,6 +429,11 @@ function testEscapeHtml() {
 			"<b>Hello, \"World!\"</b>",
 			"" + escapeHtmlSanitized( "<b>Hello, \"World!\"</b>" ) );
 	assertEquals( "42", "" + escapeHtmlSanitized( 42 ) );
+
+	assertEquals(
+			"<b>Hello, World!</b>",
+			"" + escapeHtmlSanitized(
+					makeFragileToString( "<b>Hello, World!</b>" ) ) );
 }
 
 function testEscapeHtmlAttribute() {
@@ -376,6 +451,10 @@ function testEscapeHtmlAttribute() {
 			"`abcdefghijklmno" +
 			"pqrstuvwxyz{|}~\u007f" );
 	assertEquals( escapedAscii, escapeHtmlAttribute( ASCII_CHARS ) );
+	assertEquals(
+			"Hello, World!",
+			escapeHtmlAttribute( makeFragileToString( "Hello, World!" ) ) );
+
 
 	function escapeHtmlAttributeSanitized( s ) {
 		return escapeHtmlAttribute( { contentKind: 0, content: s } );
@@ -390,6 +469,9 @@ function testEscapeHtmlAttribute() {
 			"Hello, &quot;World!&quot;",
 			escapeHtmlAttributeSanitized( "<b>Hello, \"World!\"</b>" ) );
 	assertEquals( "42", escapeHtmlAttributeSanitized( 42 ) );
+	assertEquals(
+			"Hello, World!",
+			escapeHtmlAttributeSanitized( makeFragileToString( "<b>Hello, World!</b>" ) ) );
 }
 
 function testEscapeHtmlAttributeNospace() {
@@ -415,6 +497,9 @@ function testEscapeHtmlAttributeNospace() {
 			"&#96;abcdefghijklmno" +
 			"pqrstuvwxyz{|}~\u007f" );
 	assertEquals( escapedAscii, escapeHtmlAttributeNospace( ASCII_CHARS ) );
+	assertEquals(
+			"Hello,&#32;World!",
+			escapeHtmlAttributeNospace( makeFragileToString( "Hello, World!" ) ) );
 
 	function escapeHtmlAttributeNospaceSanitized( s ) {
 		return escapeHtmlAttributeNospace( { contentKind: 0, content: s } );
@@ -431,6 +516,10 @@ function testEscapeHtmlAttributeNospace() {
 			"Hello,&#32;&quot;World!&quot;",
 			escapeHtmlAttributeNospaceSanitized( "<b>Hello, \"World!\"</b>" ) );
 	assertEquals( "42", escapeHtmlAttributeNospaceSanitized( 42 ) );
+	assertEquals(
+			"Hello,&#32;World!",
+			escapeHtmlAttributeNospaceSanitized(
+					makeFragileToString( "<b>Hello, World!</b>" ) ) );
 }
 
 if ( DEBUG ) this.testNormalizeHtml = function () {
@@ -454,6 +543,10 @@ if ( DEBUG ) this.testNormalizeHtml = function () {
 			"`abcdefghijklmno" +
 			"pqrstuvwxyz{|}~\u007f" );
 	assertEquals( escapedAscii, normalizeHtmlHelper( ASCII_CHARS ) );
+	assertEquals(
+			"&lt;b&gt;Hello,&#32;World!&lt;/b&gt;",
+			normalizeHtmlHelper(
+					makeFragileToString( "<b>Hello,&#32;World!</b>" ) ) );
 };
 
 if ( DEBUG ) this.testNormalizeHtmlNospace = function () {
@@ -476,4 +569,8 @@ if ( DEBUG ) this.testNormalizeHtmlNospace = function () {
 			"&#96;abcdefghijklmno" +
 			"pqrstuvwxyz{|}~\u007f" );
 	assertEquals( escapedAscii, normalizeHtmlNospaceHelper( ASCII_CHARS ) );
+	assertEquals(
+			"&lt;b&gt;Hello,&#32;World!&lt;&#47;b&gt;",
+			normalizeHtmlNospaceHelper(
+					makeFragileToString( "<b>Hello,&#32;World!</b>" ) ) );
 };

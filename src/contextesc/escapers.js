@@ -389,7 +389,7 @@ function filterNormalizeUri( value ) {
 	if ( !FILTER_FOR_FILTER_NORMALIZE_URI_.test( str ) ) {
 		return "#zSafehtmlz";
 	} else {
-		return normalizeUri( value );
+		return normalizeUri( str );
 	}
 }
 
