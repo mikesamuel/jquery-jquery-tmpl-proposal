@@ -357,14 +357,15 @@ var processRawText = ( function () {
 	 * @param {Array.<String>} match The token matched by {@code this.pattern}.
 	 * @return The context after the given token.
 	 */
-	Transition.prototype.computeNextContext = function ( prior, match ) {
-		throw new Error();  // Must be implemented by subclasses.
-	};
+	Transition.prototype.computeNextContext;
 
 
 	function TransitionSubclass( ctor, computeNextContext, opt_isApplicableTo ) {
 		var proto = ctor.prototype = new Transition( /(?!)/ );
 		proto.constructor = ctor;
+		/**
+		 * @override
+		 */
 		proto.computeNextContext = computeNextContext;
 		if ( opt_isApplicableTo ) { proto.isApplicableTo = opt_isApplicableTo; }
 	}
@@ -613,6 +614,9 @@ var processRawText = ( function () {
 	// Matching at the end is lowest possible precedence.
 
 	var URI_PART_TRANSITION = new Transition( /[?#]|$/ );
+	/**
+	 * @override
+	 */
 	URI_PART_TRANSITION.computeNextContext = function ( prior, match ) {
 		var uriPart = uriPartOf( prior );
 		if ( uriPart === URI_PART_START ) {

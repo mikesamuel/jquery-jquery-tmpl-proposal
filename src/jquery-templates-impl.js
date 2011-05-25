@@ -12,7 +12,7 @@ var EXT_ALL_METHOD_NAME = "extAll";
 /**
  * Like $.extend but copies properties whose values are undefined.
  * @param {Object} target
- * @param {Object...} var_args containers of properties to copy into target.
+ * @param {...Object} var_args containers of properties to copy into target.
  * @return {Object} target
  */
 $[ EXT_ALL_METHOD_NAME ] = function ( target, var_args ) {
