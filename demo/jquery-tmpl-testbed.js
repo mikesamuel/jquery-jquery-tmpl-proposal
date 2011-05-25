@@ -29,7 +29,7 @@ function sanitize() {
 				"<script((?:[^>\"']|\"[^\"]*\"|'[^']*')*)>"
 				+ "((?:[^<]+|<(?!=!--|/script)|<!--[\\s\\S]*?-->)*)"
 				+ "</script[^>]*>",
-				"ig";
+				"ig" );
 		var parsed = jqueryTemplateText.match( scriptRe );
 		var $Templates = {};
 		try {
