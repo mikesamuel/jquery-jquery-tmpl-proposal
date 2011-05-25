@@ -1,6 +1,6 @@
 (function () {
 //-*- mode: js2-mode; indent-tabs-mode: t; tab-width: 2; -*-
-/*jslint evil: true, unparam: true, maxerr: 50, indent: 4 */
+/*jslint evil: true, unparam: true, maxerr: 50 */
 
 /**
  * Common definitions for jQuery templates and plugin passes
@@ -33,7 +33,7 @@ var FALSEY = 0;
 var SUBSTITUTION_RE = (
 		"\\$\\{"
 		+ "[^}]*"               // ${...} cannot contain curlies but {{=...}} can.
-		+ "\\}");
+		+ "\\}" );
 
 /** Regular expression text for a directive name. @const */
 var NAME_RE = "(?:=|[a-z][a-z0-9]*)";
@@ -45,7 +45,7 @@ var MARKER_RE = (
 		+ NAME_RE + "[\\s\\S]*?" // A start marker.
 		+ "|/" + NAME_RE + "\\s*" // An end marker.
 		+ ")"
-		+ "\\}\\}");
+		+ "\\}\\}" );
 
 /**
  * Global regular expression that matches the beginning of markers and
@@ -54,7 +54,7 @@ var MARKER_RE = (
 var TOKEN = new RegExp(
 		"(?=" + SUBSTITUTION_RE
 		+ "|" + MARKER_RE + ")",
-		"gi");
+		"gi" );
 
 /** Regular expression text for a variable name.  @const */
 // We may need to exclude keywords if these names used outside a param decl.
@@ -81,7 +81,7 @@ var EACH_DIRECTIVE_CONTENT = new RegExp(
 		+ ")"
 		+ "\\s*"
 		+ "$",  // Finish at the end.
-		"i");
+		"i" );
 
 /** Matches the content of a <code>{{tmpl}}</code> directive. @const */
 var TMPL_DIRECTIVE_CONTENT = new RegExp(
@@ -149,13 +149,13 @@ function guessBlockDirectives( templateText ) {
 	var blockDirectives = {};
 	// For each token like {{/foo}} put "foo" into the block directives map.
 	$.each(
-			templateText.split(TOKEN),
+			templateText.split( TOKEN ),
 			function ( _, tok ) {
 				var match = tok.match( /^\{\{\/(=|[a-z][a-z0-9]*)[\s\S]*\}\}/i );
 				if ( match ) {
 					blockDirectives[ match[ 1 ] ] = TRUTHY;
 				}
-			});
+			} );
 	return blockDirectives;
 }
 
@@ -207,23 +207,28 @@ function parseTemplate( templateText, blockDirectives ) {
 			stack = [ root ],
 			// The topmost element of the stack
 			top = root,
-      commentDepth = 0;
+			commentDepth = 0;
 	$.each(
 			templateText
 					// Handle {#...} style non-nesting comments.
 					.replace( /\{#[\s\S]*?#\}/g, "" )
 					// Handle {{! ... }} style comments which can contain arbitrary nested
 					// {{...}} sections.
-					.replace( /\{\{!?|\}\}|(?:[^{}]|\{(?!\{)|\}(?!}))+/g,
-										function (token) {
-											return token === "{{!"
-													? ( ++commentDepth, "" )
-													: commentDepth
-													? ( token === "}}"
-															? --commentDepth
-															: token === "{{" && ++commentDepth,
-															"" )
-													: token;
+					.replace( /\{\{!?|\}\}|(?:[^{}]|\{(?!\{)|\}(?!\}))+/g,
+										function ( token ) {
+											if ( token === "{{!" ) {
+												++commentDepth;
+												return "";
+											} else if ( commentDepth ) {
+												if ( token === "}}" ) {
+													--commentDepth;
+												} else if ( token === "{{" ) {
+													++commentDepth;
+												}
+												return "";
+											} else {
+												return token;
+											}
 										} )
 					// Match against a global regexp to pull out all tokens.
 					.split( TOKEN ),
@@ -258,7 +263,7 @@ function parseTemplate( templateText, blockDirectives ) {
 									Function( "(" + tmplContent[ 2 ] + ")" );
 								} catch ( e2 ) {
 									throw new Error(
-											"Invalid {{" + m[2] + "}} content: " + m[ 3 ] );
+											"Invalid {{" + m[ 2 ] + "}} content: " + m[ 3 ] );
 								}
 							}
 						}
@@ -277,7 +282,7 @@ function parseTemplate( templateText, blockDirectives ) {
 						try {
 							// See notes on {{=...}} sanity check above.
 							Function( "(" + content + ")" );
-						} catch ( e2 ) {
+						} catch ( e3 ) {
 							throw new Error( "Invalid template substitution: " + content );
 						}
 					}
@@ -287,7 +292,7 @@ function parseTemplate( templateText, blockDirectives ) {
 				if ( token ) {  // An HTML snippet.
 					top.push( token );
 				}
-			});
+			} );
 	if ( DEBUG && stack.length > 1 ) {
 		throw new Error(
 				"Unclosed block directives "
@@ -315,10 +320,10 @@ function renderParseTree( parseTree, opt_blockDirectives ) {
 			buffer.push( parseTree );
 		} else {
 			var name = parseTree[ 0 ], n = parseTree.length;
-			if ( name === '=' && !/\}/.test( parseTree[ 1 ] ) ) {
+			if ( name === "=" && !/\}/.test( parseTree[ 1 ] ) ) {
 				buffer.push( "${", parseTree[ 1 ], "}" );
 			} else {
-				if (name) { buffer.push( "{{", name, parseTree[ 1 ], "}}" ); }
+				if ( name ) { buffer.push( "{{", name, parseTree[ 1 ], "}}" ); }
 				$.each( parseTree.slice( 2 ), render );
 				if ( name && ( n !== 2 || !opt_blockDirectives
 						 || opt_blockDirectives[ name ] === TRUTHY ) ) {
@@ -338,14 +343,22 @@ function renderParseTree( parseTree, opt_blockDirectives ) {
  * @author Mike Samuel <mikesamuel@gmail.com>
  */
 
-$[ "extAll" ] = function ( target ) {
-  var args = arguments, i, source, k;
-  for ( i = 1; i < args.length; ++i ) {
-    for ( k in (source = args[ i ]) ) {
-      target[ k ] = source[ k ];
-    }
-  }
-  return target;
+var EXT_ALL_METHOD_NAME = "extAll";
+
+/**
+ * Like $.extend but copies properties whose values are undefined.
+ * @param {Object} target
+ * @param {...Object} var_args containers of properties to copy into target.
+ * @return {Object} target
+ */
+$[ EXT_ALL_METHOD_NAME ] = function ( target, var_args ) {
+	var args = arguments, i, source, k;
+	for ( i = 1; i < args.length; ++i ) {
+		for ( k in ( source = args[ i ] ) ) {
+			target[ k ] = source[ k ];
+		}
+	}
+	return target;
 };
 
 function compileToFunction( parseTree ) {
@@ -357,15 +370,15 @@ function compileToFunction( parseTree ) {
 			// Make available on the stack, the enumerable properties of the data
 			// object, and the enumerable properties of the options object.
 			// Data properties should trump options.
-      + "with($data=$.extAll("
+			+ "with($data=$." + EXT_ALL_METHOD_NAME + "("
 			// Where EcmaScript 5's Object.create is available, use that to prevent
 			// Object.prototype properties from masking globals.
 			+ "Object.create?Object.create(null):{},"
 			+ "$data||{})){"
 			// The below compiles the parse tree to an expression that returns a
 			// string.
-			+ "return("];
-  var inScope = [];  // Used to propagate variables in scope through {{tmpl}}.
+			+ "return(" ];
+	var inScope = [];  // Used to propagate variables in scope through {{tmpl}}.
 	var hasValue;
 	var nestLevel = 0;
 	$.each(
@@ -376,7 +389,7 @@ function compileToFunction( parseTree ) {
 					javaScriptSource.push( "+" );
 				}
 				var match;
-				if ( typeof parseTree === "string") {  // HTML snippet
+				if ( typeof parseTree === "string" ) {  // HTML snippet
 					// 'foo' -> "\'foo\'"
 					javaScriptSource.push( escapeJsValue( parseTree ) );
 				} else {
@@ -406,7 +419,7 @@ function compileToFunction( parseTree ) {
 									wrapperEnd = new Array( postDethunk.length ).join( ")" );
 									wrapperStart = postDethunk.reverse().join( "(" );
 									return "";
-								});
+								} );
 						// To make it easy for passes to rewrite expressions without
 						// preventing thunking we convert syntax like
 						// "x=>a=>b" into "a(b(x))"
@@ -418,7 +431,7 @@ function compileToFunction( parseTree ) {
 								wrapperEnd );
 					} else if ( kind === "if" ) {  // {{if condition}}...{{/if}}
 						// {{if a}}b{{else}}c{{/if}} -> (a ? "b" : "c")
-						var pos = 2, elseIndex, i, continues = hasValue = TRUTHY;
+						var pos = 2, elseIndex, i, continues = ( hasValue = TRUTHY );
 						for ( ; continues; pos = elseIndex + 1 ) {
 							elseIndex = len;
 							for ( i = pos; i < elseIndex; ++i ) {
@@ -473,7 +486,7 @@ function compileToFunction( parseTree ) {
 						// the compiled each operator.
 						match = content.match( EACH_DIRECTIVE_CONTENT );
 						if ( DEBUG && !match ) {
-							throw new Error( 'Malformed {{each}} content: ' + content );
+							throw new Error( "Malformed {{each}} content: " + content );
 						}
 						var keyVar = match[ 1 ] || DEFAULT_EACH_KEY_VARIABLE_NAME,
 								valueVar = match[ 2 ] || DEFAULT_EACH_VALUE_VARIABLE_NAME;
@@ -482,7 +495,7 @@ function compileToFunction( parseTree ) {
 						javaScriptSource.push(
 								"(", tmpName, "=[],$.each((", containerExpr,
 								"),function(", keyVar, ",", valueVar, "){var ",
-								TEMP_NAME_PREFIX, nestLevel, ";", tmpName, ".push(");
+								TEMP_NAME_PREFIX, nestLevel, ";", tmpName, ".push(" );
 						hasValue = FALSEY;
 						inScope.push( keyVar + ":" + keyVar, valueVar + ":" + valueVar );
 						$.each( parseTree.slice( 2 ), walk );
@@ -505,7 +518,7 @@ function compileToFunction( parseTree ) {
 
 						match = content.match( TMPL_DIRECTIVE_CONTENT );
 						if ( DEBUG && !match ) {
-							throw new Error( 'Malformed {{tmpl}} content: ' + content );
+							throw new Error( "Malformed {{tmpl}} content: " + content );
 						}
 						// The data and options come separated by a comma.
 						// Parsing JavaScript expressions to figure out where a comma
@@ -529,14 +542,15 @@ function compileToFunction( parseTree ) {
 								// Propagate any loop variables in scope when all data is
 								// passed.
 								: inScope.length
-								? "[$.extAll({},$data,{" + inScope + "}),$item]"
+								? ( "[$." + EXT_ALL_METHOD_NAME
+										+ "({},$data,{" + inScope + "}),$item]" )
 								// If the content specifies neither data nor options, and
 								// no loop vars are in scope, use the arguments without the
 								// overhead of a call to $.extend.
 								: "arguments",
 								",$.template((",
 								match[ 2 ],
-								")).tmpl(", tmpName, "[0],", tmpName, "[1]))");
+								")).tmpl(", tmpName, "[0],", tmpName, "[1]))" );
 
 					// {html} and {wrap} are handled by translation to ${...} and ${tmpl}
 					// respectively.
@@ -549,10 +563,10 @@ function compileToFunction( parseTree ) {
 					}
 				}
 				hasValue = TRUTHY;
-			});
+			} );
 	javaScriptSource.push( hasValue ? ")}" : "'')}" );
 
-	if (DEBUG) {
+	if ( DEBUG ) {
 		try {
 			return Function( "$data", "$item", javaScriptSource.join( "" ) );
 		} catch ( ex ) {
@@ -615,9 +629,9 @@ function compileBundle( parseTrees, opt_exclusion ) {
 						}
 					}
 				}
-			});
+			} );
 		}
-	});
+	} );
 	function makePrepassCaller( pluginIndex ) {
 		return function ( parseTrees ) {
 			var i;
@@ -638,7 +652,7 @@ function compileBundle( parseTrees, opt_exclusion ) {
 						} else {
 							result = tmplObj;
 						}
-					});
+					} );
 	return result;
 }
 
@@ -693,6 +707,7 @@ var escapeMapForHtml = {
  */
 function replacerForHtml( ch ) {
 	return escapeMapForHtml[ ch ]
+			// Intentional assignment that caches the result of encoding ch.
 			|| ( escapeMapForHtml[ ch ] = "&#" + ch.charCodeAt( 0 ) + ";" );
 }
 
@@ -718,9 +733,9 @@ var escapeMapForJs = {
  * @private
  */
 function escapeJsChar( ch ) {
-  var s = ch.charCodeAt( 0 ).toString( 16 );
-  var prefix = s.length <= 2 ? "\\x00" : "\\u0000";
-  return prefix.substring( 0, prefix.length - s.length ) + s;
+	var s = ch.charCodeAt( 0 ).toString( 16 );
+	var prefix = s.length <= 2 ? "\\x00" : "\\u0000";
+	return prefix.substring( 0, prefix.length - s.length ) + s;
 }
 
 /**
@@ -755,8 +770,8 @@ var jsSpecialChar = /[\x00\x08-\x0d"&'\/<->\\\x85\u2028\u2029]/g;
  * @return {string} The escaped text.
  */
 function escapeHtml( value ) {
-	return value === void 0
-      ? "" : String( value ).replace( htmlSpecialChar, replacerForHtml );
+	return value === undefined
+			? "" : String( value ).replace( htmlSpecialChar, replacerForHtml );
 }
 
 /**
@@ -770,7 +785,12 @@ function escapeJsValue( value ) {
 	return "'" + String( value ).replace( jsSpecialChar, replacerForJs ) + "'";
 }
 
-$[ "encode" ] = escapeHtml;
+/**
+ * @const
+ * @private
+ */
+var ENCODE_METHOD_NAME = "encode";
+$[ ENCODE_METHOD_NAME ] = escapeHtml;
 //-*- mode: js2-mode; indent-tabs-mode: t; tab-width: 2; -*-
 
 /**
@@ -795,8 +815,8 @@ if ( !JQUERY_TMPL_PRECOMPILED ) {
 									$.each( parseTree, autoescapeOne );
 								}
 							}
-						});
+						} );
 				return parseTrees;
 			} );
 }
- })()
+ }())

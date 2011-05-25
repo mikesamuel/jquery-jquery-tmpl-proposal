@@ -1,6 +1,6 @@
 (function () {
 //-*- mode: js2-mode; indent-tabs-mode: t; tab-width: 2; -*-
-/*jslint evil: true, unparam: true, maxerr: 50, indent: 4 */
+/*jslint evil: true, unparam: true, maxerr: 50 */
 
 /**
  * Common definitions for jQuery templates and plugin passes
@@ -33,7 +33,7 @@ var FALSEY = 0;
 var SUBSTITUTION_RE = (
 		"\\$\\{"
 		+ "[^}]*"               // ${...} cannot contain curlies but {{=...}} can.
-		+ "\\}");
+		+ "\\}" );
 
 /** Regular expression text for a directive name. @const */
 var NAME_RE = "(?:=|[a-z][a-z0-9]*)";
@@ -45,7 +45,7 @@ var MARKER_RE = (
 		+ NAME_RE + "[\\s\\S]*?" // A start marker.
 		+ "|/" + NAME_RE + "\\s*" // An end marker.
 		+ ")"
-		+ "\\}\\}");
+		+ "\\}\\}" );
 
 /**
  * Global regular expression that matches the beginning of markers and
@@ -54,7 +54,7 @@ var MARKER_RE = (
 var TOKEN = new RegExp(
 		"(?=" + SUBSTITUTION_RE
 		+ "|" + MARKER_RE + ")",
-		"gi");
+		"gi" );
 
 /** Regular expression text for a variable name.  @const */
 // We may need to exclude keywords if these names used outside a param decl.
@@ -81,7 +81,7 @@ var EACH_DIRECTIVE_CONTENT = new RegExp(
 		+ ")"
 		+ "\\s*"
 		+ "$",  // Finish at the end.
-		"i");
+		"i" );
 
 /** Matches the content of a <code>{{tmpl}}</code> directive. @const */
 var TMPL_DIRECTIVE_CONTENT = new RegExp(
@@ -149,13 +149,13 @@ function guessBlockDirectives( templateText ) {
 	var blockDirectives = {};
 	// For each token like {{/foo}} put "foo" into the block directives map.
 	$.each(
-			templateText.split(TOKEN),
+			templateText.split( TOKEN ),
 			function ( _, tok ) {
 				var match = tok.match( /^\{\{\/(=|[a-z][a-z0-9]*)[\s\S]*\}\}/i );
 				if ( match ) {
 					blockDirectives[ match[ 1 ] ] = TRUTHY;
 				}
-			});
+			} );
 	return blockDirectives;
 }
 
@@ -207,23 +207,28 @@ function parseTemplate( templateText, blockDirectives ) {
 			stack = [ root ],
 			// The topmost element of the stack
 			top = root,
-      commentDepth = 0;
+			commentDepth = 0;
 	$.each(
 			templateText
 					// Handle {#...} style non-nesting comments.
 					.replace( /\{#[\s\S]*?#\}/g, "" )
 					// Handle {{! ... }} style comments which can contain arbitrary nested
 					// {{...}} sections.
-					.replace( /\{\{!?|\}\}|(?:[^{}]|\{(?!\{)|\}(?!}))+/g,
-										function (token) {
-											return token === "{{!"
-													? ( ++commentDepth, "" )
-													: commentDepth
-													? ( token === "}}"
-															? --commentDepth
-															: token === "{{" && ++commentDepth,
-															"" )
-													: token;
+					.replace( /\{\{!?|\}\}|(?:[^{}]|\{(?!\{)|\}(?!\}))+/g,
+										function ( token ) {
+											if ( token === "{{!" ) {
+												++commentDepth;
+												return "";
+											} else if ( commentDepth ) {
+												if ( token === "}}" ) {
+													--commentDepth;
+												} else if ( token === "{{" ) {
+													++commentDepth;
+												}
+												return "";
+											} else {
+												return token;
+											}
 										} )
 					// Match against a global regexp to pull out all tokens.
 					.split( TOKEN ),
@@ -258,7 +263,7 @@ function parseTemplate( templateText, blockDirectives ) {
 									Function( "(" + tmplContent[ 2 ] + ")" );
 								} catch ( e2 ) {
 									throw new Error(
-											"Invalid {{" + m[2] + "}} content: " + m[ 3 ] );
+											"Invalid {{" + m[ 2 ] + "}} content: " + m[ 3 ] );
 								}
 							}
 						}
@@ -277,7 +282,7 @@ function parseTemplate( templateText, blockDirectives ) {
 						try {
 							// See notes on {{=...}} sanity check above.
 							Function( "(" + content + ")" );
-						} catch ( e2 ) {
+						} catch ( e3 ) {
 							throw new Error( "Invalid template substitution: " + content );
 						}
 					}
@@ -287,7 +292,7 @@ function parseTemplate( templateText, blockDirectives ) {
 				if ( token ) {  // An HTML snippet.
 					top.push( token );
 				}
-			});
+			} );
 	if ( DEBUG && stack.length > 1 ) {
 		throw new Error(
 				"Unclosed block directives "
@@ -315,10 +320,10 @@ function renderParseTree( parseTree, opt_blockDirectives ) {
 			buffer.push( parseTree );
 		} else {
 			var name = parseTree[ 0 ], n = parseTree.length;
-			if ( name === '=' && !/\}/.test( parseTree[ 1 ] ) ) {
+			if ( name === "=" && !/\}/.test( parseTree[ 1 ] ) ) {
 				buffer.push( "${", parseTree[ 1 ], "}" );
 			} else {
-				if (name) { buffer.push( "{{", name, parseTree[ 1 ], "}}" ); }
+				if ( name ) { buffer.push( "{{", name, parseTree[ 1 ], "}}" ); }
 				$.each( parseTree.slice( 2 ), render );
 				if ( name && ( n !== 2 || !opt_blockDirectives
 						 || opt_blockDirectives[ name ] === TRUTHY ) ) {
@@ -340,7 +345,8 @@ function renderParseTree( parseTree, opt_blockDirectives ) {
 
 /** Like <code>$.extend</code> but copies undefined properties. */
 function extendWithUndef( target, source ) {
-	for ( var k in source ) {
+	var k;
+	for ( k in source ) {
 		target[ k ] = source[ k ];
 	}
 	return target;
@@ -393,7 +399,7 @@ function compileToFunction( parseTree ) {
 		// ahead and wrap it in the proper scope and actually execute it.
 		// We use Function instead of eval to truncate the lexical environment
 		// at the root environment.
-		var result = Function(
+		return Function(
 				"$data", "$item",
 				"$data = $data || {};"
 				+ "if ('$' in $data) { throw new Error('$ overridden'); }"
@@ -406,7 +412,6 @@ function compileToFunction( parseTree ) {
 				+ "}})) {"
 				+ "with ($data) { return (" + expressionText + ") } }" )(
 				scope, options );
-		return result;
 	}
 
 	function recurseToBody( body, scope, options ) {
@@ -446,16 +451,16 @@ function compileToFunction( parseTree ) {
 						childScope[ key ] = k;
 						childScope[ value ] = v;
 						htmlBuffer += recurseToBody( body, childScope, options );
-					});
+					} );
 			return htmlBuffer;
 		} else if ( name === "else" ) {
 			return !/\S/.test( content )
 				|| evaluateInScope( content, scope, options );
 		} else if ( name === "if" ) {
 			var pos, elseIndex, i;
-			for ( pos = 0, elseIndex; pos < body.length; pos = elseIndex + 1 ) {
+			for ( pos = 0; pos < body.length; pos = elseIndex + 1 ) {
 				elseIndex = body.length;
-				for ( var i = pos; i < elseIndex; ++i ) {
+				for ( i = pos; i < elseIndex; ++i ) {
 					if ( body[ i ][ 0 ] === "else" ) {
 						elseIndex = i;
 					}
@@ -489,7 +494,7 @@ function compileToFunction( parseTree ) {
 						contentAfter = new Array( postDethunk.length ).join( ")" );
 						contentBefore = postDethunk.reverse().join( "(" );
 						return "";
-					});
+					} );
 			var result = evaluateInScope( content, scope, options );
 			// De-thunkify if necessary.
 			if ( typeof result === "function" ) {
@@ -508,13 +513,13 @@ function compileToFunction( parseTree ) {
 				.replace( /[\ud800-\udbff](?![\udc00-\udfff])/g,
 								 function ( orphanedHighSurrogate ) {
 									 return "&#" + orphanedHighSurrogate.charCodeAt( 0 ) + ";";
-								 })
+								 } )
 				// Fix up orphaned low surrogates.  Alternately replace w/ "$1\ufffd".
 				.replace( /(^|[^\ud800-\udbff])([\udc00-\udfff])/g,
 								 function ( _, preceder, orphanedLowSurrogate ) {
 									 return preceder + "&#"
 											 + orphanedLowSurrogate.charCodeAt( 0 ) + ";";
-								 })
+								 } )
 				.replace( /\u0000/g, "&#0;" );
 	}
 
@@ -576,9 +581,9 @@ function compileBundle( parseTrees, opt_exclusion ) {
 						}
 					}
 				}
-			});
+			} );
 		}
-	});
+	} );
 	function makePrepassCaller( pluginIndex ) {
 		return function ( parseTrees ) {
 			var i;
@@ -599,7 +604,7 @@ function compileBundle( parseTrees, opt_exclusion ) {
 						} else {
 							result = tmplObj;
 						}
-					});
+					} );
 	return result;
 }
 
@@ -654,6 +659,7 @@ var escapeMapForHtml = {
  */
 function replacerForHtml( ch ) {
 	return escapeMapForHtml[ ch ]
+			// Intentional assignment that caches the result of encoding ch.
 			|| ( escapeMapForHtml[ ch ] = "&#" + ch.charCodeAt( 0 ) + ";" );
 }
 
@@ -679,9 +685,9 @@ var escapeMapForJs = {
  * @private
  */
 function escapeJsChar( ch ) {
-  var s = ch.charCodeAt( 0 ).toString( 16 );
-  var prefix = s.length <= 2 ? "\\x00" : "\\u0000";
-  return prefix.substring( 0, prefix.length - s.length ) + s;
+	var s = ch.charCodeAt( 0 ).toString( 16 );
+	var prefix = s.length <= 2 ? "\\x00" : "\\u0000";
+	return prefix.substring( 0, prefix.length - s.length ) + s;
 }
 
 /**
@@ -716,8 +722,8 @@ var jsSpecialChar = /[\x00\x08-\x0d"&'\/<->\\\x85\u2028\u2029]/g;
  * @return {string} The escaped text.
  */
 function escapeHtml( value ) {
-	return value === void 0
-      ? "" : String( value ).replace( htmlSpecialChar, replacerForHtml );
+	return value === undefined
+			? "" : String( value ).replace( htmlSpecialChar, replacerForHtml );
 }
 
 /**
@@ -731,7 +737,12 @@ function escapeJsValue( value ) {
 	return "'" + String( value ).replace( jsSpecialChar, replacerForJs ) + "'";
 }
 
-$[ "encode" ] = escapeHtml;
+/**
+ * @const
+ * @private
+ */
+var ENCODE_METHOD_NAME = "encode";
+$[ ENCODE_METHOD_NAME ] = escapeHtml;
 //-*- mode: js2-mode; indent-tabs-mode: t; tab-width: 2; -*-
 
 /**
@@ -756,8 +767,8 @@ if ( !JQUERY_TMPL_PRECOMPILED ) {
 									$.each( parseTree, autoescapeOne );
 								}
 							}
-						});
+						} );
 				return parseTrees;
 			} );
 }
- })()
+ }())
