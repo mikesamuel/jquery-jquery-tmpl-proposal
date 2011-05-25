@@ -18,12 +18,12 @@ var EMBEDDING_HAZARDS = [
  * This helps us test that coercing methods always have a single consistent
  * view of the world.
  */
-function makeFragileToString(value) {
-	value = String(value);
+function makeFragileToString( value ) {
+	value = String( value );
 	var coerced = false;
 	return {
 		toString: function () {
-			if (coerced) { throw new Error(); }
+			if ( coerced ) { throw new Error(); }
 			coerced = true;
 			return value;
 		}
@@ -471,7 +471,8 @@ function testEscapeHtmlAttribute() {
 	assertEquals( "42", escapeHtmlAttributeSanitized( 42 ) );
 	assertEquals(
 			"Hello, World!",
-			escapeHtmlAttributeSanitized( makeFragileToString( "<b>Hello, World!</b>" ) ) );
+			escapeHtmlAttributeSanitized(
+					makeFragileToString( "<b>Hello, World!</b>" ) ) );
 }
 
 function testEscapeHtmlAttributeNospace() {
