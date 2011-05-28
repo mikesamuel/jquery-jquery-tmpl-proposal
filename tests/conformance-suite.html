@@ -1195,6 +1195,27 @@ comments test
     <th>comments may span lines</th>
   </tr>
   <tr>
+    <td><xmp>{{if true}}A{{{# comment #}else}}B{{/if}}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>A{{else}}B</td>
+    <td></td>
+    <th>comments split tokens 1</th>
+  </tr>
+  <tr>
+    <td><xmp>{{if true}}A{{{! comment }}else}}B{{/if}}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>A{{else}}B</td>
+    <td></td>
+    <th>comments split tokens 2</th>
+  </tr>
+  <tr>
+    <td><xmp>{{= "{# not a comment }"}}</xmp></td>
+    <td><xmp>{}</xmp></td>
+    <td>{# not a comment }</td>
+    <td></td>
+    <th>no comments in markers</th>
+  </tr>
+  <tr>
     <td><xmp>1{{! {{ INVALID_TAG }} }}2</xmp></td>
     <td><xmp>testData</xmp></td>
     <td>12</td>
@@ -2088,5 +2109,5 @@ comments test
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Sun May 22 03:51:07 PDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Thu May 26 16:53:06 PDT 2011 <!-- hhmts end -->
 </body> </html>
