@@ -78,7 +78,7 @@ function parseTemplate( templateText, blockDirectives ) {
 			commentDepth = 0;
 	$.each(
 			templateText
-					// Handle {#...} style non-nesting comments.
+					// Handle {#...#} style non-nesting comments.
 					.replace( /\{#[\s\S]*?#\}/g, "" )
 					// Handle {{! ... }} style comments which can contain arbitrary nested
 					// {{...}} sections.
@@ -98,7 +98,7 @@ function parseTemplate( templateText, blockDirectives ) {
 												return token;
 											}
 										} )
-					// Match against a global regexp to pull out all tokens.
+					// Split against a global regexp to find all token boundaries.
 					.split( TOKEN ),
 			function ( _, token ) {
 				var m = token.match( /^\{\{(\/?)(=|[a-z][a-z0-9]*)([\s\S]*)\}\}/i );
@@ -185,7 +185,7 @@ function renderParseTree( parseTree, opt_blockDirectives ) {
 	var buffer = [];
 	( function render( _, parseTree ) {
 		if ( typeof parseTree === "string" ) {
-			buffer.push( parseTree );
+			buffer.push( parseTree.replace( /\{([\{#])/, "{{##}$1" ) );
 		} else {
 			var name = parseTree[ 0 ], n = parseTree.length;
 			if ( name === "=" && !/\}/.test( parseTree[ 1 ] ) ) {

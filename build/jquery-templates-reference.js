@@ -36,7 +36,7 @@ var SUBSTITUTION_RE = (
 		+ "\\}" );
 
 /** Regular expression text for a directive name. @const */
-var NAME_RE = "(?:=|[a-z][a-z0-9]*)";
+var NAME_RE = "[=a-z][a-z0-9]*";
 
 /** Regular expression text for a directive start|end marker. @const */
 var MARKER_RE = (
@@ -47,17 +47,14 @@ var MARKER_RE = (
 		+ ")"
 		+ "\\}\\}" );
 
-/**
- * Global regular expression that matches the beginning of markers and
- * substitution.
- */
+/** Global regular expression that matches a single template token. */
 var TOKEN = new RegExp(
 		"(?=" + SUBSTITUTION_RE
 		+ "|" + MARKER_RE + ")",
 		"gi" );
 
 /** Regular expression text for a variable name.  @const */
-// We may need to exclude keywords if these names used outside a param decl.
+// We may need to exclude keywords if these are used outside a param decl.
 var VAR_NAME_RE = "[a-z_$]\\w*";
 
 /** Matches the content of an <code>{{each}}</code> directive. @const */
@@ -97,6 +94,7 @@ var TMPL_DIRECTIVE_CONTENT = new RegExp(
 		+ "\\s*"
 		+ "$"
 		);
+
 /**
  * The default variable name for the key used when none is specified in an
  * <code>{{each}}</code> directive.
@@ -210,7 +208,7 @@ function parseTemplate( templateText, blockDirectives ) {
 			commentDepth = 0;
 	$.each(
 			templateText
-					// Handle {#...} style non-nesting comments.
+					// Handle {#...#} style non-nesting comments.
 					.replace( /\{#[\s\S]*?#\}/g, "" )
 					// Handle {{! ... }} style comments which can contain arbitrary nested
 					// {{...}} sections.
@@ -230,7 +228,7 @@ function parseTemplate( templateText, blockDirectives ) {
 												return token;
 											}
 										} )
-					// Match against a global regexp to pull out all tokens.
+					// Split against a global regexp to find all token boundaries.
 					.split( TOKEN ),
 			function ( _, token ) {
 				var m = token.match( /^\{\{(\/?)(=|[a-z][a-z0-9]*)([\s\S]*)\}\}/i );
@@ -317,7 +315,7 @@ function renderParseTree( parseTree, opt_blockDirectives ) {
 	var buffer = [];
 	( function render( _, parseTree ) {
 		if ( typeof parseTree === "string" ) {
-			buffer.push( parseTree );
+			buffer.push( parseTree.replace( /\{([\{#])/, "{{##}$1" ) );
 		} else {
 			var name = parseTree[ 0 ], n = parseTree.length;
 			if ( name === "=" && !/\}/.test( parseTree[ 1 ] ) ) {
@@ -679,25 +677,19 @@ var escapeMapForJs = {
 };
 
 /**
- * {@code "\u2028"} -> {@code "\\u2028"}.
- * @param {string} ch
- * @return {string}
- * @private
- */
-function escapeJsChar( ch ) {
-	var s = ch.charCodeAt( 0 ).toString( 16 );
-	var prefix = s.length <= 2 ? "\\x00" : "\\u0000";
-	return prefix.substring( 0, prefix.length - s.length ) + s;
-}
-
-/**
- * A function that can be used with String.replace..
+ * A function that can be used with {@code String.replace}.
  * @param {string} ch A single character matched by a compatible matcher.
  * @return {string} A token in the output language.
  * @private
  */
 function replacerForJs( ch ) {
-	return escapeMapForJs[ ch ] || ( escapeMapForJs[ ch ] = escapeJsChar( ch ) );
+	var hex;
+	return escapeMapForJs[ ch ]
+			|| (
+					hex = ch.charCodeAt( 0 ).toString( 16 ),
+					// "\u2028" -> "\\u2028" and is cached in escapeMapForJs.
+					escapeMapForJs[ ch ] = "\\u0000".substring( 0, 6 - hex.length ) + hex
+					);
 }
 
 /**

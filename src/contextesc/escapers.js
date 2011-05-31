@@ -267,18 +267,6 @@ function escapeJsString( value ) {
 
 
 /**
- * @param {string} ch
- * @return {string}
- * @private
- */
-function escapeJsChar_( ch ) {
-	var s = ch.charCodeAt( 0 ).toString( 16 );
-	var prefix = s.length <= 2 ? "\\x00" : "\\u0000";
-	return prefix.substring( 0, prefix.length - s.length ) + s;
-}
-
-
-/**
  * Encodes a value as a JavaScript literal.
  *
  * @param {*} value The value to escape.  May not be a string, but the value
@@ -435,7 +423,6 @@ function filterCssValue( value ) {
  * @private
  */
 var ESCAPE_MAP_FOR_ESCAPE_HTML__AND__NORMALIZE_HTML__AND__ESCAPE_HTML_NOSPACE__AND__NORMALIZE_HTML_NOSPACE_ = {
-	"\"": "&quot;",
 	"&": "&amp;",
 	"<": "&lt;",
 	">": "&gt;"
@@ -474,9 +461,14 @@ var ESCAPE_MAP_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_ = {
  * @private
  */
 function REPLACER_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_( ch ) {
+	var hex;
 	return ESCAPE_MAP_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_[ ch ]
-		 || ( ESCAPE_MAP_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_[ ch ]
-				 = escapeJsChar_( ch ) );
+			|| (
+					hex = ch.charCodeAt( 0 ).toString( 16 ),
+					// "\u2028" -> "\\u2028" and is cached in escapeMapForJs.
+					ESCAPE_MAP_FOR_ESCAPE_JS_STRING__AND__ESCAPE_JS_REGEX_[ ch ]
+							= "\\u0000".substring( 0, 6 - hex.length ) + hex
+					);
 }
 
 /**

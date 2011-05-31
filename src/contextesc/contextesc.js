@@ -456,6 +456,7 @@ function autoescape( jqueryTemplatesByName ) {
 	return parsedTemplates;
 }
 
+// Clones a JSON value.
 var cloneJson;
 if ( typeof JSON !== "undefined" ) {
 	cloneJson = function ( ptree ) {
