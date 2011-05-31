@@ -27,7 +27,7 @@ function compileToFunction( parseTree ) {
 					PROP_DESCRIP_VALUE = "value";
 			if ( Object.hasOwnProperty.call( pd, PROP_DESCRIP_VALUE ) ) {
 				obj[ prop ] = pd[ PROP_DESCRIP_VALUE ];
-			} else if ( typeof obj.__defineGetter__ !== "undefined" ) {
+			} else if ( "undefined" !== typeof obj.__defineGetter__ ) {
 				if ( pd[ PROP_DESCRIP_GET ] ) {
 					obj.__defineGetter__( prop, pd[ PROP_DESCRIP_GET ] );
 				}
@@ -90,7 +90,7 @@ function compileToFunction( parseTree ) {
 	}
 
 	function interpret( parseTree, scope, options ) {
-		if ( typeof parseTree === "string" ) {
+		if ( "string" === typeof parseTree ) {
 			return parseTree;
 		}
 
@@ -161,7 +161,7 @@ function compileToFunction( parseTree ) {
 					} );
 			var result = evaluateInScope( content, scope, options );
 			// De-thunkify if necessary.
-			if ( typeof result === "function" ) {
+			if ( "function" === typeof result ) {
 				result = result.call( scope );
 			}
 			return new Function(
