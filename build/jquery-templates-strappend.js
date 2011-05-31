@@ -247,8 +247,8 @@ function guessBlockDirectives( templateText ) {
  * </pre>
  *
  * @param {!string} templateText The text to parse.
- * @param {!Object.<string, number>} blockDirectives Maps directive names such as
- *     {@code "if"} to {link #TRUTHY} if they require/allow an end marker.
+ * @param {!Object.<string, number>} blockDirectives Maps directive names such
+ *     as {@code "if"} to {link #TRUTHY} if they require/allow an end marker.
  *     {@link #DEFAULT_BLOCK_DIRECTIVES} and the output of
  *     {@link #guessBlockDirectives} both obey this contract.
  * @return {!Array.<string|Array>|string} A parse tree node.
@@ -378,9 +378,7 @@ function parseTemplate( templateText, blockDirectives ) {
 function renderParseTree( parseTree, opt_blockDirectives ) {
 	var buffer = [];
 	( function render( _, parseTree ) {
-		if ( typeof parseTree === "string" ) {
-			buffer.push( parseTree.replace( /\{([\{#])/, "{{##}$1" ) );
-		} else {
+		if ( "string" !== typeof parseTree ) {
 			var name = parseTree[ 0 ], n = parseTree.length;
 			if ( name === "=" && !/\}/.test( parseTree[ 1 ] ) ) {
 				buffer.push( "${", parseTree[ 1 ], "}" );
@@ -392,6 +390,8 @@ function renderParseTree( parseTree, opt_blockDirectives ) {
 					buffer.push( "{{/", name, "}}" );
 				}
 			}
+		} else {
+			buffer.push( parseTree.replace( /\{([\{#])/, "{{##}$1" ) );
 		}
 	}( 2, parseTree ) );
 	return buffer.join( "" );
@@ -502,13 +502,14 @@ function compileToFunction( parseTree ) {
 					javaScriptSource.push( "+" );
 				}
 				var match;
-				if ( typeof parseTree === "string" ) {  // HTML snippet
+				if ( "string" === typeof parseTree ) {  // HTML snippet
 					// 'foo' -> "\'foo\'"
 					javaScriptSource.push( escapeJsValue( parseTree ) );
 				} else {
-					var kind = parseTree[ 0 ], content = parseTree[ 1 ],
-							len = parseTree.length;
-					var tmpName = TEMP_NAME_PREFIX + nestLevel;
+					var kind = parseTree[ 0 ],
+							content = parseTree[ 1 ],
+							len = parseTree.length,
+							tmpName = TEMP_NAME_PREFIX + nestLevel;
 					if ( kind === "=" ) {  // ${...} substitution.
 						// Make sure that + is string-wise.
 						// Specifically, ${1}${2} should not compile to (1 + 2).
@@ -921,7 +922,7 @@ if ( !JQUERY_TMPL_PRECOMPILED ) {
 				$.each(
 						parseTrees,
 						function autoescapeOne( _, parseTree ) {
-							if ( typeof parseTree !== "string" ) {
+							if ( "string" !== typeof parseTree ) {
 								if ( parseTree[ 0 ] === "=" ) {
 									parseTree[ 1 ] += "=>$.encode";
 								} else if ( parseTree[ 0 ] === "html" ) {

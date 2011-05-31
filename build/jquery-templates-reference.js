@@ -247,8 +247,8 @@ function guessBlockDirectives( templateText ) {
  * </pre>
  *
  * @param {!string} templateText The text to parse.
- * @param {!Object.<string, number>} blockDirectives Maps directive names such as
- *     {@code "if"} to {link #TRUTHY} if they require/allow an end marker.
+ * @param {!Object.<string, number>} blockDirectives Maps directive names such
+ *     as {@code "if"} to {link #TRUTHY} if they require/allow an end marker.
  *     {@link #DEFAULT_BLOCK_DIRECTIVES} and the output of
  *     {@link #guessBlockDirectives} both obey this contract.
  * @return {!Array.<string|Array>|string} A parse tree node.
@@ -378,9 +378,7 @@ function parseTemplate( templateText, blockDirectives ) {
 function renderParseTree( parseTree, opt_blockDirectives ) {
 	var buffer = [];
 	( function render( _, parseTree ) {
-		if ( typeof parseTree === "string" ) {
-			buffer.push( parseTree.replace( /\{([\{#])/, "{{##}$1" ) );
-		} else {
+		if ( "string" !== typeof parseTree ) {
 			var name = parseTree[ 0 ], n = parseTree.length;
 			if ( name === "=" && !/\}/.test( parseTree[ 1 ] ) ) {
 				buffer.push( "${", parseTree[ 1 ], "}" );
@@ -392,6 +390,8 @@ function renderParseTree( parseTree, opt_blockDirectives ) {
 					buffer.push( "{{/", name, "}}" );
 				}
 			}
+		} else {
+			buffer.push( parseTree.replace( /\{([\{#])/, "{{##}$1" ) );
 		}
 	}( 2, parseTree ) );
 	return buffer.join( "" );
@@ -425,7 +425,7 @@ function compileToFunction( parseTree ) {
 					PROP_DESCRIP_VALUE = "value";
 			if ( Object.hasOwnProperty.call( pd, PROP_DESCRIP_VALUE ) ) {
 				obj[ prop ] = pd[ PROP_DESCRIP_VALUE ];
-			} else if ( typeof obj.__defineGetter__ !== "undefined" ) {
+			} else if ( "undefined" !== typeof obj.__defineGetter__ ) {
 				if ( pd[ PROP_DESCRIP_GET ] ) {
 					obj.__defineGetter__( prop, pd[ PROP_DESCRIP_GET ] );
 				}
@@ -488,7 +488,7 @@ function compileToFunction( parseTree ) {
 	}
 
 	function interpret( parseTree, scope, options ) {
-		if ( typeof parseTree === "string" ) {
+		if ( "string" === typeof parseTree ) {
 			return parseTree;
 		}
 
@@ -559,7 +559,7 @@ function compileToFunction( parseTree ) {
 					} );
 			var result = evaluateInScope( content, scope, options );
 			// De-thunkify if necessary.
-			if ( typeof result === "function" ) {
+			if ( "function" === typeof result ) {
 				result = result.call( scope );
 			}
 			return new Function(
@@ -822,7 +822,7 @@ if ( !JQUERY_TMPL_PRECOMPILED ) {
 				$.each(
 						parseTrees,
 						function autoescapeOne( _, parseTree ) {
-							if ( typeof parseTree !== "string" ) {
+							if ( "string" !== typeof parseTree ) {
 								if ( parseTree[ 0 ] === "=" ) {
 									parseTree[ 1 ] += "=>$.encode";
 								} else if ( parseTree[ 0 ] === "html" ) {
