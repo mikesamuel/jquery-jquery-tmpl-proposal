@@ -35,7 +35,7 @@ var SUBSTITUTION_RE = (
 		+ "\\}" );
 
 /** Regular expression text for a directive name. @const */
-var NAME_RE = "(?:=|[a-z][a-z0-9]*)";
+var NAME_RE = "[=a-z][a-z0-9]*";
 
 /** Regular expression text for a directive start|end marker. @const */
 var MARKER_RE = (
@@ -46,17 +46,14 @@ var MARKER_RE = (
 		+ ")"
 		+ "\\}\\}" );
 
-/**
- * Global regular expression that matches the beginning of markers and
- * substitution.
- */
+/** Global regular expression that matches a single template token. */
 var TOKEN = new RegExp(
 		"(?=" + SUBSTITUTION_RE
 		+ "|" + MARKER_RE + ")",
 		"gi" );
 
 /** Regular expression text for a variable name.  @const */
-// We may need to exclude keywords if these names used outside a param decl.
+// We may need to exclude keywords if these are used outside a param decl.
 var VAR_NAME_RE = "[a-z_$]\\w*";
 
 /** Matches the content of an <code>{{each}}</code> directive. @const */
@@ -96,6 +93,7 @@ var TMPL_DIRECTIVE_CONTENT = new RegExp(
 		+ "\\s*"
 		+ "$"
 		);
+
 /**
  * The default variable name for the key used when none is specified in an
  * <code>{{each}}</code> directive.

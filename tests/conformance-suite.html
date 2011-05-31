@@ -554,13 +554,10 @@ bar</td>
   <tr>
     <td><xmp>
       <script type="text/x-jquery-tmpl" id="main">
-        this x=${++x}, {{tmpl "that" + ++x}}
+        this x=${++x}, {{tmpl({ x: ++x }) "that"}}
       </script>
-      <script type="text/x-jquery-tmpl" id="that2">
+      <script type="text/x-jquery-tmpl" id="that">
         that x=(${++x})
-      </script>
-      <script type="text/x-jquery-tmpl" id="that1">
-        wrong target
       </script>
     </xmp></td>
     <td><xmp>{ x: 0 }</xmp></td>
@@ -1202,7 +1199,7 @@ comments test
     <th>comments split tokens 1</th>
   </tr>
   <tr>
-    <td><xmp>{{if true}}A{{{! comment }}else}}B{{/if}}</xmp></td>
+    <td><xmp>{{if true}}A{{{{! comment }}else}}B{{/if}}</xmp></td>
     <td><xmp>{}</xmp></td>
     <td>A{{else}}B</td>
     <td></td>
@@ -2109,5 +2106,5 @@ comments test
 
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Thu May 26 16:53:06 PDT 2011 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Mon May 30 18:00:21 PDT 2011 <!-- hhmts end -->
 </body> </html>

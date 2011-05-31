@@ -95,3 +95,30 @@ function testJavaScriptCurlies() {
 	assertParsedJqueryTemplate(
 			[ "", "", "if (foo) {{ foo() }}" ], "if (foo) {{ foo() }}" );
 }
+
+function testSubstitutionInCurlies() {
+	assertParsedJqueryTemplate(
+			[ "", "", "-{", [ "=", "x" ], "}-" ], "-{${x}}-" );
+}
+
+function testSimpleComments() {
+	assertParsedJqueryTemplate(
+			[ "", "", "barbaz {} boo" ],
+			"{# foo #}bar{# boo } boo #}baz {{# far #}} boo" );
+}
+
+function testNestingComments() {
+	assertParsedJqueryTemplate(
+			[ "", "", "farbaz" ],
+			"far{{! {{foo}} {{!bar}} }}baz" );
+}
+
+function testSubstitutionInDoubleCurlies() {
+	assertParsedJqueryTemplate(
+			[ "", "", "{{", [ "=", " two " ], "}" ], "{{${ two }}" );
+}
+
+function testMarkerInCurlies() {
+	assertParsedJqueryTemplate(
+			[ "", "", "{", [ "x", "" ] ], "{{{x}}" );
+}

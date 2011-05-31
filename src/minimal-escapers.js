@@ -39,25 +39,19 @@ var escapeMapForJs = {
 };
 
 /**
- * {@code "\u2028"} -> {@code "\\u2028"}.
- * @param {string} ch
- * @return {string}
- * @private
- */
-function escapeJsChar( ch ) {
-	var s = ch.charCodeAt( 0 ).toString( 16 );
-	var prefix = s.length <= 2 ? "\\x00" : "\\u0000";
-	return prefix.substring( 0, prefix.length - s.length ) + s;
-}
-
-/**
- * A function that can be used with String.replace..
+ * A function that can be used with {@code String.replace}.
  * @param {string} ch A single character matched by a compatible matcher.
  * @return {string} A token in the output language.
  * @private
  */
 function replacerForJs( ch ) {
-	return escapeMapForJs[ ch ] || ( escapeMapForJs[ ch ] = escapeJsChar( ch ) );
+	var hex;
+	return escapeMapForJs[ ch ]
+			|| (
+					hex = ch.charCodeAt( 0 ).toString( 16 ),
+					// "\u2028" -> "\\u2028" and is cached in escapeMapForJs.
+					escapeMapForJs[ ch ] = "\\u0000".substring( 0, 6 - hex.length ) + hex
+					);
 }
 
 /**

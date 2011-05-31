@@ -40,7 +40,7 @@ function testSafeHtmlBadInputs() {
 	};
 	assertEquals(
 			"<a href=\"#zSafehtmlz?q=%22%3E%3Cscript%3Ealert%2813%29%3C%2Fscript%3E\""
-			+ " onclick=alert(&#39;\\x22Hello&#32;World&#39;)"
+			+ " onclick=alert(&#39;\\u0022Hello&#32;World&#39;)"
 			+ " style=\"color: zSafehtmlz\">"
 			+ "&lt;script&gt;alert(1337)&lt;/script&gt;</a>",
 			$.template( "test" ).tmpl( data ) );

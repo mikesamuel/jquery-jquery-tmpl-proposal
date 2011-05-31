@@ -37,7 +37,7 @@ function testEscapeJsString() {
 	// Do not remove anything from this set without talking to your friendly local
 	// security-team@.
 	assertEquals(
-			"\\x00 \\x22 \\x27 \\\\ \\r \\n \\u2028 \\u2029",
+			"\\u0000 \\u0022 \\u0027 \\\\ \\r \\n \\u2028 \\u2029",
 			escapeJsString( "\u0000 \" \' \\ \r \n \u2028 \u2029" ) );
 
 	for ( var i = 0, n = EMBEDDING_HAZARDS.length; i < n; ++i ) {
@@ -47,12 +47,12 @@ function testEscapeJsString() {
 
 	// Check correctness of other Latins.
 	var escapedAscii = (
-			"\\x00\u0001\u0002\u0003\u0004\u0005\u0006\u0007" +
-			"\\x08\\t\\n\\x0b\\f\\r\u000e\u000f" +
+			"\\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007" +
+			"\\u0008\\t\\n\\u000b\\f\\r\u000e\u000f" +
 			"\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017" +
 			"\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f" +
-			" !\\x22#$%\\x26\\x27()*+,-.\\/" +
-			"0123456789:;\\x3c\\x3d\\x3e?" +
+			" !\\u0022#$%\\u0026\\u0027()*+,-.\\/" +
+			"0123456789:;\\u003c\\u003d\\u003e?" +
 			"@ABCDEFGHIJKLMNO" +
 			"PQRSTUVWXYZ[\\\\]^_" +
 			"`abcdefghijklmno" +
@@ -72,10 +72,10 @@ function testEscapeJsRegExpString() {
 	// Do not remove anything from this set without talking to your friendly local
 	// security-team@.
 	assertEquals(
-			"\\x00 \\x22 \\x27 \\\\ \\/ \\r \\n \\u2028 \\u2029" +
+			"\\u0000 \\u0022 \\u0027 \\\\ \\/ \\r \\n \\u2028 \\u2029" +
 			// RegExp operators.
-			" \\x24\\x5e\\x2a\\x28\\x29\\x2d\\x2b\\x7b" +
-			"\\x7d\\x5b\\x5d\\x7c\\x3f",
+			" \\u0024\\u005e\\u002a\\u0028\\u0029\\u002d\\u002b\\u007b" +
+			"\\u007d\\u005b\\u005d\\u007c\\u003f",
 			escapeJsRegex(
 					"\u0000 \" \' \\ / \r \n \u2028 \u2029" +
 					" $^*()-+{}[]|?" ) );
@@ -86,21 +86,21 @@ function testEscapeJsRegExpString() {
 	}
 
 	var escapedAscii = (
-			"\\x00\u0001\u0002\u0003\u0004\u0005\u0006\u0007" +
-			"\\x08\\t\\n\\x0b\\f\\r\u000e\u000f" +  // \b means word-break in JS.
+			"\\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007" +
+			"\\u0008\\t\\n\\u000b\\f\\r\u000e\u000f" +  // \b means word-break in JS.
 			"\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017" +
 			"\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f" +
-			" !\\x22#\\x24%\\x26\\x27\\x28\\x29" +
-			"\\x2a\\x2b\\x2c\\x2d\\x2e\\/" +
-			"0123456789\\x3a;\\x3c\\x3d\\x3e\\x3f" +
+			" !\\u0022#\\u0024%\\u0026\\u0027\\u0028\\u0029" +
+			"\\u002a\\u002b\\u002c\\u002d\\u002e\\/" +
+			"0123456789\\u003a;\\u003c\\u003d\\u003e\\u003f" +
 			"@ABCDEFGHIJKLMNO" +
-			"PQRSTUVWXYZ\\x5b\\\\\\x5d\\x5e_" +
+			"PQRSTUVWXYZ\\u005b\\\\\\u005d\\u005e_" +
 			"`abcdefghijklmno" +
-			"pqrstuvwxyz\\x7b\\x7c\\x7d~\u007f" );
+			"pqrstuvwxyz\\u007b\\u007c\\u007d~\u007f" );
 	assertEquals( escapedAscii, escapeJsRegex( ASCII_CHARS ) );
 
 	assertEquals(
-			"Hello\\x2c World!",
+			"Hello\\u002c World!",
 			escapeJsRegex( makeFragileToString( "Hello, World!" ) ) );
 }
 
@@ -108,7 +108,7 @@ function testEscapeJsValue() {
 	var escapeJsValue = $.encode[ ESC_MODE_ESCAPE_JS_VALUE ];
 
 	assertEquals(  // Adds quotes.
-			"'Don\\x27t run with \\x22scissors\\x22.\\n'",
+			"'Don\\u0027t run with \\u0022scissors\\u0022.\\n'",
 			escapeJsValue( "Don't run with \"scissors\".\n" ) );
 	assertEquals( " 4 ", escapeJsValue( 4 ) );
 	assertEquals( " 4.5 ", escapeJsValue( 4.5 ) );
@@ -403,7 +403,7 @@ function testEscapeHtml() {
 			"\b\t\n\u000b\f\r\u000e\u000f" +
 			"\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017" +
 			"\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f" +
-			" !&quot;#$%&amp;&#39;()*+,-./" +
+			" !&#34;#$%&amp;&#39;()*+,-./" +
 			"0123456789:;&lt;=&gt;?" +
 			"@ABCDEFGHIJKLMNO" +
 			"PQRSTUVWXYZ[\\]^_" +
@@ -444,7 +444,7 @@ function testEscapeHtmlAttribute() {
 			"\b\t\n\u000b\f\r\u000e\u000f" +
 			"\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017" +
 			"\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f" +
-			" !&quot;#$%&amp;&#39;()*+,-./" +
+			" !&#34;#$%&amp;&#39;()*+,-./" +
 			"0123456789:;&lt;=&gt;?" +
 			"@ABCDEFGHIJKLMNO" +
 			"PQRSTUVWXYZ[\\]^_" +
@@ -466,7 +466,7 @@ function testEscapeHtmlAttribute() {
 	assertEquals(
 			"Hello, World!", escapeHtmlAttributeSanitized( "<b>Hello, World!</b>" ) );
 	assertEquals(
-			"Hello, &quot;World!&quot;",
+			"Hello, &#34;World!&#34;",
 			escapeHtmlAttributeSanitized( "<b>Hello, \"World!\"</b>" ) );
 	assertEquals( "42", escapeHtmlAttributeSanitized( 42 ) );
 	assertEquals(
@@ -483,7 +483,7 @@ function testEscapeHtmlAttributeNospace() {
 	// Do not remove anything from this set without talking to your friendly local
 	// security-team@.
 	assertEquals(
-			"&#9;&#10;&#11;&#12;&#13;&#32;&quot;&#39;&#96;&lt;&gt;&amp;",
+			"&#9;&#10;&#11;&#12;&#13;&#32;&#34;&#39;&#96;&lt;&gt;&amp;",
 			escapeHtmlAttributeNospace( "\u0009\n\u000B\u000C\r \"'\u0060<>&" ) );
 
 	var escapedAscii = (
@@ -491,7 +491,7 @@ function testEscapeHtmlAttributeNospace() {
 			"\b&#9;&#10;&#11;&#12;&#13;\u000e\u000f" +
 			"\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017" +
 			"\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f" +
-			"&#32;!&quot;#$%&amp;&#39;()*+,&#45;.&#47;" +
+			"&#32;!&#34;#$%&amp;&#39;()*+,&#45;.&#47;" +
 			"0123456789:;&lt;&#61;&gt;?" +
 			"@ABCDEFGHIJKLMNO" +
 			"PQRSTUVWXYZ[\\]^_" +
@@ -514,7 +514,7 @@ function testEscapeHtmlAttributeNospace() {
 			"Hello,&#32;World!",
 			escapeHtmlAttributeNospaceSanitized( "<b>Hello, World!</b>" ) );
 	assertEquals(
-			"Hello,&#32;&quot;World!&quot;",
+			"Hello,&#32;&#34;World!&#34;",
 			escapeHtmlAttributeNospaceSanitized( "<b>Hello, \"World!\"</b>" ) );
 	assertEquals( "42", escapeHtmlAttributeNospaceSanitized( 42 ) );
 	assertEquals(
@@ -529,7 +529,7 @@ if ( DEBUG ) this.testNormalizeHtml = function () {
 	// Do not remove anything from this set without talking to your friendly local
 	// security-team@.
 	assertEquals(
-			"&quot;&#39;&lt;&gt;",
+			"&#34;&#39;&lt;&gt;",
 			normalizeHtmlHelper( "\"'<>" ) );
 
 	var escapedAscii = (
@@ -537,7 +537,7 @@ if ( DEBUG ) this.testNormalizeHtml = function () {
 			"\b\t\n\u000b\u000c\r\u000e\u000f" +
 			"\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017" +
 			"\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f" +
-			" !&quot;#$%&&#39;()*+,-./" +
+			" !&#34;#$%&&#39;()*+,-./" +
 			"0123456789:;&lt;=&gt;?" +
 			"@ABCDEFGHIJKLMNO" +
 			"PQRSTUVWXYZ[\\]^_" +
@@ -555,7 +555,7 @@ if ( DEBUG ) this.testNormalizeHtmlNospace = function () {
 	// Do not remove anything from this set without talking to your friendly local
 	// security-team@.
 	assertEquals(
-			"&#9;&#10;&#11;&#12;&#13;&#32;&quot;&#39;&#96;&lt;&gt;",
+			"&#9;&#10;&#11;&#12;&#13;&#32;&#34;&#39;&#96;&lt;&gt;",
 			normalizeHtmlNospaceHelper( "\u0009\n\u000B\u000C\r \"'\u0060<>" ) );
 
 	var escapedAscii = (
@@ -563,7 +563,7 @@ if ( DEBUG ) this.testNormalizeHtmlNospace = function () {
 			"\b&#9;&#10;&#11;&#12;&#13;\u000e\u000f" +
 			"\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017" +
 			"\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f" +
-			"&#32;!&quot;#$%&&#39;()*+,&#45;.&#47;" +
+			"&#32;!&#34;#$%&&#39;()*+,&#45;.&#47;" +
 			"0123456789:;&lt;&#61;&gt;?" +
 			"@ABCDEFGHIJKLMNO" +
 			"PQRSTUVWXYZ[\\]^_" +

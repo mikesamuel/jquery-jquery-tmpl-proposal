@@ -45,7 +45,7 @@ function autoescape( jqueryTemplatesByName ) {
 		} else if ( hop.call( parsedTemplates, name ) ) {
 			// Clone one in the given context if none is found.
 			var base = parsedTemplates[ name ];
-			var clone = cloneJson( base );
+			var clone = cloneParseTree( base );
 			clone.jqueryTemplateName = qname;
 			assignIds( clone );
 			return parsedTemplates[ qname ] = clone;
@@ -456,21 +456,16 @@ function autoescape( jqueryTemplatesByName ) {
 	return parsedTemplates;
 }
 
-var cloneJson;
-if ( typeof JSON !== "undefined" ) {
-	cloneJson = function ( ptree ) {
-		return JSON.parse( JSON.stringify( ptree ) );
-	};
-} else {
-	cloneJson = function ( ptree ) {
-		var clone = ptree.slice();
-		for ( var i = clone.length; --i >= 0; ) {
-			if ( typeof clone[ i ] === "object" ) {
-				clone[ i ] = cloneJson( clone[ i ] );
-			}
+function cloneParseTree( ptree ) {
+	// Once JSON is supported on all interpreters, this can be replaced with
+	// return JSON.parse(JSON.stringify(ptree));
+	var clone = ptree.slice();
+	for ( var i = clone.length; --i >= 0; ) {
+		if ( clone[ i ].push ) {  // Recurse if it is an array.
+			clone[ i ] = cloneParseTree( clone[ i ] );
 		}
-		return clone;
-	};
+	}
+	return clone;
 }
 
 if ( !JQUERY_TMPL_PRECOMPILED ) {
