@@ -69,8 +69,8 @@ function guessBlockDirectives( templateText ) {
  * </pre>
  *
  * @param {!string} templateText The text to parse.
- * @param {!Object.<string, number>} blockDirectives Maps directive names such as
- *     {@code "if"} to {link #TRUTHY} if they require/allow an end marker.
+ * @param {!Object.<string, number>} blockDirectives Maps directive names such
+ *     as {@code "if"} to {link #TRUTHY} if they require/allow an end marker.
  *     {@link #DEFAULT_BLOCK_DIRECTIVES} and the output of
  *     {@link #guessBlockDirectives} both obey this contract.
  * @return {!Array.<string|Array>|string} A parse tree node.
@@ -200,9 +200,7 @@ function parseTemplate( templateText, blockDirectives ) {
 function renderParseTree( parseTree, opt_blockDirectives ) {
 	var buffer = [];
 	( function render( _, parseTree ) {
-		if ( typeof parseTree === "string" ) {
-			buffer.push( parseTree.replace( /\{([\{#])/, "{{##}$1" ) );
-		} else {
+		if ( "string" !== typeof parseTree ) {
 			var name = parseTree[ 0 ], n = parseTree.length;
 			if ( name === "=" && !/\}/.test( parseTree[ 1 ] ) ) {
 				buffer.push( "${", parseTree[ 1 ], "}" );
@@ -214,6 +212,8 @@ function renderParseTree( parseTree, opt_blockDirectives ) {
 					buffer.push( "{{/", name, "}}" );
 				}
 			}
+		} else {
+			buffer.push( parseTree.replace( /\{([\{#])/, "{{##}$1" ) );
 		}
 	}( 2, parseTree ) );
 	return buffer.join( "" );
