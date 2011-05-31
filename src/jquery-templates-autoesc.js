@@ -13,7 +13,7 @@ if ( !JQUERY_TMPL_PRECOMPILED ) {
 				$.each(
 						parseTrees,
 						function autoescapeOne( _, parseTree ) {
-							if ( typeof parseTree !== "string" ) {
+							if ( "string" !== typeof parseTree ) {
 								if ( parseTree[ 0 ] === "=" ) {
 									parseTree[ 1 ] += "=>$.encode";
 								} else if ( parseTree[ 0 ] === "html" ) {

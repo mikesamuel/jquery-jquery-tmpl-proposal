@@ -104,13 +104,14 @@ function compileToFunction( parseTree ) {
 					javaScriptSource.push( "+" );
 				}
 				var match;
-				if ( typeof parseTree === "string" ) {  // HTML snippet
+				if ( "string" === typeof parseTree ) {  // HTML snippet
 					// 'foo' -> "\'foo\'"
 					javaScriptSource.push( escapeJsValue( parseTree ) );
 				} else {
-					var kind = parseTree[ 0 ], content = parseTree[ 1 ],
-							len = parseTree.length;
-					var tmpName = TEMP_NAME_PREFIX + nestLevel;
+					var kind = parseTree[ 0 ],
+							content = parseTree[ 1 ],
+							len = parseTree.length,
+							tmpName = TEMP_NAME_PREFIX + nestLevel;
 					if ( kind === "=" ) {  // ${...} substitution.
 						// Make sure that + is string-wise.
 						// Specifically, ${1}${2} should not compile to (1 + 2).
