@@ -1,16 +1,26 @@
 //-*- mode: js2-mode; indent-tabs-mode: t; tab-width: 2; -*-
 
 /**
+ * @fileoverview
  * An efficient backend for the JQuery template compiler
  * based on http://wiki.jqueryui.com/w/page/37898666/Template
  *
  * @author Mike Samuel <mikesamuel@gmail.com>
  */
 
+/**
+ * Name of a method of $ that can be used to merge data objects.
+ * This is needed because <code>$.extend({}, { x: undefined })</code>
+ * will not contain a property named "x" leading <code>${x}</code>
+ * to fail with an undefined property error.
+ *
+ * @const
+ */
 var EXT_ALL_METHOD_NAME = "extAll";
 
 /**
  * Like $.extend but copies properties whose values are undefined.
+ *
  * @param {Object} target
  * @param {...Object} var_args containers of properties to copy into target.
  * @return {Object} target
@@ -25,8 +35,36 @@ $[ EXT_ALL_METHOD_NAME ] = function ( target, var_args ) {
 	return target;
 };
 
+/**
+ * Compiles the given template parse tree to a function that implements that
+ * produces the result of applying that template to data and options passed
+ * as parameters to the function.
+ *
+ * @param { Array.<string|Array> } parseTree
+ * @return { function ( Object.<string, *>=, Object.<string, *>= ): !string }
+ *     A function that takes an optional a data object and options object and
+ *     produces a string output that is the template output.
+ */
 function compileToFunction( parseTree ) {
+	/**
+	 * The compilation uses variable names to prevent re-evaluation of expressions
+	 * when de-thunking, and to collect the results of loops.
+	 * When loops are nested, multiple variables are needed, so this prefix is
+	 * used for all variable names.  If it appears in template code, behavior
+	 * is undefined.
+	 * @const
+	 */
 	var TEMP_NAME_PREFIX = "$$tmplVar";
+	/**
+	 * The level of nesting.  Used with TEMP_NAME_PREFIX to generate a variable
+	 * name.
+	 * @type !number
+	 */
+	var nestLevel = 0;
+	/**
+	 * An array to which pieces of the JavaScript function body are pushed.
+	 * @type Array.<string>
+	 */
 	var javaScriptSource = [
 			"var " + TEMP_NAME_PREFIX + "0;"
 			// Make the options object available
@@ -42,9 +80,22 @@ function compileToFunction( parseTree ) {
 			// The below compiles the parse tree to an expression that returns a
 			// string.
 			+ "return(" ];
-	var inScope = [];  // Used to propagate variables in scope through {{tmpl}}.
+	/**
+	 * An array of all the loop variable and index names in scope
+	 * used to propagate variables in scope through {{tmpl}}.
+	 * The variable names are stored as "foo:foo" so that the result can be
+	 * joined on "," to produce an object literal to extend with the current
+	 * data as in <code>$.extend( {}, $data, { <<inScope.join("")>> } )</code>.
+	 * @type Array.<string>
+	 */
+	var inScope = [];
+	// True iff the innermost parenthetical group in javaScriptSource's return
+	// statement contains a string expression.  If it does not, then sticking
+	// "+ foo" at the end would be interpreted as converting "foo" to a number
+	// instead of appending foo to whatever is there.
 	var hasValue;
-	var nestLevel = 0;
+
+	// Walk each parse tree node and append the translation to javaScriptSource.
 	$.each(
 			parseTree.slice( 2 ),
 			function walk( _, parseTree ) {

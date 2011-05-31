@@ -1,6 +1,7 @@
 //-*- mode: js2-mode; indent-tabs-mode: t; tab-width: 2; -*-
 
 /**
+ * @fileoverview
  * API methods and builtin compiler passes for JQuery templates
  * based on http://wiki.jqueryui.com/w/page/37898666/Template
  *
@@ -38,10 +39,13 @@ function compileBundle( parseTrees, opt_exclusion ) {
 	$.each( parseTrees, function process( name, parseTree ) {
 		if ( processedNames[ name ] !== TRUTHY ) {
 			processedNames[ name ] = TRUTHY;
+			// Look at {{tmpl}} calls to produce the minimal set of templates that
+			// need to be compiled together.
 			$.each( parseTree, function findDeps( _, node ) {
 				if ( node[ 0 ] === "tmpl" || node[ 0 ] === "wrap" ) {
 					var match = node[ 1 ].match( TMPL_DIRECTIVE_CONTENT );
 					if ( match ) {
+						// Unpack the template name, e.g. "foo" in {{tmpl "foo"}}.
 						var depName = Function( "return " + match[ 2 ] )();
 						if ( needsCompile( depName )
 								 && processedNames[ depName ] !== TRUTHY ) {
@@ -54,6 +58,9 @@ function compileBundle( parseTrees, opt_exclusion ) {
 			} );
 		}
 	} );
+	// Produces a function that will apply all the passes already run to new
+	// dependencies so that if a pass pulls in imports, it can bring them
+	// up to date.
 	function makePrepassCaller( pluginIndex ) {
 		return function ( parseTrees ) {
 			var i;
@@ -65,6 +72,7 @@ function compileBundle( parseTrees, opt_exclusion ) {
 		};
 	}
 	var result;
+	// Apply the passes to parseTrees.
 	$.each( makePrepassCaller(
 						$[ TEMPLATE_PLUGINS_PROP_NAME ].length )( parseTrees ),
 					function ( templateName, parseTree ) {
