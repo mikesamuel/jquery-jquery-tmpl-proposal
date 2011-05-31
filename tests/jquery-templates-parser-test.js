@@ -26,7 +26,14 @@ function testSubstitutions() {
 	assertParsedJqueryTemplate( [ "", "", [ "=", "foo" ] ], "${foo}" );
 	assertParsedJqueryTemplate( [ "", "", [ "=", "foo + 1" ] ], "${foo + 1}" );
 	assertParsedJqueryTemplate( [ "", "", "foo", [ "=", "bar" ], "baz" ],
-														 "foo${bar}baz" );
+															"foo${bar}baz" );
+}
+
+function testUnabbreviatedSubstitutions() {
+	assertParsedJqueryTemplate( [ "", "", [ "=", "foo" ] ], "{{=foo}}" );
+	assertParsedJqueryTemplate( [ "", "", [ "=", "foo + 1" ] ], "{{=foo + 1}}" );
+	assertParsedJqueryTemplate( [ "", "", "foo", [ "=", "bar" ], "baz" ],
+															"foo{{=bar}}baz" );
 }
 
 function testMalformedSubstitutions() {

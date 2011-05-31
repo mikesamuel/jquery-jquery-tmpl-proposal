@@ -2,6 +2,7 @@
 /*jslint evil: true, unparam: true, maxerr: 50 */
 
 /**
+ * @fileoverview
  * Common definitions for jQuery templates and plugin passes
  * based on http://wiki.jqueryui.com/w/page/37898666/Template
  *
@@ -19,25 +20,40 @@
  */
 var DEBUG = true;
 
-/** A boolean-esque value that minifies better than true. @const */
+/**
+ * A boolean-esque value that minifies better than true.
+ * @const
+ */
 var TRUTHY = 1;
 
-/** A boolean-esque value that minifies better than false. @const */
+/**
+ * A boolean-esque value that minifies better than false.
+ * @const
+ */
 var FALSEY = 0;
 
 
 // JQuery Lexical Grammar.
 
-/** Regular expression text for a substitution.  ${...}. @const */
+/**
+ * Regular expression text for a substitution.  ${...}.
+ * @const
+ */
 var SUBSTITUTION_RE = (
 		"\\$\\{"
 		+ "[^}]*"               // ${...} cannot contain curlies but {{=...}} can.
 		+ "\\}" );
 
-/** Regular expression text for a directive name. @const */
+/**
+ * Regular expression text for a directive name.
+ * @const
+ */
 var NAME_RE = "[=a-z][a-z0-9]*";
 
-/** Regular expression text for a directive start|end marker. @const */
+/**
+ * Regular expression text for a directive start|end marker.
+ * @const
+ */
 var MARKER_RE = (
 		"\\{\\{"
 		+ "(?:"
@@ -46,13 +62,31 @@ var MARKER_RE = (
 		+ ")"
 		+ "\\}\\}" );
 
-/** Global regular expression that matches a single template token. */
+/**
+ * Global regular expression that matches a single template token.
+ * @const
+ */
 var TOKEN = new RegExp(
 		"(?=" + SUBSTITUTION_RE
 		+ "|" + MARKER_RE + ")",
 		"gi" );
 
-/** Regular expression text for a variable name.  @const */
+/**
+ * Global regular expression that can be used to decompose a marker.
+ * @const
+ */
+var MARKER = new RegExp(
+		"^\\{\\{"
+		+ "(/?)"  // Iff a close marker, group 1 is truthy.
+		+ "(=|[a-z][a-z0-9]*)"  // Marker name in group 2.
+		+ "([\\s\\S]*)"  // Marker content in group 3.
+		+ "\\}\\}",
+		"i" );
+
+/**
+ * Regular expression text for a variable name.
+ * @const
+ */
 // We may need to exclude keywords if these are used outside a param decl.
 var VAR_NAME_RE = "[a-z_$]\\w*";
 
@@ -97,12 +131,14 @@ var TMPL_DIRECTIVE_CONTENT = new RegExp(
 /**
  * The default variable name for the key used when none is specified in an
  * <code>{{each}}</code> directive.
+ * @const
  */
 var DEFAULT_EACH_KEY_VARIABLE_NAME = "$index";
 
 /**
  * The default variable name used for the value when none is specified in an
  * <code>{{each}}</code> directive.
+ * @const
  */
 var DEFAULT_EACH_VALUE_VARIABLE_NAME = "$value";
 
@@ -116,14 +152,26 @@ var DEFAULT_EACH_VALUE_VARIABLE_NAME = "$value";
  */
 var TEMPLATE_PLUGINS_PROP_NAME = "templatePlugins";
 
-/** Name of the map from template names to compiled/parsed template.  @const */
+/**
+ * Name of the map from template names to compiled/parsed template.
+ * @const
+ */
 var TEMPLATES_PROP_NAME = "templates";
 
-/** Name of the extern method used to define/lookup templates.  @const */
+/**
+ * Name of the extern method used to define/lookup templates.
+ * @const
+ */
 var TEMPLATE_METHOD_NAME = "template";
 
-/** Method of a template object that renders the template.  @const */
+/**
+ * Method of a template object that renders the template.
+ * @const
+ */
 var TMPL_METHOD_NAME = "tmpl";
 
-/** The default set of block directives. @const */
+/**
+ * The default set of block directives.
+ * @const
+ */
 var DEFAULT_BLOCK_DIRECTIVES = { "each": TRUTHY, "if": TRUTHY, "wrap": TRUTHY };

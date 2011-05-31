@@ -661,23 +661,23 @@ jQuery.event.prototype.type;
 jQuery.event.prototype.which;
 
 /**
- * @param {(Object|boolean)} arg1
- * @param {...*} var_args
- * @return {Object}
+ * @param {!(Object|boolean)} arg1
+ * @param {...!Object} var_args
+ * @return {!Object}
  */
 jQuery.extend = function(arg1, var_args) {};
 
 /**
- * @param {(Object|boolean)} arg1
- * @param {...*} var_args
- * @return {Object}
+ * @param {!(Object|boolean)} arg1
+ * @param {...!Object} var_args
+ * @return {!Object}
  */
 jQuery.prototype.extend = function(arg1, var_args) {};
 
 /**
- * @param {(Object|boolean)} arg1
- * @param {...*} var_args
- * @return {Object}
+ * @param {!(Object|boolean)} arg1
+ * @param {...!Object} var_args
+ * @return {!Object}
  */
 $.extend = function(arg1, var_args) {};
 
