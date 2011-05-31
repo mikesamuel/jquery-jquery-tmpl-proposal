@@ -200,7 +200,7 @@ function parseTemplate( templateText, blockDirectives ) {
 function renderParseTree( parseTree, opt_blockDirectives ) {
 	var buffer = [];
 	( function render( _, parseTree ) {
-		if ( typeof parseTree !== "string" ) {
+		if ( "string" !== typeof parseTree ) {
 			var name = parseTree[ 0 ], n = parseTree.length;
 			if ( name === "=" && !/\}/.test( parseTree[ 1 ] ) ) {
 				buffer.push( "${", parseTree[ 1 ], "}" );
