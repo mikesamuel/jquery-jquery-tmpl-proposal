@@ -28,7 +28,8 @@ EXTERNS=--externs closure/externs.js \
   --externs closure/webkit_console.js
 
 CLOSURE_COMPILER=java -jar closure/compiler.jar \
-   --compilation_level ADVANCED_OPTIMIZATIONS
+   --compilation_level ADVANCED_OPTIMIZATIONS \
+   --language_in ECMASCRIPT5
 
 all: $(OUTPUT_JS) sizereport
 

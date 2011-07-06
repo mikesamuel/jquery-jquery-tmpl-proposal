@@ -342,7 +342,6 @@ var processRawText = ( function () {
 	 * True iff this transition can produce a context after the text in
 	 * {@code rawText[0:match.index + match[0].length]}.
 	 * This should not destructively modify the match.
-	 * Specifically, it should not call {@code find()} again.
 	 * @param {number} prior The context prior to the token in match.
 	 * @param {Array.<String>} match The token matched by {@code this.pattern}.
 	 */
@@ -503,7 +502,7 @@ var processRawText = ( function () {
 			} );
 
 	/**
-	 * A transition to a context in the name of an attribute of the given type.
+	 * A transition to a context in the value of an attribute of the given type.
 	 * @param {RegExp} regex
 	 * @constructor
 	 * @extends Transition
@@ -537,7 +536,7 @@ var processRawText = ( function () {
 			} );
 
 	/**
-	 * A transition to the given state.
+	 * A transition to the given JS string state.
 	 * @param {RegExp} regex
 	 * @constructor
 	 * @extends Transition
@@ -554,6 +553,7 @@ var processRawText = ( function () {
 			} );
 
 	/**
+	 * Transition on a JS slash that does not start a comment.
 	 * @param {RegExp} regex
 	 * @constructor
 	 * @extends Transition
@@ -751,9 +751,9 @@ var processRawText = ( function () {
 		TRANSITION_TO_SELF ];
 	TRANSITIONS[ STATE_HTML_BEFORE_TAG_NAME ] = [
 		new ToTransition( /^[a-z]+/i, STATE_HTML_TAG_NAME ),
-		new ToTransition( /^(?=[^a-z])/i, STATE_HTML_PCDATA ) ];
+		new ToTransition( /^/, STATE_HTML_PCDATA ) ];
 	TRANSITIONS[ STATE_HTML_TAG_NAME ] = [
-		new TransitionToSelf( /^[a-z0-9:-]*(?:[a-z0-9]|$)/i ),
+		new TransitionToSelf( /^[a-z0-9:-]+/i ),
 		new ToTagTransition( /^(?=[\/\s>])/, ELEMENT_TYPE_NORMAL ) ];
 	TRANSITIONS[ STATE_HTML_TAG ] = [
 		// Allows {@code data-foo} and other dashed attribute names, but
@@ -784,6 +784,7 @@ var processRawText = ( function () {
 	TRANSITIONS[ STATE_HTML_COMMENT ] = [
 		new ToTransition( /-->/, STATE_HTML_PCDATA ),
 		TRANSITION_TO_SELF ];
+	// Exit handled by the attribute delimiter end check.
 	TRANSITIONS[ STATE_HTML_NORMAL_ATTR_VALUE ] = [
 		TRANSITION_TO_SELF ];
 	// The CSS transitions below are based on
@@ -804,14 +805,14 @@ var processRawText = ( function () {
 	TRANSITIONS[ STATE_CSS_DQ_STRING ] = [
 		new TransitionToState( /"/, STATE_CSS ),
 		// Line continuation or escape.
-		new TransitionToSelf( /\\(?:\r\n?|[\n\f"])/ ),
+		new TransitionToSelf( /\\(?:\r\n?|[\n\f"\\])/ ),
 		new ToTransition( /[\n\r\f]/, STATE_ERROR ),
 		STYLE_TAG_END,  // TODO: Make this an error transition?
 		TRANSITION_TO_SELF ];
 	TRANSITIONS[ STATE_CSS_SQ_STRING ] = [
 		new TransitionToState( /'/, STATE_CSS ),
 		// Line continuation or escape.
-		new TransitionToSelf( /\\(?:\r\n?|[\n\f'])/ ),
+		new TransitionToSelf( /\\(?:\r\n?|[\n\f'\\])/ ),
 		new ToTransition( /[\n\r\f]/, STATE_ERROR ),
 		STYLE_TAG_END,  // TODO: Make this an error transition?
 		TRANSITION_TO_SELF ];
@@ -824,14 +825,14 @@ var processRawText = ( function () {
 		new TransitionToState( /'/, STATE_CSS ),
 		URI_PART_TRANSITION,
 		// Line continuation or escape.
-		new TransitionToSelf( /\\(?:\r\n?|[\n\f'])/ ),
+		new TransitionToSelf( /\\(?:\r\n?|[\n\f'\\])/ ),
 		new ToTransition( /[\n\r\f]/, STATE_ERROR ),
 		STYLE_TAG_END ];
 	TRANSITIONS[ STATE_CSS_DQ_URI ] = [
 		new TransitionToState( /"/, STATE_CSS ),
 		URI_PART_TRANSITION,
 		// Line continuation or escape.
-		new TransitionToSelf( /\\(?:\r\n?|[\n\f"])/ ),
+		new TransitionToSelf( /\\(?:\r\n?|[\n\f"\\])/ ),
 		new ToTransition( /[\n\r\f]/, STATE_ERROR ),
 		STYLE_TAG_END ];
 	TRANSITIONS[ STATE_JS ] = [
@@ -857,6 +858,7 @@ var processRawText = ( function () {
 	TRANSITIONS[ STATE_JS_DQ_STRING ] = [
 		new DivPreceder( /"/ ),
 		SCRIPT_TAG_END,
+// TODO, maybe separate out <(?!/script)
 		new TransitionToSelf( new RegExp(
 							"^(?:" +                    // Case-insensitively, from start
 								"[^\"\\\\" + NLS + "<]" + // match chars - newlines, quotes, \s;
@@ -892,8 +894,9 @@ var processRawText = ( function () {
 								"|\\\\?<(?!/script)" +
 								"|\\[" +                  // or a character set containing
 									"(?:[^\\]\\\\<" + NLS + "]" +  // normal characters,
-									"|\\\\(?:[^" + NLS + "]))*" +  // and escapes;
-									"|\\\\?<(?!/script)" +  // or non-closing angle less-than.
+										"|\\\\(?:[^" + NLS + "])" +  // and escapes;
+										"|\\\\?<(?!/script)" +  // or non-closing angle less-than.
+									")*" +
 								"\\]" +
 							")+", "i" ) ) ];
 		// TODO: Do we need to recognize URI attributes that start with javascript:,
@@ -1043,7 +1046,7 @@ var processRawText = ( function () {
 
 				// Recurse on the decoded value.
 				var attrCu = new RawTextContextUpdater();
-				while ( attrValueTail.length ) {
+				while ( attrValueTail ) {
 					attrCu.processNextToken( attrValueTail, context );
 					attrValueTail = attrValueTail.substring( attrCu.numCharsConsumed );
 					context = attrCu.next;
