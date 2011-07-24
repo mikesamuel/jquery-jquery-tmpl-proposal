@@ -81,21 +81,6 @@ function contextToString( context ) {
 	return "[Context " + parts.join( " " ) + "]";
 }
 
-var REGEX_PRECEDER_KEYWORDS = {
-	"break" : TRUTHY,
-	"case" : TRUTHY,
-	"continue" : TRUTHY,
-	"delete" : TRUTHY,
-	"do" : TRUTHY,
-	"else" : TRUTHY,
-	"finally" : TRUTHY,
-	"instanceof" : TRUTHY,
-	"return" : TRUTHY,
-	"throw" : TRUTHY,
-	"try" : TRUTHY,
-	"typeof": TRUTHY
-};
-
 /**
  * True iff a slash after the given run of non-whitespace tokens
  * starts a regular expression instead of a div operator : (/ or /=).
@@ -120,41 +105,29 @@ function isRegexPreceder( jsTokens ) {
 	// ">>>=", "?", "@", "[", "^", "^=", "^^", "^^=",
 	// "{", "|", "|=", "||", "||=", "~",
 	// "break", "case", "continue", "delete", "do",
-	// "else", "finally", "instanceof", "return",
-	// "throw", "try", "typeof"
+	// "else", "finally", "in", "instanceof", "return",
+	// "throw", "try", "typeof", "void",
 
 	var jsTokensLen = jsTokens.length;
 	var lastChar = jsTokens.charAt( jsTokensLen - 1 );
-	switch ( lastChar ) {
-	case "+":
-	case "-":
-		// ++ and -- are not
-		var signStart = jsTokensLen - 1;
-		// Count the number of adjacent dashes or pluses.
-		while ( signStart > 0 && jsTokens.charAt( signStart - 1 ) === lastChar ) {
-			--signStart;
-		}
-		var numAdjacent = jsTokensLen - signStart;
+	if ( lastChar === "+" || lastChar === "-" ) {
 		// True for odd numbers since "---" is the same as "-- -".
 		// False for even numbers since "----" is the same as "-- --" which ends
 		// with a decrement, not a minus sign.
-		return ( numAdjacent & 1 ) === 1;
-	case ".":
+		return jsTokens.match(/\++$|-+$/)[0].length & 1;
+	} else if ( lastChar === "." ) {
 		if ( jsTokensLen === 1 ) {
 			return TRUTHY;
 		}
 		// There is likely to be a .. or ... operator in next version of EcmaScript.
 		var ch = jsTokens.charAt( jsTokensLen - 2 );
 		return !( "0" <= ch && ch <= "9" );
-	case "/":  // Match a div op, but not a regexp.
+	} else if ( lastChar === "/" ) { // Match a div op, but not a regexp.
 		return jsTokensLen === 1;
-	default:
+	} else {
 		// [:-?] matches ':', ';', '<', '=', '>', '?'
 		// [{-~] matches '{', '|', '}', '~'
-		if ( /[#%&(*,:-?\[^{-~]/.test( lastChar ) ) { return TRUTHY; }
-		// Look for one of the keywords above.
-		var word = jsTokens.match( /[\w$]+$/ );
-		return word && REGEX_PRECEDER_KEYWORDS[ word[ 0 ] ] === TRUTHY;
+		return /\b(?:break|case|continue|delete|do|else|finally|in|instanceof|return|throw|try|typeof|void)$|[#%&(*,:-?\[^{-~]$/.test( jsTokens );
 	}
 }
 
